@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>실시간 파라미터 예측</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f6f9;
+        }
+
+        h2 {
+            margin-bottom: 10px;
+        }
+
+        #layout-container {
+            display: flex;
+            flex-direction: row;
+            gap: 24px;
+            align-items: stretch;
+        }
+
+        #charts-container {
+            flex: 2;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+
+        .chart-box {
+            border: 1px solid #ccc;
+            padding: 12px;
+            border-radius: 8px;
+            background-color: #ffffff;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        canvas {
+            width: 100% !important;
+            height: 300px;
+        }
+
+        #log-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: flex-start;
+            border: 1px solid #ccc;
+            padding: 12px;
+            border-radius: 8px;
+            background-color: #ffffff;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            text-align: left;
+        }
+
+        #log-panel label {
+            margin: 0 0 8px 0;
+            font-weight: bold;
+            text-align: left;
+        }
+
+        #log-content {
+            text-align: left;
+            width: 100%;
+        }
+
+        #settings-modal {
+            display: none;
+            position: fixed;
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            padding: 24px;
+            z-index: 100;
+            top: 10%;
+            left: 10%;
+            width: 80%;
+            max-height: 80%;
+            overflow-y: auto;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .tab {
+            display: inline-block;
+            margin-right: 8px;
+            margin-bottom: 8px;
+            padding: 6px 12px;
+            border: 1px solid #bbb;
+            border-radius: 5px;
+            cursor: pointer;
+            background: #eee;
+            transition: background 0.2s;
+        }
+
+        .tab:hover {
+            background-color: #ddd;
+        }
+
+        .tab.active {
+            background: #4caf50;
+            color: white;
+            font-weight: bold;
+        }
+
+        .step-table {
+            margin-top: 16px;
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .step-table th,
+        .step-table td {
+            border: 1px solid #ccc;
+            padding: 6px;
+            text-align: center;
+        }
+
+        .step-table th {
+            background-color: #f2f2f2;
+        }
+
+        .step-table input {
+            width: 70px;
+            padding: 4px;
+            border-radius: 4px;
+            border: 1px solid #aaa;
+        }
+
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            margin: 4px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+
+<body>
+    <h2>실시간 데이터 모니터링</h2>
+
+    <div style="display: flex; align-items: center; gap: 16px;">
+        <label for="duration-select">표시 기간 </label>
+        <select id="duration-select">
+            <option value="60">1분</option>
+            <option value="300" selected>5분</option>
+            <option value="600">10분</option>
+            <option value="3600">1시간</option>
+        </select>
+
+        <button id="open-settings">Step별 상/하한 설정</button>
+    </div>
+    <br>
+
+    <div>
+        <strong>차트 출력 ON/OFF</strong><br>
+        {% for col in columns %}
+        <label style="margin-right: 10px;">
+            <input type="checkbox" class="toggle-chart" data-col="{{ col }}" checked>
+            {{ col }}
+        </label>
+        {% endfor %}
+    </div><br>
+
+    <div id="layout-container">
+        <div id="charts-container">
+            {% for col in columns %}
+            <div id="chart-box-{{ col }}" class="chart-box">
+                <label><strong>{{ col }}</strong></label>
+                <canvas id="chart-{{ col }}"></canvas>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div id="log-panel">
+            <label><strong>이벤트 로그</strong></label>
+            <div id="log-content">()</div>
+        </div>
+    </div>
+
+    <div id="settings-modal">
+        <h3>상/하한 설정</h3>
+        <div id="tab-container"></div><br>
+        <button id="save-settings">저장 및 적용</button>
+        <button onclick="document.getElementById('settings-modal').style.display='none'">닫기</button>
+        <div id="settings-form"></div>
+    </div>
+    <script src="/static/chart.js" defer></script>
+</body>
+
+</html>
