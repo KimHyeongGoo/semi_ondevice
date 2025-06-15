@@ -5,6 +5,7 @@ from fastapi.templating import Jinja2Templates
 from db import get_latest_data
 import yaml
 import os
+import psycopg2
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -42,7 +43,6 @@ async def save_limits(request: Request):
 
 @app.get("/api/logs")
 async def get_logs():
-    import psycopg2
     conn = psycopg2.connect(
         dbname="postgres",
         user="keti",
@@ -51,16 +51,6 @@ async def get_logs():
         port=5432
     )
     cur = conn.cursor()
-
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS realtime_violation_log (
-            "Timestamp" TIMESTAMP NOT NULL,
-            parameter TEXT NOT NULL,
-            message TEXT NOT NULL,
-            UNIQUE ("Timestamp", parameter)
-        );
-    """)
-    conn.commit()
     
     cur.execute("""
         SELECT "Timestamp", message FROM realtime_violation_log

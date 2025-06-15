@@ -3,7 +3,7 @@ const columns = Array.from(document.querySelectorAll(".toggle-chart")).map(cb =>
 let selectedDuration = 300; // 기본값: 5분
 let limits = {};
 const stepNames = {
-    2: 'END', 998: 'STANDBY', 1: 'START', 17: 'B.UP', 3: 'WAIT',
+    2: 'END', 0: 'STANDBY', 1: 'START', 17: 'B.UP', 3: 'WAIT',
     74: 'S.P-1', 75: 'S.P-2', 25: 'R.UP1', 22: 'STAB1', 76: 'S.P-3',
     81: 'M.P-3', 72: 'L.CHK', 44: 'PREPRG1', 99: 'EVAC1', 100: 'EVAC2',
     111: 'N-EVA1', 128: 'CLOSE1', 119: 'SI-FL1', 117: 'SI-EVA1', 152: 'CHANGE',
@@ -12,7 +12,7 @@ const stepNames = {
     84: 'A.VAC1', 89: 'A.PRG1', 104: 'N2PRG2', 105: 'N2PRG3', 86: 'A.VAC3',
     91: 'A.PRG3', 87: 'A.VAC4', 92: 'A.PRG4', 130: 'CYCLE1', 93: 'A.PRG5',
     31: 'R.DOWN1', 94: 'B.FILL1', 95: 'B.FILL2', 96: 'B.FILL3', 97: 'B.FILL4',
-    98: 'B.FILL5', 18: 'B.DOWN', 0: 'IDLE'
+    98: 'B.FILL5', 18: 'B.DOWN'
 };
 
 function parseTimeString(tstr) {

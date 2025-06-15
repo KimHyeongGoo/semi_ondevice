@@ -123,6 +123,23 @@ def interpolate_rows(data):
 
     return data_expanded
 
+
+def insert_violation(conn, cur, timestamp, col, step_id, step_name, val, limit_type, threshold):
+
+    symbol = "<=" if limit_type == "min" else ">="
+    if symbol == '<=':
+        msg = f"[{timestamp.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]}] 하한선 침범\n [파라미터 {col}] {step_name}({step_id})\n 예측값({val:.3f}) {symbol} {limit_type}({threshold})"
+    else:
+        msg = f"[{timestamp.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]}] 상한선 침범\n [파라미터 {col}] {step_name}({step_id})\n 예측값({val:.3f}) {symbol} {limit_type}({threshold})"
+        
+    cur.execute("""
+        INSERT INTO realtime_violation_log ("Timestamp",  parameter, message)
+        VALUES (%s, %s, %s)
+        ON CONFLICT ("Timestamp", parameter) DO NOTHING
+    """, (timestamp, col, msg))
+    conn.commit()
+    
+    
 # 각 칼럼별 예측 수행
 @ray.remote
 def ray_predict(selected_cols, predict_column, window_size, predict_steps, model_path = './model_10sec', scaler_path = './model_10sec/scaler'):
@@ -157,18 +174,19 @@ def ray_predict(selected_cols, predict_column, window_size, predict_steps, model
             interval_sec = window_size // 2 + 1
             colnames = ', '.join([f'"{col}"' for col in selected_cols])
             query = f"""
-                SELECT {colnames}
+                SELECT {colnames}, "ProcessRecipeStepRemainTime", "ProcessRecipeStepID", "ProcessRecipeStepName"
                 FROM "{table_name}"
                 WHERE "Timestamp" BETWEEN
                     (%s::timestamp - INTERVAL '{interval_sec} seconds') AND %s::timestamp
             """
             data = pd.read_sql(query, conn, params=(last_date, last_date))
+            step_data = data[["ProcessRecipeStepRemainTime", "ProcessRecipeStepID", "ProcessRecipeStepName"]]
             data = data[selected_cols]
             data = interpolate_rows(data) # 1초 데이터를 0.5초로 변환
             if len(data) < window_size:
                 if len(prev_table_name) > 0:
                     query = f"""
-                        SELECT *
+                        SELECT {colnames}
                         FROM "{prev_table_name}"
                         WHERE "Timestamp" BETWEEN
                             (%s::timestamp - INTERVAL '{interval_sec} seconds') AND %s::timestamp
@@ -196,7 +214,26 @@ def ray_predict(selected_cols, predict_column, window_size, predict_steps, model
                 pred_date = datetime.strptime(last_date, "%Y-%m-%d %H:%M:%S.%f") + timedelta(seconds=predict_steps)
             except:
                 pred_date = datetime.strptime(last_date, "%Y-%m-%d %H:%M:%S") + timedelta(seconds=predict_steps)
-            pred_data = pred_real[0][0]                
+            pred_data = pred_real[0][0]
+            try:
+                remain_str = df.iloc[-1]['ProcessRecipeStepRemainTime']  
+                if remain_str == "00:00:00":
+                    last_remain_sec = 100
+                else:
+                    h, m, s = map(int, remain_str.split(":"))
+                    last_remain_sec = h * 3600 + m * 60 + s
+                last_step_id = df.iloc[-1]["ProcessRecipeStepID"]
+                last_step_name = df.iloc[-1]["ProcessRecipeStepName"]
+                if last_step_id == 0:
+                    last_step_name = 'STANDBY'
+                if last_remain_sec > 0 and last_step_id >= predict_steps:
+                    pass
+                else:
+                    last_step_id = -1
+                    last_step_name = 'UNKNOWN'               
+            except:
+                    last_step_id = -1
+                    last_step_name = 'UNKNOWN'                             
         except Exception as e:
             logg(f"[PID|{proc_pid}]{predict_column}.log", "쿼리후 데이터 전처리 및 예측 시 오류발생")
             logg(f"[PID|{proc_pid}]{predict_column}.log", str(e))
@@ -212,17 +249,40 @@ def ray_predict(selected_cols, predict_column, window_size, predict_steps, model
             create_query = f"""
             CREATE TABLE IF NOT EXISTS "{save_table_name}" (
                 "Timestamp" TIMESTAMP,
-                "{predict_column}" REAL
+                "Parameter" REAL,
+                "ProcessRecipeStepID" INTEGER,
+                "ProcessRecipeStepName" TEXT,
+                UNIQUE ("Timestamp", parameter)
             );
             """
             cur.execute(create_query)
 
             # 데이터 삽입
             insert_query = f"""
-            INSERT INTO "{save_table_name}" ("Timestamp", "{predict_column}")
-            VALUES (%s::timestamp, %s::real, %s::integer);
+            INSERT INTO "{save_table_name}" ("Timestamp", "Parameter", "ProcessRecipeStepID", "ProcessRecipeStepName")
+            VALUES (%s::timestamp, %s::real, %s::integer, %s::text)
+            ON CONFLICT ("Timestamp") DO NOTHING
             """
-            cur.execute(insert_query, (pred_date, float(pred_data), int(pred_step_id)))
+            cur.execute(insert_query, (pred_date, float(pred_data), int(last_step_id), str(last_step_name)))
+        except Exception as e:
+            logg(f"[PID|{proc_pid}]{predict_column}.log", "예측데이터 DB insert 오류발생")
+            logg(f"[PID|{proc_pid}]{predict_column}.log", str(e))
+            time.sleep(0.2)
+            
+        try:   
+            if last_step_id != -1 and val is not None:
+                # limits.yaml 읽기
+                limits = {}
+                if os.path.exists("./fastapi/limits.yaml"):
+                    with open("./fastapi/limits.yaml", "r", encoding="utf-8") as f:
+                        limits = yaml.safe_load(f)
+                    step_limits = limits.get(predict_column, {}).get(str(step_id))
+                    if step_limits:
+                        ts = str(pred_date)
+                        if "min" in step_limits and pred_data <= step_limits["min"]:
+                            insert_violation(conn, cur, ts, predict_column, last_step_id, last_step_name, pred_data, 'min', step_limits["min"])
+                        elif "max" in step_limits and pred_data >= step_limits["max"]:
+                            insert_violation(conn, cur, ts, predict_column, last_step_id, last_step_name, pred_data, 'max', step_limits["max"])
         except Exception as e:
             logg(f"[PID|{proc_pid}]{predict_column}.log", "예측데이터 DB insert 오류발생")
             logg(f"[PID|{proc_pid}]{predict_column}.log", str(e))
@@ -243,6 +303,26 @@ if __name__ == '__main__':
     except:
         ray.shutdown()
         ray.init()
+    
+    conn = psycopg2.connect(
+        dbname="postgres",
+        user="keti",
+        password="keti1234!",
+        host="localhost",
+        port=5432
+    )
+    cur = conn.cursor()
+
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS realtime_violation_log (
+            "Timestamp" TIMESTAMP NOT NULL,
+            parameter TEXT NOT NULL,
+            message TEXT NOT NULL,
+            UNIQUE ("Timestamp", parameter)
+        );
+    """)
+    cur.close()
+    conn.close()
     
     obj_id_list = []
     for predict_column in predict_columns:
