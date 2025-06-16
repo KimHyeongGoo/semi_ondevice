@@ -1,6 +1,7 @@
 import time
 import os
 from watchdog.observers import Observer
+from watchdog.observers.polling import PollingObserver
 from watchdog.events import FileSystemEventHandler
 import psycopg2
 import csv
@@ -191,32 +192,41 @@ def insert_rows(rows, table_name):
     
     
 def insert_leaked_data(file_path):
+    new_flag = False
     latest_table, latest_table2, latest_timestamp = get_last_tablename()
     if latest_timestamp == "":
-        return
-    latest_timestamp = str(latest_timestamp)
-    if len(latest_timestamp) == 26:
-        latest_timestamp = latest_timestamp[:-3]
-    print(latest_timestamp)
-    csv_files = find_csv_files(file_path)
-    insert_flag = False
+        new_flag = True
+    if not new_flag:
+        latest_timestamp = str(latest_timestamp)
+        if len(latest_timestamp) == 26:
+    	    latest_timestamp = latest_timestamp[:-3]
+        print(latest_timestamp)
+        csv_files = find_csv_files(file_path)
+        insert_flag = False
+        for i in range(len(csv_files)-1, -1, -1):
+            splits = list(csv_files[i].split('/'))
+            year = splits[-4]
+            month = splits[-3]
+            day = splits[-2]
+            hour = splits[-1][:2]
+            #print(year, month, day, hour)
+            #print(latest_timestamp[:4], latest_timestamp[5:7], latest_timestamp[8:10], latest_timestamp[11:13])
+            if year == latest_timestamp[:4] and month == latest_timestamp[5:7] and day == latest_timestamp[8:10] and hour == latest_timestamp[11:13]:
+                csv_files = csv_files[i:]
+                break
+    if new_flag:
+        csv_files = find_csv_files(file_path)
+        csv_files = csv_files[-100:]
     collected_rows = {}
-    
-    for i in range(len(csv_files)-1, -1, -1):
-        splits = csv_files.split('/')
-        year = splits[-4]
-        month = splits[-3]
-        day = splits[-2]
-        hour = splits[-1][:2]
-        if year == latest_timestamp[:4] and month == latest_timestamp[6:8] and day == latest_timestamp[10:12] and hour == latest_timestamp[11:13]:
-            csv_files = csv_files[i:]
-            break
     for csv_file in csv_files:
         try:
             with open(csv_file, 'r', encoding='utf-8') as f:
                 lines  = f.readlines()
                 lines  = lines[1:]
                 for line in lines:
+                    clean_line = line.strip()
+                    if not clean_line:
+                        continue
                     row = [transform_value(v) for v in clean_line.split(',')]
                     # 현재 시간으로 타임스탬프 덮어쓰기
                     now_ts = row[0]
@@ -228,7 +238,7 @@ def insert_leaked_data(file_path):
                     except:
                         collected_rows[table_name] = [row]
         except Exception as e:
-            print(f"Error reading file {csv_files[i]}: {e}")
+            print(f"Error reading file {csv_file}: {e}")
     for table_name, rows in collected_rows.items():
         insert_rows(rows, table_name)
                 
@@ -295,6 +305,7 @@ def is_valid_hourly_csv(base):
 # watchdog 프로세스 함수
 class CSVUpdateHandler(FileSystemEventHandler):
     def on_modified(self, event): # 파일이 수정되었을떄
+        #print("[MODIFIED]", event.src_path)
         if event.is_directory or not event.src_path.endswith(".csv") or not is_valid_hourly_csv(os.path.basename(event.src_path).replace(".csv", "")):
             return
         file_path = event.src_path
@@ -313,7 +324,8 @@ class CSVUpdateHandler(FileSystemEventHandler):
     
 if __name__ == '__main__':
     realtime_path = "../shared_data_2" # 감시할 디렉토리 경로
-    '''
+    print(f"감시대상경로 : {os.path.abspath(realtime_path)}")
+    
     # ① DB 연결 설정
     conn = psycopg2.connect(
         dbname="postgres",
@@ -340,14 +352,14 @@ if __name__ == '__main__':
     cur.close()
     conn.close()
     print("✅ 모든 public 테이블 제거 완료")
-    '''
     
-
+    
+    print("누락 데이터 검사중..\n")
     # 누락 데이터 저장
-    insert_leaked_data(realtime_path)
+    #insert_leaked_data(realtime_path)
     
     # watchdog 실행
-    observer = Observer()
+    observer = PollingObserver()
     event_handler = CSVUpdateHandler()
     observer.schedule(event_handler, path=realtime_path, recursive=True)
     observer.start()

@@ -193,18 +193,22 @@ def insert_violation(conn, cur, timestamp, col, step_id, step_name, val, limit_t
     
 # 각 칼럼별 예측 수행
 @ray.remote
-def ray_predict(selected_cols, predict_column, window_size, predict_steps, model_path = './model', scaler_path = './model/scaler'):
+def ray_predict(selected_cols, predict_columns, window_size, predict_steps, model_path = './model', scaler_path = './model/scaler'):
+    print(predict_columns)
     proc_pid = os.getpid()
     last_date = ""
+    scaler_ys = {}
+    loaded_models = {}
     try:
         scaler_X = joblib.load(os.path.join(scaler_path,'scaler_X.pkl'))
-        scaler_y = joblib.load(os.path.join(scaler_path,f'scaler_y_{predict_column}.pkl'))
-        loaded_model = load_model(os.path.join(model_path,f'new_mae_192_patchtst_{predict_column}.keras'), custom_objects={
-            'PatchEmbedding': PatchEmbedding,
-            'PositionalEncoding': PositionalEncoding
-        })
+        for predict_column in predict_columns:
+            scaler_ys[predict_column] = joblib.load(os.path.join(scaler_path,f'scaler_y_{predict_column}.pkl'))
+            loaded_models[predict_column] = load_model(os.path.join(model_path,f'new_mae_192_patchtst_{predict_column}.keras'), custom_objects={
+                'PatchEmbedding': PatchEmbedding,
+                'PositionalEncoding': PositionalEncoding
+            })
     except Exception as e:
-        logg(f"[PID|{proc_pid}]{predict_column}.log", str(e))
+        logg(f"[PID|{proc_pid}].log", str(e))
         return
         
     while True:
@@ -259,124 +263,122 @@ def ray_predict(selected_cols, predict_column, window_size, predict_steps, model
             if len(data) > window_size:
                 data = data.tail(window_size)
         except Exception as e:
-            logg(f"[PID|{proc_pid}]{predict_column}.log", " 데이터 쿼리시도중 오류발생")
-            logg(f"[PID|{proc_pid}]{predict_column}.log", str(e))
-            conn.close()
-            time.sleep(0.2)
-            continue
-            
-        try:
-            X_data = scaler_X.transform(data.values)
-            pred_scaled = loaded_model.predict(np.array([X_data]), verbose=0)
-            pred_dates = []
-            for predict_step in predict_steps:
-                try:
-                    pred_date = datetime.strptime(last_date, "%Y-%m-%d %H:%M:%S.%f") + timedelta(seconds=predict_step)
-                except:
-                    pred_date = datetime.strptime(last_date, "%Y-%m-%d %H:%M:%S") + timedelta(seconds=predict_step)
-                pred_dates.append(pred_date)
-            pred_datas = np.stack([
-                    scaler_y.inverse_transform(pred_scaled[:, [i]])[:, 0]
-                    for i in range(3)
-                ], axis=1)
-            
-            last_step_ids = []
-            last_step_names = []
-            for predict_step in predict_steps:
-                try:
-                    remain_str = df.iloc[-1]['ProcessRecipeStepRemainTime']  
-                    if remain_str == "00:00:00":
-                        last_remain_sec = 100
-                    else:
-                        h, m, s = map(int, remain_str.split(":"))
-                        last_remain_sec = h * 3600 + m * 60 + s
-                    last_step_id = df.iloc[-1]["ProcessRecipeStepID"]
-                    last_step_name = df.iloc[-1]["ProcessRecipeStepName"]
-                    if last_remain_sec >= predict_step:
-                        pass
-                    else:
-                        last_step_id = -1
-                        last_step_name = 'UNKNOWN'               
-                except:
-                        last_step_id = -1
-                        last_step_name = 'UNKNOWN'
-                last_step_ids.append(last_step_id)
-                last_step_names.append(last_step_name)                
-        except Exception as e:
-            logg(f"[PID|{proc_pid}]{predict_column}.log", "쿼리후 데이터 전처리 및 예측 시 오류발생")
-            logg(f"[PID|{proc_pid}]{predict_column}.log", str(e))
+            logg(f"[PID|{proc_pid}].log", " 데이터 쿼리시도중 오류발생")
+            logg(f"[PID|{proc_pid}].log", str(e))
             conn.close()
             time.sleep(0.2)
             continue
         
-        for idx, predict_step in enumerate(predict_steps):
-            pred_date = pred_dates[idx]
-            pred_data = pred_datas[0,idx]
-            last_step_id = last_step_ids[idx]
-            last_step_name = last_step_names[idx]
-            print(pred_date, pred_data)
+        for predict_column in predict_columns:    
             try:
-                cur = conn.cursor()
+                X_data = scaler_X.transform(data.values)
+                pred_scaled = loaded_models[predict_column].predict(np.array([X_data]), verbose=0)
+                pred_dates = []
+                for predict_step in predict_steps:
+                    try:
+                        pred_date = datetime.strptime(last_date, "%Y-%m-%d %H:%M:%S.%f") + timedelta(seconds=predict_step)
+                    except:
+                        pred_date = datetime.strptime(last_date, "%Y-%m-%d %H:%M:%S") + timedelta(seconds=predict_step)
+                    pred_dates.append(pred_date)
+                pred_datas = np.stack([
+                        scaler_ys[predict_column].inverse_transform(pred_scaled[:, [i]])[:, 0]
+                        for i in range(3)
+                    ], axis=1)
                 
-                predict_column_modified = predict_column.replace('.', '_').replace(' ', '_').replace('-', '_')
-                save_table_name = f"pred_{predict_step}_{predict_column_modified}"
-                # 테이블 생성 (없을 경우)
-                create_query = f"""
-                CREATE TABLE IF NOT EXISTS "{save_table_name}" (
-                    "Timestamp" TIMESTAMP,
-                    "Parameter" REAL,
-                    "ProcessRecipeStepID" INTEGER,
-                    "ProcessRecipeStepName" TEXT,
-                    UNIQUE ("Timestamp", "Parameter")
-                );
-                """
-                cur.execute(create_query)
-
-                # 데이터 삽입
-                insert_query = f"""
-                INSERT INTO "{save_table_name}" ("Timestamp", "Parameter", "ProcessRecipeStepID", "ProcessRecipeStepName")
-                VALUES (%s::timestamp, %s::real, %s::integer, %s::text)
-                ON CONFLICT ("Timestamp", "Parameter") DO NOTHING
-                """
-                cur.execute(insert_query, (pred_date, float(pred_data), int(last_step_id), str(last_step_name)))
+                last_step_ids = []
+                last_step_names = []
+                for predict_step in predict_steps:
+                    try:
+                        remain_str = df.iloc[-1]['ProcessRecipeStepRemainTime']  
+                        if remain_str == "00:00:00":
+                            last_remain_sec = 100
+                        else:
+                            h, m, s = map(int, remain_str.split(":"))
+                            last_remain_sec = h * 3600 + m * 60 + s
+                        last_step_id = df.iloc[-1]["ProcessRecipeStepID"]
+                        last_step_name = df.iloc[-1]["ProcessRecipeStepName"]
+                        if last_remain_sec >= predict_step:
+                            pass
+                        else:
+                            last_step_id = -1
+                            last_step_name = 'UNKNOWN'               
+                    except:
+                            last_step_id = -1
+                            last_step_name = 'UNKNOWN'
+                    last_step_ids.append(last_step_id)
+                    last_step_names.append(last_step_name)                
             except Exception as e:
-                logg(f"[PID|{proc_pid}]{predict_column}.log", "예측데이터 DB insert 오류발생")
-                logg(f"[PID|{proc_pid}]{predict_column}.log", str(e))
-                cur.close()
-                conn.close()
+                logg(f"[PID|{proc_pid}].log", "쿼리후 데이터 전처리 및 예측 시 오류발생")
+                logg(f"[PID|{proc_pid}].log", str(e))
                 time.sleep(0.2)
                 continue
             
-            try:   
-                if last_step_id != -1 and pred_data is not None:
-                    # limits.yaml 읽기
-                    limits = {}
-                    if os.path.exists("./fastapi/limits.yaml"):
-                        with open("./fastapi/limits.yaml", "r", encoding="utf-8") as f:
-                            limits = yaml.safe_load(f)
-                        step_limits = limits.get(predict_column, {}).get(str(last_step_id))
-                        if step_limits:
-                            ts = str(pred_date)
-                            if "min" in step_limits and pred_data <= step_limits["min"]:
-                                insert_violation(conn, cur, ts, predict_column, last_step_id, last_step_name, pred_data, 'min', step_limits["min"])
-                            elif "max" in step_limits and pred_data >= step_limits["max"]:
-                                insert_violation(conn, cur, ts, predict_column, last_step_id, last_step_name, pred_data, 'max', step_limits["max"])
-                elif pred_data is not None:
-                    limits = {}
-                    if os.path.exists("./fastapi/limits.yaml"):
-                        with open("./fastapi/limits.yaml", "r", encoding="utf-8") as f:
-                            limits = yaml.safe_load(f)
-                        step_limits = limits.get(predict_column, {}).get('all')
-                        if step_limits:
-                            ts = str(pred_date)
-                            if "min" in step_limits and pred_data <= step_limits["min"]:
-                                insert_violation(conn, cur, ts, predict_column, last_step_id, last_step_name, pred_data, 'min', step_limits["min"])
-                            elif "max" in step_limits and pred_data >= step_limits["max"]:
-                                insert_violation(conn, cur, ts, predict_column, last_step_id, last_step_name, pred_data, 'max', step_limits["max"])
-            except Exception as e:
-                logg(f"[PID|{proc_pid}]{predict_column}.log", "예측데이터 DB insert 오류발생")
-                logg(f"[PID|{proc_pid}]{predict_column}.log", str(e))
-                time.sleep(0.2)
+            for idx, predict_step in enumerate(predict_steps):
+                pred_date = pred_dates[idx]
+                pred_data = pred_datas[0,idx]
+                last_step_id = last_step_ids[idx]
+                last_step_name = last_step_names[idx]
+                #print(pred_date, pred_data)
+                try:
+                    cur = conn.cursor()
+                    
+                    predict_column_modified = predict_column.replace('.', '_').replace(' ', '_').replace('-', '_')
+                    save_table_name = f"pred_{predict_step}_{predict_column_modified}"
+                    # 테이블 생성 (없을 경우)
+                    create_query = f"""
+                    CREATE TABLE IF NOT EXISTS "{save_table_name}" (
+                        "Timestamp" TIMESTAMP,
+                        "Parameter" REAL,
+                        "ProcessRecipeStepID" INTEGER,
+                        "ProcessRecipeStepName" TEXT,
+                        UNIQUE ("Timestamp", "Parameter")
+                    );
+                    """
+                    cur.execute(create_query)
+
+                    # 데이터 삽입
+                    insert_query = f"""
+                    INSERT INTO "{save_table_name}" ("Timestamp", "Parameter", "ProcessRecipeStepID", "ProcessRecipeStepName")
+                    VALUES (%s::timestamp, %s::real, %s::integer, %s::text)
+                    ON CONFLICT ("Timestamp", "Parameter") DO NOTHING
+                    """
+                    cur.execute(insert_query, (pred_date, float(pred_data), int(last_step_id), str(last_step_name)))
+                    #print(predict_column, "END")
+                except Exception as e:
+                    logg(f"[PID|{proc_pid}].log", "예측데이터 DB insert 오류발생")
+                    logg(f"[PID|{proc_pid}].log", str(e))
+                    continue
+                
+                try:   
+                    if last_step_id != -1 and pred_data is not None:
+                        # limits.yaml 읽기
+                        limits = {}
+                        if os.path.exists("./fastapi/limits.yaml"):
+                            with open("./fastapi/limits.yaml", "r", encoding="utf-8") as f:
+                                limits = yaml.safe_load(f)
+                            step_limits = limits.get(predict_column, {}).get(str(last_step_id))
+                            if step_limits:
+                                ts = str(pred_date)
+                                if "min" in step_limits and pred_data <= step_limits["min"]:
+                                    insert_violation(conn, cur, ts, predict_column, last_step_id, last_step_name, pred_data, 'min', step_limits["min"])
+                                elif "max" in step_limits and pred_data >= step_limits["max"]:
+                                    insert_violation(conn, cur, ts, predict_column, last_step_id, last_step_name, pred_data, 'max', step_limits["max"])
+                    elif pred_data is not None:
+                        limits = {}
+                        if os.path.exists("./fastapi/limits.yaml"):
+                            with open("./fastapi/limits.yaml", "r", encoding="utf-8") as f:
+                                limits = yaml.safe_load(f)
+                            step_limits = limits.get(predict_column, {}).get('all')
+                            if step_limits:
+                                ts = str(pred_date)
+                                if "min" in step_limits and pred_data <= step_limits["min"]:
+                                    insert_violation(conn, cur, ts, predict_column, last_step_id, last_step_name, pred_data, 'min', step_limits["min"])
+                                elif "max" in step_limits and pred_data >= step_limits["max"]:
+                                    insert_violation(conn, cur, ts, predict_column, last_step_id, last_step_name, pred_data, 'max', step_limits["max"])
+                except Exception as e:
+                    logg(f"[PID|{proc_pid}].log", "예측데이터 DB insert 오류발생")
+                    logg(f"[PID|{proc_pid}].log", str(e))
+                    time.sleep(0.2)
 
         # 커밋 및 정리
         conn.commit()
@@ -416,8 +418,14 @@ if __name__ == '__main__':
     conn.close()
     
     obj_id_list = []
+    cnt = 1
+    tasks = []
     for predict_column in predict_columns:
-        obj_id_list.append(ray_predict.remote(selected_cols, predict_column, window_size, predict_steps))
+        tasks.append(predict_column)
+        if cnt % 3 == 0 or cnt == len(predict_columns):
+            obj_id_list.append(ray_predict.remote(selected_cols, tasks, window_size, predict_steps))
+            tasks = []
+        cnt+=1
     
     while len(obj_id_list):
         done, obj_id_list = ray.wait(obj_id_list)
