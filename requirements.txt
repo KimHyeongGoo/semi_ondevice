@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+jinja2
+psycopg2-binary
+watchdog
+joblib
+ray
+tensorflow
+pyyaml

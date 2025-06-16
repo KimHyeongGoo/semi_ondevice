@@ -16,25 +16,13 @@ columns = ['Timestamp', 'ObservableTimestamp', 'EquipmentStatus', 'AlarmState', 
 
 column_types = {'Timestamp': 'TIMESTAMP', 'ObservableTimestamp': 'TEXT', 'EquipmentStatus': 'INTEGER', 'AlarmState': 'BOOLEAN', 'O2Density_Monitor_Value': 'REAL', 'O2Density_Set_Value': 'REAL', 'PMstatus': 'INTEGER', 'PPExecname': 'TEXT', 'PPExecStepSeqNo': 'INTEGER', 'PPExecStepID': 'INTEGER', 'PPExecStepName': 'TEXT', 'ActiveCjobID': 'TEXT', 'ActivePjobID': 'TEXT', 'PMStoredProcessRecipeName': 'TEXT', 'ProcessRecipeEndRemainTime': 'TEXT', 'ProcessRecipeStepTime': 'TEXT', 'ProcessRecipeStepRemainTime': 'TEXT', 'ProcessRecipeStepID': 'INTEGER', 'ProcessRecipeStepName': 'TEXT', 'ProcessRecipeStepSeqNo': 'INTEGER', 'ProcessRecipeTotalTime': 'TEXT', 'Temp_Set_U': 'REAL', 'Temp_HT_Power_U': 'REAL', 'Temp_Monitor_U': 'REAL', 'Temp_TC_Monitor_U': 'REAL', 'Temp_TC_Cascade_U ': 'REAL', 'Temp_Act_U': 'REAL', 'Temp_HT_Power_Cascade_U': 'REAL', 'Temp_Set_CU': 'REAL', 'Temp_HT_Power_CU': 'REAL', 'Temp_Monitor_CU': 'REAL', 'Temp_TC_Monitor_CU': 'REAL', 'Temp_TC_Cascade_CU': 'REAL', 'Temp_Act_CU': 'REAL', 'Temp_HT_Power_Cascade_CU': 'REAL', 'Temp_Set_C': 'REAL', 'Temp_HT_Power_C': 'REAL', 'Temp_Monitor_C': 'REAL', 'Temp_TC_Monitor_C': 'REAL', 'Temp_TC_Cascade_C': 'REAL', 'Temp_Act_C': 'REAL', 'Temp_HT_Power_Cascade_C': 'REAL', 'Temp_Set_CL': 'REAL', 'Temp_HT_Power_CL': 'REAL', 'Temp_Monitor_CL': 'REAL', 'Temp_TC_Monitor_CL': 'REAL', 'Temp_TC_Cascade_CL': 'REAL', 'Temp_Act_CL': 'REAL', 'Temp_HT_Power_Cascade_CL': 'REAL', 'Temp_Set_L': 'REAL', 'Temp_HT_Power_L': 'REAL', 'Temp_Monitor_L': 'REAL', 'Temp_TC_Monitor_L': 'REAL', 'Temp_TC_Cascade_L': 'REAL', 'Temp_Act_L': 'REAL', 'Temp_HT_Power_Cascade_L': 'REAL', 'APC Valve Value (Angle)': 'REAL', 'VG13_LeakPressure_Monitor': 'REAL', 'VG11_LeakPressure_Monitor': 'REAL', 'VG13_LeakQuantity_Monitor': 'REAL', 'VG11_LeakQuantity_Monitor': 'REAL', 'VG13 Press value': 'REAL', 'VG11 Press value': 'REAL', 'PJobProcessingState': 'INTEGER', 'ValveAct_1:1': 'REAL', 'ValveAct_2:2': 'REAL', 'ValveAct_3:3': 'REAL', 'ValveAct_4:4': 'REAL', 'ValveAct_5:5': 'REAL', 'ValveAct_9:9': 'REAL', 'ValveAct_11:11': 'REAL', 'ValveAct_12:12': 'REAL', 'ValveAct_14:14': 'REAL', 'ValveAct_15:15': 'REAL', 'ValveAct_16:16': 'REAL', 'ValveAct_26:26': 'REAL', 'ValveAct_28:28': 'REAL', 'ValveAct_29:29': 'REAL', 'ValveAct_30:30': 'REAL', 'ValveAct_60:71': 'REAL', 'ValveAct_63:75': 'REAL', 'ValveAct_73:83': 'REAL', 'ValveAct_75:85': 'REAL', 'ValveAct_76:86': 'REAL', 'ValveAct_80:DPO': 'REAL', 'ValveAct_86:HT1': 'REAL', 'ValveAct_87:HT2': 'REAL', 'ValveAct_88:HT3': 'REAL', 'ValveAct_89:RF': 'REAL', 'ValveAct_90:PST': 'REAL', 'ValveAct_95:WAT': 'REAL', 'SubRecipeLoopSettingValue': 'INTEGER', 'SubRecipeLoopMoniterValue': 'INTEGER', 'VG12_LeakPressure_Monitor': 'REAL', 'VG12 Press value': 'REAL', 'MFC1_N2-1': 'REAL', 'MFC2_N2-2': 'REAL', 'MFC3_N2-3': 'REAL', 'MFC4_N2-4': 'REAL', 'MFC7_DCS': 'REAL', 'MFC8_NH3': 'REAL', 'MFC9_F2': 'REAL', 'MFC10_N2-R': 'REAL', 'MFC11_NO': 'REAL', 'MFC12_DCSMFM_7': 'REAL', 'MFC16_MFC51 N2': 'REAL', 'MFC26_F.PWR': 'REAL', 'MFC27_L.POS': 'REAL', 'MFC28_R.POS': 'REAL', 'AUX1_MS1': 'REAL', 'AUX2_MS321': 'REAL', 'AUX3_MS2': 'REAL', 'AUX4_MS3': 'REAL', 'AUX5_MS5': 'REAL', 'AUX8_MS8': 'REAL', 'AUX9_MS9': 'REAL', 'AUX16_VG21': 'REAL', 'AUX18_VG12': 'REAL', 'AUX19_VG11': 'REAL', 'AUX20_VG13': 'REAL', 'AUX21_M.WAT': 'REAL', 'AUX22_FS101': 'REAL', 'AUX23_FS102': 'REAL', 'AUX24_FS104': 'REAL', 'AUX26_FS106': 'REAL', 'AUX28_FS111': 'REAL', 'AUX29_FS105': 'REAL', 'AUX33_G.PS1': 'REAL', 'AUX34_G.PS2': 'REAL', 'AUX35_G.PS3': 'REAL', 'AUX36_G.PS4': 'REAL', 'AUX37_G.PS5': 'REAL', 'AUX38_G.PS6': 'REAL', 'AUX45_G.PS13': 'REAL', 'AUX46_G.PS14': 'REAL', 'AUX47_G.PS15': 'REAL', 'AUX48_G.PS16': 'REAL', 'AUX50_Vpp': 'REAL', 'AUX51_Vdc': 'REAL', 'AUX52_R.PWR': 'REAL', 'AUX53_DCS_IN': 'REAL', 'AUX54_IGS_DCS': 'REAL', 'AUX56_DCS1_PIP': 'REAL', 'AUX58_PURGE-1': 'REAL', 'AUX59_DCS_TANK': 'REAL', 'AUX64_REC-1': 'REAL', 'AUX65_REC-2-1': 'REAL', 'AUX66_REC-2-2': 'REAL', 'AUX67_IGS_N2-1': 'REAL', 'AUX69_SEALCAP': 'REAL', 'AUX72_RAXIS': 'REAL', 'AUX73_APC_RING': 'REAL', 'AUX74_APC_OUT': 'REAL', 'AUX89_JH1': 'REAL', 'AUX90_JH2': 'REAL', 'AUX91_JH3': 'REAL', 'AUX92_JH4': 'REAL', 'AUX93_JH5': 'REAL', 'AUX94_JH6': 'REAL', 'AUX95_JH7': 'REAL', 'AUX96_JH8': 'REAL', 'AUX97_JH9': 'REAL', 'AUX98_JH10': 'REAL', 'AUX99_JH11': 'REAL', 'AUX100_JH12': 'REAL', 'AUX101_JH13': 'REAL'}
 
-# CSV 파일 리스트 가져오는 함수
-def find_csv_files(base_dir):
-    csv_files = []
-    for root, dirs, files in os.walk(base_dir):
-        for file in files:
-            if file.endswith('.csv') and not file.endswith('-checkpoint.csv'):
-                full_path = os.path.join(root, file)
-                csv_files.append(full_path)
-    csv_files.sort()
-    return csv_files
-
-'''
 def find_csv_files(base_dir):
     csv_files = []
     # 정규 표현식: YYYY/MM/DD/HH00.csv
     pattern = re.compile(r'.*/\d{4}/\d{2}/\d{2}/([0-2][0-9]00)\.csv$')
     for root, dirs, files in os.walk(base_dir):
         for file in files:
-            if file.endswith('.csv') and not file.endswith('-checkpoint.csv'):
+            if file.endswith('.csv'):
                 full_path = os.path.join(root, file)
                 match = pattern.match(full_path)
                 if match:
@@ -43,7 +31,7 @@ def find_csv_files(base_dir):
                         csv_files.append(full_path)
     csv_files.sort()
     return csv_files
-'''
+
 
 # 날짜 파싱 및 정렬
 def extract_date(tname):
@@ -104,7 +92,7 @@ def transform_value(val):
     elif val == "CLOSE":
         return '0'
     elif val == "" or val == "NaN" or val == "nan":
-        return None
+        return ""
     return val
 
 
@@ -112,21 +100,25 @@ def insert_row(row):
     # 1. 전처리
     row = row[:-1] # 개행문자 제거
     row = [transform_value(v) for v in row.split(',')]
+    if row[17] == "0":
+        row[18] = "IDLE"
+    if row[17] == "998":
+        row[17] = "0"
     #print(row)
     # 2. 날짜 기반 테이블 이름
     
     timestamp_str = row[0]
-    date_part = datetime.strptime(timestamp_str, "%Y-%m-%d %H:%M:%S.%f").strftime("%d%H")
-    #date_part = datetime.strptime(timestamp_str, "%Y-%m-%d %H:%M:%S.%f").strftime("%Y%m%d")
+    #date_part = datetime.strptime(timestamp_str, "%Y-%m-%d %H:%M:%S.%f").strftime("%d%H")
+    date_part = datetime.strptime(timestamp_str, "%Y-%m-%d %H:%M:%S.%f").strftime("%Y%m%d")
     table_name = f"rawdata{date_part}"
 
     # 3. 테이블 생성 (최초 1회만)    
     columns_sql = ',\n    '.join([
-        f'"{col}" {column_types.get(col, "TEXT")}' + (' PRIMARY KEY' if col == 'Timestamp' else '')
-        for col in columns])
+        f'"{col}" {column_types.get(col, "TEXT")}' for col in columns])
     create_sql = f'''
     CREATE TABLE IF NOT EXISTS "{table_name}" (
-        {columns_sql}
+        {columns_sql},
+        UNIQUE ("Timestamp")
     );
     '''
     conn = psycopg2.connect(
@@ -174,7 +166,8 @@ def insert_rows(rows, table_name):
         for col in columns])
     create_sql = f'''
     CREATE TABLE IF NOT EXISTS "{table_name}" (
-        {columns_sql}
+        {columns_sql},
+        UNIQUE ("Timestamp")
     );
     '''
     cur.execute(create_sql)
@@ -208,7 +201,7 @@ def insert_leaked_data(file_path):
     csv_files = find_csv_files(file_path)
     insert_flag = False
     collected_rows = {}
-    '''
+    
     for i in range(len(csv_files)-1, -1, -1):
         splits = csv_files.split('/')
         year = splits[-4]
@@ -227,8 +220,8 @@ def insert_leaked_data(file_path):
                     row = [transform_value(v) for v in clean_line.split(',')]
                     # 현재 시간으로 타임스탬프 덮어쓰기
                     now_ts = row[0]
-                    table_suffix = datetime.strptime(now_ts, "%Y-%m-%d %H:%M:%S.%f").strftime("%d%H")
-                    #table_suffix = datetime.strptime(now_ts, "%Y-%m-%d %H:%M:%S.%f").strftime("%Y%m%d")
+                    #table_suffix = datetime.strptime(now_ts, "%Y-%m-%d %H:%M:%S.%f").strftime("%d%H")
+                    table_suffix = datetime.strptime(now_ts, "%Y-%m-%d %H:%M:%S.%f").strftime("%Y%m%d")
                     table_name = f"rawdata{table_suffix}"
                     try:
                         collected_rows[table_name].append(row)
@@ -268,6 +261,7 @@ def insert_leaked_data(file_path):
             print(f"Error reading file {csv_files[i]}: {e}")
     for table_name, rows in collected_rows.items():
         insert_rows(rows, table_name)
+    '''
     print(f'누락 데이터 저장 완료')
     print(list(collected_rows.keys()))
 
@@ -318,7 +312,7 @@ class CSVUpdateHandler(FileSystemEventHandler):
 
     
 if __name__ == '__main__':
-    realtime_path = "./realtimedata" # 감시할 디렉토리 경로
+    realtime_path = "../shared_data_2" # 감시할 디렉토리 경로
     '''
     # ① DB 연결 설정
     conn = psycopg2.connect(
@@ -329,7 +323,7 @@ if __name__ == '__main__':
         port=5432
     )
     cur = conn.cursor()
-
+    
     # 모든 public 테이블 삭제 쿼리 실행
     cur.execute("""
         DO $$
@@ -342,12 +336,12 @@ if __name__ == '__main__':
         END
         $$;
     """)
-
     conn.commit()
     cur.close()
     conn.close()
     print("✅ 모든 public 테이블 제거 완료")
     '''
+    
 
     # 누락 데이터 저장
     insert_leaked_data(realtime_path)

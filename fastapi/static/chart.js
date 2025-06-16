@@ -3,7 +3,7 @@ const columns = Array.from(document.querySelectorAll(".toggle-chart")).map(cb =>
 let selectedDuration = 300; // 기본값: 5분
 let limits = {};
 const stepNames = {
-    2: 'END', 0: 'STANDBY', 1: 'START', 17: 'B.UP', 3: 'WAIT',
+    2: 'END', 0: 'STANDBY/IDLE', 1: 'START', 17: 'B.UP', 3: 'WAIT',
     74: 'S.P-1', 75: 'S.P-2', 25: 'R.UP1', 22: 'STAB1', 76: 'S.P-3',
     81: 'M.P-3', 72: 'L.CHK', 44: 'PREPRG1', 99: 'EVAC1', 100: 'EVAC2',
     111: 'N-EVA1', 128: 'CLOSE1', 119: 'SI-FL1', 117: 'SI-EVA1', 152: 'CHANGE',
@@ -70,7 +70,7 @@ async function fetchAndUpdate() {
         for (let d of predicted) {
             const t = parseTimeString(d.time);
             const step = d.step_id?.toString();
-            const limit = limits?.[col]?.[step];
+            const limit = limits?.[col]?.[step] || limits?.[col]?.["all"];
             if (limit) {
                 upper.push({ x: t, y: limit.max });
                 lower.push({ x: t, y: limit.min });
@@ -110,27 +110,49 @@ function createSettingsUI() {
 
 function renderStepTable(col) {
     const form = document.getElementById("settings-form");
-    form.innerHTML = '';
+    form.innerHTML = '';  // 기존 테이블 제거
 
     const stepIds = Object.keys(stepNames).map(Number).sort((a, b) => a - b);
     const table = document.createElement("table");
     table.className = "step-table";
-    table.innerHTML = `<tr><th>Step ID</th><th>Step Name</th><th>Min</th><th>Max</th></tr>`;
 
+    // ⬆️ 1. 테이블 헤더 생성
+    const thead = document.createElement("thead");
+    thead.innerHTML = `<tr><th>Step ID</th><th>Step Name</th><th>Min</th><th>Max</th></tr>`;
+    table.appendChild(thead);
+
+    // ⬇️ 2. 테이블 바디 생성
+    const tbody = document.createElement("tbody");
+
+    // ✅ (1) "All" 공통 설정 행
+    const commonLim = limits?.[col]?.["all"] || {};
+    const commonRow = document.createElement("tr");
+    commonRow.innerHTML = `
+        <td><strong>All</strong></td>
+        <td><em>모든 Step 공통</em></td>
+        <td><input data-col="${col}" data-step="all" data-type="min" value="${commonLim.min ?? ''}" /></td>
+        <td><input data-col="${col}" data-step="all" data-type="max" value="${commonLim.max ?? ''}" /></td>
+    `;
+    tbody.appendChild(commonRow);
+
+    // ✅ (2) Step ID별 행 추가
     stepIds.forEach(id => {
-        const tr = document.createElement("tr");
         const stepKey = id.toString();
         const lim = limits?.[col]?.[stepKey] || {};
+        const tr = document.createElement("tr");
         tr.innerHTML = `
             <td>${id}</td>
-            <td>${stepNames[id] || "Unknown"}</td>
+            <td>${stepNames[id] || "UNKNOWN"}</td>
             <td><input data-col="${col}" data-step="${stepKey}" data-type="min" value="${lim.min ?? ''}" /></td>
             <td><input data-col="${col}" data-step="${stepKey}" data-type="max" value="${lim.max ?? ''}" /></td>
         `;
-        table.appendChild(tr);
+        tbody.appendChild(tr);
     });
+
+    table.appendChild(tbody);
     form.appendChild(table);
 }
+
 
 function collectLimits() {
     const inputs = document.querySelectorAll("#settings-form input");
@@ -183,8 +205,13 @@ async function fetchLogs() {
         if (!logs || logs.length === 0) {
             logContent.innerText = "(최근 이벤트 없음)";
         } else {
-            // 오래된 로그가 위로 가도록 reverse()
-            logContent.innerText = logs.reverse().join("\n\n");
+            logContent.innerHTML = logs.map(log => {
+                const encoded = encodeURIComponent(JSON.stringify({
+                    time: log.timestamp,
+                    parameter: log.parameter
+                }));
+                return `${log.message}<br><a href="/logview.html?info=${encoded}" target="_blank">[리포트 확인]</a>`;
+            }).join("<br><br>");
         }
     } catch (e) {
         console.error("로그 로딩 실패:", e);
@@ -192,6 +219,7 @@ async function fetchLogs() {
         logContent.innerText = "(로그 불러오기 오류)";
     }
 }
+
 
 // 초기 실행
 window.addEventListener("DOMContentLoaded", () => {

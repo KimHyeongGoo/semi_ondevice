@@ -1,7 +1,6 @@
 import psycopg2
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
-import yaml
 import os
 
 def get_latest_data(columns, duration=300):
@@ -18,12 +17,13 @@ def get_latest_data(columns, duration=300):
     from_time = now - timedelta(seconds=duration)
 
     result = {}
-    date_suffix = now.strftime("%d%H")
+    #date_suffix = now.strftime("%d%H")"
+    date_suffix = now.strftime("%Y%m%d")
     raw_table = f"rawdata{date_suffix}"
 
     for col in columns:
-        col_modified = col.replace(' ', '_').replace('.', '_')
-        pred_table = f"pred_{col_modified}"
+        col_modified = col.replace(' ', '_').replace('.', '_').replace('-', '_')
+        pred_table = f"pred_10_{col_modified}"
 
         # 실제값
         cur.execute(f"""
@@ -46,7 +46,7 @@ def get_latest_data(columns, duration=300):
             preds.append({
                 "time": str(ts),
                 "value": val,
-                "step_id": int(step_id) if step_id is not None else None
+                "step_id": int(step_id) if step_id is not None else None,
                 "step_name": str(step_name) if step_name is not None else None
             })
         result[col] = {
