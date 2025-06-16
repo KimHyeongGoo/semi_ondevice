@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 import os
 
-def get_latest_data(columns, duration=300):
+def get_latest_data(columns, duration=300, step=10):
     tz = ZoneInfo("Asia/Seoul")
     conn = psycopg2.connect(
         dbname="postgres",
@@ -23,7 +23,7 @@ def get_latest_data(columns, duration=300):
 
     for col in columns:
         col_modified = col.replace(' ', '_').replace('.', '_').replace('-', '_')
-        pred_table = f"pred_10_{col_modified}"
+        pred_table = f"pred_{step}_{col_modified}"
 
         # 실제값
         cur.execute(f"""

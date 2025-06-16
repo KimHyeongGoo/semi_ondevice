@@ -13,6 +13,9 @@ app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
+# main.py
+PREDICT_STEPS = [10, 20, 30]
+
 # 사용할 칼럼 정의
 predict_columns = [      
     #'PPExecStepID',
@@ -26,14 +29,14 @@ predict_columns = [
     'VG11 Press value',                 ## Baratron Gauge(의 압력 모니터링 값 (프로세스중 작용)
     'VG12 Press value',                 # Baratron Gauge(의 압력 모니터링 값 (프로세스외 작용)
     'VG13 Press value',                 # Baratron Gauge(의 압력 모니터링 값 (프로세스외 작용)
+    'MFC26_F.PWR',
+    'MFC27_L.POS',         # MFC Left Position 위치 모니터링 값
+    'MFC28_R.POS',         # MFC P.POS 위치 모니터링 값
     'Temp_Act_U',            # 상부 위치 실제 온도
     'Temp_Act_CU',           # 중앙 상부 위치 실제 온도
     'Temp_Act_C',            # 중앙 위치 실제 온도
     'Temp_Act_CL',           # 중앙 하부 위치 실제 온도
-    'Temp_Act_L',              
-    'MFC26_F.PWR',
-    'MFC27_L.POS',         # MFC Left Position 위치 모니터링 값
-    'MFC28_R.POS'         # MFC P.POS 위치 모니터링 값
+    'Temp_Act_L'              
 ]
 
 LIMIT_PATH = "limits.yaml"
@@ -43,8 +46,8 @@ async def get_page(request: Request):
     return templates.TemplateResponse("index.html", {"request": request, "columns": predict_columns})
 
 @app.get("/api/data")
-async def get_data(duration: int = 300):
-    data = get_latest_data(predict_columns, duration)
+async def get_data(duration: int = 300, step: int = 10):
+    data = get_latest_data(predict_columns, duration, step)
     limits = {}
     if os.path.exists(LIMIT_PATH):
         with open(LIMIT_PATH, 'r') as f:
@@ -89,7 +92,7 @@ async def get_logs():
     ])
     
 @app.get("/api/event_chart")
-async def event_chart(param: str, start: str = Query(...), end: str = Query(...)):
+async def event_chart(param: str, start: str = Query(...), end: str = Query(...), step: int = 10):
     conn = psycopg2.connect(
         dbname="postgres",
         user="keti",
@@ -106,7 +109,7 @@ async def event_chart(param: str, start: str = Query(...), end: str = Query(...)
 
     raw_table = f"rawdata{date_suffix}"
     param_modified = param.replace(' ', '_').replace('.', '_').replace('-', '_')
-    pred_table = f"pred_10_{param_modified}"
+    pred_table = f"pred_{step}_{param_modified}"
 
     if len(str(from_ts)) >= 26:
         from_ts = str(from_ts)[:23]

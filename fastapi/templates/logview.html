@@ -29,6 +29,7 @@
     <div id="charts-container"></div>
 
     <script>
+        let selectedStep = 10; // 예측 시점 10초
         function toKSTISOString(date) {
             const tzOffset = date.getTimezoneOffset() * 60000;  // KST = -540 → -540*60000 = -32400000
             return new Date(date - tzOffset).toISOString();
@@ -72,7 +73,7 @@
             });
 
         predictColumns.forEach(p => {
-            fetch(`/api/event_chart?param=${encodeURIComponent(p)}&start=${start}&end=${end}`)
+            fetch(`/api/event_chart?param=${encodeURIComponent(p)}&start=${start}&end=${end}&step=${selectedStep}`)
                 .then(res => res.json())
                 .then(json => {
                     const container = document.getElementById("charts-container");

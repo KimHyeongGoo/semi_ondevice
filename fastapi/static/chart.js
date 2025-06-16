@@ -1,6 +1,7 @@
 const charts = {};
 const columns = Array.from(document.querySelectorAll(".toggle-chart")).map(cb => cb.dataset.col);
 let selectedDuration = 300; // 기본값: 5분
+let selectedStep = 10; //
 let limits = {};
 const stepNames = {
     2: 'END', 0: 'STANDBY/IDLE', 1: 'START', 17: 'B.UP', 3: 'WAIT',
@@ -45,7 +46,7 @@ function createCharts() {
 }
 
 async function fetchAndUpdate() {
-    const res = await fetch(`/api/data?duration=${selectedDuration}`);
+    const res = await fetch(`/api/data?duration=${selectedDuration}&step=${selectedStep}`);
     const json = await res.json();
     limits = json.limits || {};
 
@@ -58,8 +59,19 @@ async function fetchAndUpdate() {
         const values = all.map(d => d.value);
         const times = all.map(d => parseTimeString(d.time));
 
-        const yMin = Math.min(...values) - 3;
-        const yMax = Math.max(...values) + 3;
+        let yMin, yMax;
+        if (col.startsWith("Temp_Act")) {
+            yMin = Math.min(...values) - 100;
+            yMax = Math.max(...values) + 100;
+        } else if (col.startsWith("VG11")) {
+            yMin = Math.min(...values) - 50;
+            yMax = Math.max(...values) + 50;
+        } else {
+            yMin = Math.min(...values) - 3;
+            yMax = Math.max(...values) + 3;
+        }
+
+
         const xMin = new Date(Math.min(...times));
         const xMax = new Date(Math.max(...times));
 
@@ -233,6 +245,12 @@ window.addEventListener("DOMContentLoaded", () => {
         selectedDuration = parseInt(e.target.value);
         fetchAndUpdate();
     });
+
+    document.getElementById("step-select").addEventListener("change", e => {
+        selectedStep = parseInt(e.target.value);
+        fetchAndUpdate();
+    });
+
 
     document.querySelectorAll(".toggle-chart").forEach(cb => {
         cb.addEventListener("change", () => {
