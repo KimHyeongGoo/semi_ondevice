@@ -192,31 +192,28 @@ def insert_rows(rows, table_name):
     
     
 def insert_leaked_data(file_path):
-    new_flag = False
     latest_table, latest_table2, latest_timestamp = get_last_tablename()
     if latest_timestamp == "":
-        new_flag = True
-    if not new_flag:
-        latest_timestamp = str(latest_timestamp)
-        if len(latest_timestamp) == 26:
-    	    latest_timestamp = latest_timestamp[:-3]
-        print(latest_timestamp)
-        csv_files = find_csv_files(file_path)
-        insert_flag = False
-        for i in range(len(csv_files)-1, -1, -1):
-            splits = list(csv_files[i].split('/'))
-            year = splits[-4]
-            month = splits[-3]
-            day = splits[-2]
-            hour = splits[-1][:2]
-            #print(year, month, day, hour)
-            #print(latest_timestamp[:4], latest_timestamp[5:7], latest_timestamp[8:10], latest_timestamp[11:13])
-            if year == latest_timestamp[:4] and month == latest_timestamp[5:7] and day == latest_timestamp[8:10] and hour == latest_timestamp[11:13]:
-                csv_files = csv_files[i:]
-                break
-    if new_flag:
-        csv_files = find_csv_files(file_path)
-        csv_files = csv_files[-100:]
+        return
+    latest_timestamp = str(latest_timestamp)
+    if len(latest_timestamp) == 26:
+        latest_timestamp = latest_timestamp[:-3]
+    print(latest_timestamp)
+    csv_files = find_csv_files(file_path)
+    insert_flag = False
+    for i in range(len(csv_files)-1, -1, -1):
+        splits = list(csv_files[i].split('/'))
+        year = splits[-4]
+        month = splits[-3]
+        day = splits[-2]
+        hour = splits[-1][:2]
+        #print(year, month, day, hour)
+        #print(latest_timestamp[:4], latest_timestamp[5:7], latest_timestamp[8:10], latest_timestamp[11:13])
+        if year == latest_timestamp[:4] and month == latest_timestamp[5:7] and day == latest_timestamp[8:10] and hour == latest_timestamp[11:13]:
+            csv_files = csv_files[i:]
+            break
+
+    
     collected_rows = {}
     for csv_file in csv_files:
         try:
@@ -244,6 +241,7 @@ def insert_leaked_data(file_path):
                 
     print(f'누락 데이터 저장 완료')
     print(list(collected_rows.keys()))
+    return 
 
 
 def seek_last_line(file_path, last_offset):
@@ -293,9 +291,9 @@ class CSVUpdateHandler(FileSystemEventHandler):
 
     
 if __name__ == '__main__':
-    realtime_path = "../real_time_data" # 감시할 디렉토리 경로
+    realtime_path = "../realtimedata" # 감시할 디렉토리 경로
     print(f"감시대상경로 : {os.path.abspath(realtime_path)}")
-    
+    '''
     # ① DB 연결 설정
     conn = psycopg2.connect(
         dbname="postgres",
@@ -322,11 +320,11 @@ if __name__ == '__main__':
     cur.close()
     conn.close()
     print("✅ 모든 public 테이블 제거 완료")
-    
+    '''
     
     print("누락 데이터 검사중..\n")
     # 누락 데이터 저장
-    #insert_leaked_data(realtime_path)
+    insert_leaked_data(realtime_path)
     
     # watchdog 실행
     observer = PollingObserver()

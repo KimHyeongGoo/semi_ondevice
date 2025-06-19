@@ -248,7 +248,7 @@ def ray_predict(selected_cols, predict_columns, window_size, predict_steps, mode
                         SELECT {colnames}
                         FROM "{prev_table_name}"
                         WHERE "Timestamp" BETWEEN
-                            (%s::timestamp - INTERVAL '{interval_sec} seconds') AND %s::timestamp
+                            (%s::timestamp - INTERVAL '{interval_sec+5} seconds') AND %s::timestamp
                     """
 
                     data2 = pd.read_sql(query, conn, params=(last_date, last_date))

@@ -39,12 +39,11 @@ def insert_rows(rows, table_name):
 
     # 테이블 생성    
     columns_sql = ',\n    '.join([
-        f'"{col}" {column_types.get(col, "TEXT")}' + (' PRIMARY KEY' if col == 'Timestamp' else '')
-        for col in columns])
+        f'"{col}" {column_types.get(col, "TEXT")}' for col in columns])
     create_sql = f'''
     CREATE TABLE IF NOT EXISTS "{table_name}" (
         {columns_sql},
-        UNIQUE ("Timestamp")
+        PRIMARY KEY ("Timestamp")
     );
     '''
     cur.execute(create_sql)
@@ -168,5 +167,5 @@ def insert_missing_data(base_path):
     print(f'누락 데이터 저장 완료')
     
 if __name__ == '__main__':
-    real_time_path = '../semi/surplus/data/GSF_origin/2025'
+    real_time_path = '../../semi/surplus/data/GSF_origin/2025'
     insert_missing_data(real_time_path)
