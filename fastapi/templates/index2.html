@@ -39,6 +39,65 @@
             background-color: #007bff;
             color: #fff;
         }
+
+        .process-container {
+            display: grid;
+            grid-auto-flow: column;
+            grid-template-rows: repeat(2, auto);
+            gap: 16px;
+        }
+
+        .page-nav {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 10px;
+            gap: 20px;
+        }
+
+        .page-nav button {
+            padding: 6px 12px;
+            font-size: 16px;
+        }
+
+        .process-box {
+            min-width: 340px;
+            background: #ffffff;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            padding: 10px;
+        }
+
+        .proc-header {
+            font-weight: bold;
+            margin-bottom: 8px;
+            white-space: nowrap;
+        }
+
+        .proc-row {
+            display: flex;
+        }
+
+        .proc-row .label {
+            display: inline-block;
+            width: 70px;
+        }
+
+        .thickness-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .thickness-table th,
+        .thickness-table td {
+            border: 1px solid #ccc;
+            padding: 4px;
+            text-align: center;
+        }
+
+        .thickness-table th {
+            background-color: #f2f2f2;
+        }
     </style>
 </head>
 
@@ -48,8 +107,14 @@
         <a href="/index2.html" class="{% if active_tab == 'index2' %}active{% endif %}">공정 결과 추론</a>
         <a href="/index3.html" class="{% if active_tab == 'index3' %}active{% endif %}">STANDARD 공정 셋팅값 비교</a>
     </div>
-    <h2>공정 결과 추론</h2>
-    <p>준비 중인 페이지입니다.</p>
+    <h2>웨이퍼 박막 두께값 추론 결과</h2>
+    <div id="process-container" class="process-container"></div>
+    <div class="page-nav">
+        <button id="prevPage">◀</button>
+        <button id="nextPage">▶</button>
+    </div>
+
+    <script src="/static/trace.js" defer></script>
 </body>
 
 </html>

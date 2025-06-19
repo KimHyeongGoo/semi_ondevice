@@ -229,7 +229,7 @@ def ray_predict(selected_cols, predict_columns, window_size, predict_steps, mode
         )
         
         try:
-            interval_sec = window_size + 1
+            interval_sec = window_size+1
             colnames = ', '.join([f'"{col}"' for col in selected_cols + ["ProcessRecipeStepRemainTime", "ProcessRecipeStepID", "ProcessRecipeStepName"]])
             query = f"""
                 SELECT {colnames}
@@ -242,6 +242,7 @@ def ray_predict(selected_cols, predict_columns, window_size, predict_steps, mode
             data = data[selected_cols + ['ProcessRecipeStepName']]
             data['PPExecStepID'] = [step_reverse_dict[str(name)] for name in data['ProcessRecipeStepName']]
             data.drop(columns=['ProcessRecipeStepName'], inplace=True)
+            data.dropna(inplace=True)
             if len(data) < window_size:
                 if len(prev_table_name) > 0:
                     query = f"""
@@ -255,6 +256,7 @@ def ray_predict(selected_cols, predict_columns, window_size, predict_steps, mode
                     data2 = data2[selected_cols + ['ProcessRecipeStepName']]
                     data2['PPExecStepID'] = [step_reverse_dict[str(name)] for name in data2['ProcessRecipeStepName']]
                     data2.drop(columns=['ProcessRecipeStepName'], inplace=True)
+                    data2.dropna(inplace=True)
                     data = pd.concat([data2, data], ignore_index=True)
                 else:
                     conn.close()

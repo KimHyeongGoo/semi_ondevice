@@ -57,3 +57,48 @@ def get_latest_data(columns, duration=300, step=10):
     cur.close()
     conn.close()
     return result
+
+def get_trace_info(limit=10):
+    """Return recent rows from trace_info ordered by start_time descending."""
+    conn = psycopg2.connect(
+        dbname="postgres",
+        user="keti",
+        password="keti1234!",
+        host="localhost",
+        port=5432,
+    )
+    cur = conn.cursor()
+
+    thickness_cols = [f"thickness_{i+1}" for i in range(45)]
+    col_sql = ", ".join(thickness_cols)
+
+    # Assign row numbers by start_time (oldest -> newest)
+    query = f"""
+        SELECT row_num, start_time, end_time, {col_sql}
+        FROM (
+            SELECT *, ROW_NUMBER() OVER (ORDER BY start_time) AS row_num
+            FROM trace_info
+        ) t
+        ORDER BY start_time DESC
+        LIMIT %s
+    """
+
+    cur.execute(query, (limit,))
+    rows = cur.fetchall()
+
+    result = []
+    for row in rows:
+        row_num = row[0]
+        start_time = row[1]
+        end_time = row[2]
+        thicknesses = list(row[3:])
+        result.append({
+            "row_num": int(row_num) if row_num is not None else None,
+            "start_time": start_time.strftime("%Y-%m-%d %H:%M:%S"),
+            "end_time": end_time.strftime("%Y-%m-%d %H:%M:%S"),
+            "thicknesses": [float(t) if t is not None else None for t in thicknesses],
+        })
+
+    cur.close()
+    conn.close()
+    return result

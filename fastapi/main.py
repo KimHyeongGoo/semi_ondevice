@@ -7,7 +7,7 @@ from dateutil import parser
 import yaml
 import os
 import psycopg2
-from db import get_latest_data
+from db import get_latest_data, get_trace_info
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -78,6 +78,11 @@ async def save_limits(request: Request):
     with open(LIMIT_PATH, "w") as f:
         yaml.dump(body, f)
     return JSONResponse({"status": "saved"})
+
+@app.get("/api/trace_info")
+async def api_trace_info(limit: int = 10):
+    data = get_trace_info(limit)
+    return JSONResponse(data)
 
 @app.get("/api/logs")
 async def get_logs():
