@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>공정 결과 추론</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f6f9;
+        }
+
+        .navbar {
+            display: flex;
+            background-color: #343a40;
+            border-radius: 6px;
+            overflow: hidden;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .navbar a {
+            flex: 1;
+            padding: 12px 20px;
+            text-align: center;
+            color: #adb5bd;
+            text-decoration: none;
+            font-weight: bold;
+            transition: background 0.2s, color 0.2s;
+        }
+
+        .navbar a:hover {
+            background-color: #495057;
+            color: #fff;
+        }
+
+        .navbar a.active {
+            background-color: #007bff;
+            color: #fff;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="navbar">
+        <a href="/" class="{% if active_tab == 'index' %}active{% endif %}">실시간 파라미터 예측</a>
+        <a href="/index2.html" class="{% if active_tab == 'index2' %}active{% endif %}">공정 결과 추론</a>
+        <a href="/index3.html" class="{% if active_tab == 'index3' %}active{% endif %}">STANDARD 공정 셋팅값 비교</a>
+    </div>
+    <h2>공정 결과 추론</h2>
+    <p>준비 중인 페이지입니다.</p>
+</body>
+
+</html>

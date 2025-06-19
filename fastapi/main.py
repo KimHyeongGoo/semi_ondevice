@@ -43,8 +43,25 @@ LIMIT_PATH = "limits.yaml"
 
 @app.get("/", response_class=HTMLResponse)
 async def get_page(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request, "columns": predict_columns})
+    return templates.TemplateResponse(
+        "index.html",
+        {"request": request, "columns": predict_columns, "active_tab": "index"}
+    )
 
+@app.get("/index2.html", response_class=HTMLResponse)
+async def get_page2(request: Request):
+    return templates.TemplateResponse(
+        "index2.html",
+        {"request": request, "active_tab": "index2"}
+    )
+
+@app.get("/index3.html", response_class=HTMLResponse)
+async def get_page3(request: Request):
+    return templates.TemplateResponse(
+        "index3.html",
+        {"request": request, "active_tab": "index3"}
+    )
+    
 @app.get("/api/data")
 async def get_data(duration: int = 300, step: int = 10):
     data = get_latest_data(predict_columns, duration, step)
