@@ -242,36 +242,6 @@ def insert_leaked_data(file_path):
     for table_name, rows in collected_rows.items():
         insert_rows(rows, table_name)
                 
-    ''' 
-    for i in range(len(csv_files)-1, -1, -1):
-        try:
-            with open(csv_files[i], 'r', encoding='utf-8') as f:
-                lines  = f.readlines()
-            if lines:
-                lines  = lines[1:]
-                for line in lines:
-                    clean_line = line.strip()
-                    if not clean_line:
-                        continue
-                    if insert_flag:
-                        row = [transform_value(v) for v in clean_line.split(',')]
-                        # 현재 시간으로 타임스탬프 덮어쓰기
-                        now_ts = row[0]
-                        table_suffix = datetime.strptime(now_ts, "%Y-%m-%d %H:%M:%S.%f").strftime("%d%H")
-                        #table_suffix = datetime.strptime(now_ts, "%Y-%m-%d %H:%M:%S.%f").strftime("%Y%m%d")
-                        table_name = f"rawdata{table_suffix}"
-                        try:
-                            collected_rows[table_name].append(row)
-                        except:
-                            collected_rows[table_name] = [row]
-                    elif latest_timestamp in clean_line:
-                        insert_flag = True
-                        print(f"Match found: {clean_line.strip()}")
-        except Exception as e:
-            print(f"Error reading file {csv_files[i]}: {e}")
-    for table_name, rows in collected_rows.items():
-        insert_rows(rows, table_name)
-    '''
     print(f'누락 데이터 저장 완료')
     print(list(collected_rows.keys()))
 
@@ -323,7 +293,7 @@ class CSVUpdateHandler(FileSystemEventHandler):
 
     
 if __name__ == '__main__':
-    realtime_path = "../shared_data_2" # 감시할 디렉토리 경로
+    realtime_path = "../real_time_data" # 감시할 디렉토리 경로
     print(f"감시대상경로 : {os.path.abspath(realtime_path)}")
     
     # ① DB 연결 설정

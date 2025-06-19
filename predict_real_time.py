@@ -327,7 +327,7 @@ def ray_predict(selected_cols, predict_columns, window_size, predict_steps, mode
                     # 테이블 생성 (없을 경우)
                     create_query = f"""
                     CREATE TABLE IF NOT EXISTS "{save_table_name}" (
-                        "Timestamp" TIMESTAMP,
+                        "Timestamp" TIMESTAMP PRIMARY KEY,
                         "Parameter" REAL,
                         "ProcessRecipeStepID" INTEGER,
                         "ProcessRecipeStepName" TEXT,
@@ -407,7 +407,7 @@ if __name__ == '__main__':
 
     cur.execute("""
         CREATE TABLE IF NOT EXISTS realtime_violation_log (
-            "Timestamp" TIMESTAMP NOT NULL,
+            "Timestamp" TIMESTAMP  PRIMARY KEY,
             parameter TEXT NOT NULL,
             message TEXT NOT NULL,
             UNIQUE ("Timestamp", parameter)

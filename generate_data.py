@@ -4,8 +4,8 @@ import pandas as pd
 from glob import glob
 from datetime import datetime
 
-DATA_DIR = './data'
-OUTPUT_DIR = './realtimedata'
+DATA_DIR = '../data'
+OUTPUT_DIR = '../realtimedata'
 LINES_PER_FILE = 100
 FILES_PER_FOLDER = 24  # 0000 ~ 2300 (100씩 증가)
 MAX_FILE_IDX = FILES_PER_FOLDER * LINES_PER_FILE  # 2400줄
