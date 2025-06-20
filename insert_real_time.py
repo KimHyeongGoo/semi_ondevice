@@ -9,6 +9,8 @@ from datetime import datetime, timedelta
 import re
 from zoneinfo import ZoneInfo
 
+from insert_old_data import insert_missing_data
+
 
 # 파일별로 마지막 읽은 위치 저장
 file_offsets = [0]
@@ -202,13 +204,17 @@ def insert_leaked_data(file_path):
         latest_timestamp = latest_timestamp[:-3]
     print(latest_timestamp)
     csv_files = find_csv_files(file_path)
-    insert_flag = False
+    pattern = re.compile(r'.*/(\d{4})/(\d{2})/(\d{2})/([0-2][0-9])00\.csv$')
+    pattern2 = re.compile(r'.*/(\d{4})/svid 수정전/(\d{2})/(\d{2})/([0-2][0-9])00\.csv$')
     for i in range(len(csv_files)-1, -1, -1):
-        splits = list(csv_files[i].split('/'))
-        year = splits[-4]
-        month = splits[-3]
-        day = splits[-2]
-        hour = splits[-1][:2]
+        if 'svid 수정전' in csv_files[i]:
+            match = pattern2.match(csv_files[i])
+        else:
+            match = pattern.match(csv_files[i])
+        if not match:
+            continue
+
+        year, month, day, hour = match.groups()
         #print(year, month, day, hour)
         #print(latest_timestamp[:4], latest_timestamp[5:7], latest_timestamp[8:10], latest_timestamp[11:13])
         if month == latest_timestamp[5:7] and day == latest_timestamp[8:10] and hour == latest_timestamp[11:13]:
@@ -332,10 +338,12 @@ if __name__ == '__main__':
     print("✅ 모든 public 테이블 제거 완료")
     '''
     
-    # 누락 데이터 저장 (컴퓨터 껐다 켜졌을떄 주석해제)
-    #print("누락 데이터 검사중..\n")
-    #insert_leaked_data(realtime_path)
+    print("초기 데이터 저장중..\n")
+    insert_missing_data(realtime_path)
     
+    print("누락 데이터 검사중..\n")
+    insert_leaked_data(realtime_path)
+        
     # watchdog 실행
     observer = PollingObserver()
     event_handler = CSVUpdateHandler()

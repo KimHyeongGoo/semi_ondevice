@@ -353,7 +353,7 @@ if __name__ == '__main__':
     try:
         while True:
             extract_process_ranges_incrementally()
-            print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}]  30분 후 재실행 대기 중...\n")
-            time.sleep(1800)
+            print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}]  10분 후 재실행 대기 중...\n")
+            time.sleep(600)
     except KeyboardInterrupt:
         print("\n🛑 수동 종료됨.")

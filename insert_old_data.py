@@ -97,36 +97,37 @@ def insert_missing_data(base_path):
     tables = [t[0] for t in cur.fetchall()]
     tables = [t for t in tables if re.match(r'rawdata\d{8}$', t)]  # YYYYMMDD
 
-    if not tables:
-        print("No existing tables. Nothing to compare.")
-        return
+    if tables:
+        tables_sorted = sorted(tables, key=lambda x: int(x.replace("rawdata", "")))
+        oldest_table = tables_sorted[0]
 
-    tables_sorted = sorted(tables, key=lambda x: int(x.replace("rawdata", "")))
-    oldest_table = tables_sorted[0]
+        cur.execute(f'SELECT MIN("Timestamp") FROM "{oldest_table}";')
+        result = cur.fetchone()
+        conn.commit()
+        cur.close()
+        conn.close()
 
-    cur.execute(f'SELECT MIN("Timestamp") FROM "{oldest_table}";')
-    result = cur.fetchone()
-    conn.commit()
-    cur.close()
-    conn.close()
-
-    if not result or not result[0]:
-        print("Could not determine oldest timestamp.")
-        return
-        
-    oldest_timestamp = result[0]
-    #oldest_timestamp = datetime.strptime("2025-06-12 00:00:01.100", "%Y-%m-%d %H:%M:%S.%f")
-    #from_timestamp = datetime.strptime("2025-04-30 00:00:01.100", "%Y-%m-%d %H:%M:%S.%f")
+        if not result or not result[0]:
+            print("Could not determine oldest timestamp.")
+            return
+            
+        oldest_timestamp = result[0]
+    else:
+        oldest_timestamp = datetime.strptime("2025-03-05 99:00:01.100", "%Y-%m-%d %H:%M:%S.%f")
     print(f"Oldest Timestamp in DB: {oldest_timestamp}")
 
     # 2. 정규표현식 필터링 포함한 CSV 파일 탐색
     pattern = re.compile(r'.*/(\d{4})/(\d{2})/(\d{2})/([0-2][0-9])00\.csv$')
+    pattern2 = re.compile(r'.*/(\d{4})/svid 수정전/(\d{2})/(\d{2})/([0-2][0-9])00\.csv$')
     csv_files = find_csv_files(base_path)
     
     collected_rows = {}
 
     for csv_file in csv_files:
-        match = pattern.match(csv_file)
+        if 'svid 수정전' in csv_file:
+            match = pattern2.match(csv_file)
+        else:
+            match = pattern.match(csv_file)
         if not match:
             continue
 
@@ -181,6 +182,3 @@ def insert_missing_data(base_path):
             print(f"[{csv_file}] 읽기 중 오류 발생: {e}")
     print(f'누락 데이터 저장 완료')
     
-if __name__ == '__main__':
-    real_time_path = '../../semi/surplus/data/GSF_origin/2025'
-    insert_missing_data(real_time_path)

@@ -217,7 +217,7 @@ def ray_predict(selected_cols, predict_columns, window_size, predict_steps, mode
         if len(new_last_date) == 26:
             new_last_date = new_last_date[:-3]
         if table_name == "" or str(new_last_date) == "" or last_date >= new_last_date:
-            time.sleep(0.2)
+            time.sleep(0.1)
             continue
         last_date = new_last_date
         conn = psycopg2.connect(
@@ -272,7 +272,7 @@ def ray_predict(selected_cols, predict_columns, window_size, predict_steps, mode
             logg(f"[PID|{proc_pid}].log", " 데이터 쿼리시도중 오류발생")
             logg(f"[PID|{proc_pid}].log", str(e))
             conn.close()
-            time.sleep(0.2)
+            time.sleep(0.1)
             continue
         
         for predict_column in predict_columns:    
@@ -384,7 +384,7 @@ def ray_predict(selected_cols, predict_columns, window_size, predict_steps, mode
                 except Exception as e:
                     logg(f"[PID|{proc_pid}].log", "예측데이터 DB insert 오류발생")
                     logg(f"[PID|{proc_pid}].log", str(e))
-                    time.sleep(0.2)
+                    time.sleep(0.1)
 
         # 커밋 및 정리
         conn.commit()
