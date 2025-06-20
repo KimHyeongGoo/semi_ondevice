@@ -35,21 +35,26 @@ def get_latest_data(columns, duration=300, step=10):
         actuals = [{"time": str(r[0]), "value": r[1]} for r in cur.fetchall()]
         
         # 예측값 + Step ID 포함
-        cur.execute(f"""
-            SELECT DATE_TRUNC('second', "Timestamp") AS ts, "Parameter", "ProcessRecipeStepID", "ProcessRecipeStepName"
-            FROM "{pred_table}"
-            WHERE "Timestamp" >= %s
-            ORDER BY "Timestamp" ASC
-        """, (from_time,))
         preds = []
-        for row in cur.fetchall():
-            ts, val, step_id, step_name = row
-            preds.append({
-                "time": str(ts),
-                "value": val,
-                "step_id": int(step_id) if step_id is not None else None,
-                "step_name": str(step_name) if step_name is not None else None
-            })
+        try:
+            cur.execute(f"""
+                SELECT DATE_TRUNC('second', "Timestamp") AS ts, "Parameter", "ProcessRecipeStepID", "ProcessRecipeStepName"
+                FROM "{pred_table}"
+                WHERE "Timestamp" >= %s
+                ORDER BY "Timestamp" ASC
+            """, (from_time,))
+
+            for row in cur.fetchall():
+                ts, val, step_id, step_name = row
+                preds.append({
+                    "time": str(ts),
+                    "value": val,
+                    "step_id": int(step_id) if step_id is not None else None,
+                    "step_name": str(step_name) if step_name is not None else None
+                })
+        except Exception as e:
+            # 예측 테이블이 없으면 예측값 없이 실제값만 반환
+            preds = []
         result[col] = {
             "actual": actuals,
             "predicted": preds
