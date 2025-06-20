@@ -229,7 +229,7 @@ def ray_predict(selected_cols, predict_columns, window_size, predict_steps, mode
         )
         
         try:
-            interval_sec = window_size+1
+            interval_sec = window_size+5
             colnames = ', '.join([f'"{col}"' for col in selected_cols + ["ProcessRecipeStepRemainTime", "ProcessRecipeStepID", "ProcessRecipeStepName"]])
             query = f"""
                 SELECT {colnames}
@@ -249,7 +249,7 @@ def ray_predict(selected_cols, predict_columns, window_size, predict_steps, mode
                         SELECT {colnames}
                         FROM "{prev_table_name}"
                         WHERE "Timestamp" BETWEEN
-                            (%s::timestamp - INTERVAL '{interval_sec+5} seconds') AND %s::timestamp
+                            (%s::timestamp - INTERVAL '{interval_sec} seconds') AND %s::timestamp
                     """
 
                     data2 = pd.read_sql(query, conn, params=(last_date, last_date))
@@ -260,10 +260,14 @@ def ray_predict(selected_cols, predict_columns, window_size, predict_steps, mode
                     data = pd.concat([data2, data], ignore_index=True)
                 else:
                     conn.close()
-                    time.sleep(0.2)
+                    time.sleep(0.1)
                     continue
             if len(data) > window_size:
                 data = data.tail(window_size)
+            if len(data) < window_size:
+                conn.close()
+                time.sleep(0.1)
+                continue
         except Exception as e:
             logg(f"[PID|{proc_pid}].log", " 데이터 쿼리시도중 오류발생")
             logg(f"[PID|{proc_pid}].log", str(e))
@@ -312,7 +316,7 @@ def ray_predict(selected_cols, predict_columns, window_size, predict_steps, mode
             except Exception as e:
                 logg(f"[PID|{proc_pid}].log", "쿼리후 데이터 전처리 및 예측 시 오류발생")
                 logg(f"[PID|{proc_pid}].log", str(e))
-                time.sleep(0.2)
+                time.sleep(0.1)
                 continue
             
             for idx, predict_step in enumerate(predict_steps):

@@ -7,7 +7,7 @@ from dateutil import parser
 import yaml
 import os
 import psycopg2
-from db import get_latest_data, get_trace_info
+from db import get_latest_data, get_trace_info, get_event_chart_data
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -84,6 +84,16 @@ async def api_trace_info(limit: int = 10):
     data = get_trace_info(limit)
     return JSONResponse(data)
 
+@app.get("/api/model_columns")
+async def api_model_columns():
+    cols = []
+    for fname in os.listdir("../model"):
+        if fname.startswith("new_mae_192_patchtst_") and fname.endswith(".keras"):
+            col = fname[len("new_mae_192_patchtst_"):-6]
+            cols.append(col)
+    cols.sort()
+    return JSONResponse(cols)
+
 @app.get("/api/logs")
 async def get_logs():
     conn = psycopg2.connect(
@@ -115,55 +125,8 @@ async def get_logs():
     
 @app.get("/api/event_chart")
 async def event_chart(param: str, start: str = Query(...), end: str = Query(...), step: int = 10):
-    conn = psycopg2.connect(
-        dbname="postgres",
-        user="keti",
-        password="keti1234!",
-        host="localhost",
-        port=5432
-    )
-    cur = conn.cursor()
-
-    from_ts = parser.parse(start)
-    to_ts = parser.parse(end)
-    #date_suffix = from_ts.strftime("%d%H") 
-    date_suffix = from_ts.strftime("%Y%m%d") 
-
-    raw_table = f"rawdata{date_suffix}"
-    param_modified = param.replace(' ', '_').replace('.', '_').replace('-', '_')
-    pred_table = f"pred_{step}_{param_modified}"
-
-    if len(str(from_ts)) >= 26:
-        from_ts = str(from_ts)[:23]
-        to_ts = str(to_ts)[:23]
-    try:
-        # 실제값
-        cur.execute(f"""
-            SELECT DATE_TRUNC('second', "Timestamp") AS ts, "{param}"
-            FROM "{raw_table}"
-            WHERE "Timestamp" BETWEEN %s::timestamp AND %s::timestamp
-            ORDER BY ts ASC
-        """, (from_ts, to_ts))
-        actuals = [{"x": str(ts), "y": val} for ts, val in cur.fetchall()]
-        # 예측값
-        cur.execute(f"""
-            SELECT DATE_TRUNC('second', "Timestamp") AS ts, "Parameter"
-            FROM "{pred_table}"
-            WHERE "Timestamp" BETWEEN %s::timestamp AND %s::timestamp
-            ORDER BY ts ASC
-        """, (from_ts, to_ts))
-        preds = [{"x": str(ts), "y": val} for ts, val in cur.fetchall()]
-    except Exception as e:
-        actuals, preds = [], []
-        print("[event_chart ERROR]", e)
-
-    cur.close()
-    conn.close()
-
-    return JSONResponse({
-        "actual": actuals,
-        "predicted": preds
-    })
+    data = get_event_chart_data(param, start, end, step)
+    return JSONResponse(data)
 
 @app.get("/logview.html", response_class=HTMLResponse)
 async def view_log_chart():

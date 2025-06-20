@@ -84,7 +84,6 @@ def insert_missing_data(base_path):
         port=5432
     )
     cur = conn.cursor()
-    '''
     cur.execute("""
         SELECT table_name
         FROM information_schema.tables
@@ -112,9 +111,8 @@ def insert_missing_data(base_path):
         return
         
     oldest_timestamp = result[0]
-    '''
-    oldest_timestamp = datetime.strptime("2025-06-12 00:00:01.100", "%Y-%m-%d %H:%M:%S.%f")
-    from_timestamp = datetime.strptime("2025-04-30 00:00:01.100", "%Y-%m-%d %H:%M:%S.%f")
+    #oldest_timestamp = datetime.strptime("2025-06-12 00:00:01.100", "%Y-%m-%d %H:%M:%S.%f")
+    #from_timestamp = datetime.strptime("2025-04-30 00:00:01.100", "%Y-%m-%d %H:%M:%S.%f")
     print(f"Oldest Timestamp in DB: {oldest_timestamp}")
 
     # 2. 정규표현식 필터링 포함한 CSV 파일 탐색
@@ -132,7 +130,8 @@ def insert_missing_data(base_path):
         file_dt = datetime(int(year), int(month), int(day), int(hour))
 
         # 🔍 Timestamp보다 최신이면 건너뜀
-        if file_dt >= oldest_timestamp or file_dt < from_timestamp:
+        #if file_dt >= oldest_timestamp or file_dt < from_timestamp:
+        if file_dt >= oldest_timestamp:
             continue
 
         try:

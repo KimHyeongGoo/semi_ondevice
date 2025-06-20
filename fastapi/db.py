@@ -2,6 +2,7 @@ import psycopg2
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 import os
+from dateutil import parser
 
 def get_latest_data(columns, duration=300, step=10):
     tz = ZoneInfo("Asia/Seoul")
@@ -57,6 +58,60 @@ def get_latest_data(columns, duration=300, step=10):
     cur.close()
     conn.close()
     return result
+
+def get_event_chart_data(param, start, end, step=10):
+    """Return actual and predicted data for a parameter between two timestamps."""
+    conn = psycopg2.connect(
+        dbname="postgres",
+        user="keti",
+        password="keti1234!",
+        host="localhost",
+        port=5432,
+    )
+    cur = conn.cursor()
+
+    from_ts = parser.parse(start)
+    to_ts = parser.parse(end)
+    date_suffix = from_ts.strftime("%Y%m%d")
+
+    raw_table = f"rawdata{date_suffix}"
+    param_modified = param.replace(' ', '_').replace('.', '_').replace('-', '_')
+    pred_table = f"pred_{step}_{param_modified}"
+
+    if len(str(from_ts)) >= 26:
+        from_ts = str(from_ts)[:23]
+        to_ts = str(to_ts)[:23]
+
+    try:
+        cur.execute(
+            f"""
+            SELECT DATE_TRUNC('second', "Timestamp") AS ts, "{param}"
+            FROM "{raw_table}"
+            WHERE "Timestamp" BETWEEN %s::timestamp AND %s::timestamp
+            ORDER BY ts ASC
+            """,
+            (from_ts, to_ts),
+        )
+        actuals = [{"x": str(ts), "y": val} for ts, val in cur.fetchall()]
+
+        cur.execute(
+            f"""
+            SELECT DATE_TRUNC('second', "Timestamp") AS ts, "Parameter"
+            FROM "{pred_table}"
+            WHERE "Timestamp" BETWEEN %s::timestamp AND %s::timestamp
+            ORDER BY ts ASC
+            """,
+            (from_ts, to_ts),
+        )
+        preds = [{"x": str(ts), "y": val} for ts, val in cur.fetchall()]
+    except Exception as e:
+        actuals, preds = [], []
+        print("[get_event_chart_data ERROR]", e)
+
+    cur.close()
+    conn.close()
+
+    return {"actual": actuals, "predicted": preds}
 
 def get_trace_info(limit=10):
     """Return recent rows from trace_info ordered by start_time descending."""

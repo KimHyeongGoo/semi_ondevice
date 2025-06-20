@@ -4,6 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <title>STANDARD 공정 셋팅값 비교</title>
+    <!-- Use the UMD build so Chart is available globally -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -39,6 +42,45 @@
             background-color: #007bff;
             color: #fff;
         }
+
+        #process-list {
+            display: flex;
+            flex-direction: row-reverse;
+            gap: 16px;
+            margin-bottom: 20px;
+            overflow-x: auto;
+        }
+
+        .process-box {
+            min-width: 220px;
+            background: #ffffff;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            padding: 8px;
+            cursor: pointer;
+        }
+
+        .process-box.active {
+            background: #e8f0fe;
+        }
+
+        #charts-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+
+        .chart-box {
+            border: 1px solid #ccc;
+            padding: 12px;
+            border-radius: 8px;
+            background-color: #ffffff;
+        }
+
+        canvas {
+            width: 100% !important;
+            height: 300px;
+        }
     </style>
 </head>
 
@@ -49,7 +91,10 @@
         <a href="/index3.html" class="{% if active_tab == 'index3' %}active{% endif %}">STANDARD 공정 셋팅값 비교</a>
     </div>
     <h2>STANDARD 공정 셋팅값 비교</h2>
-    <p>준비 중인 페이지입니다.</p>
+    <div id="process-list"></div>
+    <div id="charts-container"></div>
+
+    <script src="/static/process_compare.js" defer></script>
 </body>
 
 </html>
