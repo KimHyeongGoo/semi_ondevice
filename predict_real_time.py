@@ -15,26 +15,26 @@ import tensorflow as tf
 window_size = 192  
 predict_steps = [10, 20, 30]  
 #예측할 칼럼 리스트
-predict_columns = [      
+tasks = [      
     #'PPExecStepID',
-    'MFC7_DCS',           ## MFC Dichlorosilane(DCS) 유량 모니터링 값
-    'MFC8_NH3',           ## MFC 암모니아(NH3) 유량 모니터링 값
+    ['MFC7_DCS',          
+    'MFC8_NH3',          
+    'MFC26_F.PWR'],
     #'MFC9_F2',
-    'MFC1_N2-1',  # MFC(Mass Flow Controller) N2-1 모니터링 값
-    'MFC2_N2-2',          # MFC N2-2 모니터링 값
-    'MFC3_N2-3',  # MFC N2-3 모니터링 값
-    'MFC4_N2-4',          
-    'VG11 Press value',                 ## Baratron Gauge(의 압력 모니터링 값 (프로세스중 작용)
+    ['MFC1_N2-1',
+    'MFC2_N2-2',         
+    'MFC3_N2-3'], 
+    ['MFC4_N2-4',          
+    'MFC27_L.POS',        
+    'MFC28_R.POS'],        
+    ['VG11 Press value',              
     'VG12 Press value',                 # Baratron Gauge(의 압력 모니터링 값 (프로세스외 작용)
-    'VG13 Press value',                 # Baratron Gauge(의 압력 모니터링 값 (프로세스외 작용)
-    'Temp_Act_U',            # 상부 위치 실제 온도
+    'VG13 Press value'],                 # Baratron Gauge(의 압력 모니터링 값 (프로세스외 작용)
+    ['Temp_Act_U',            # 상부 위치 실제 온도
     'Temp_Act_CU',           # 중앙 상부 위치 실제 온도
-    'Temp_Act_C',            # 중앙 위치 실제 온도
-    'Temp_Act_CL',           # 중앙 하부 위치 실제 온도
-    'Temp_Act_L',              
-    'MFC26_F.PWR',
-    'MFC27_L.POS',         # MFC Left Position 위치 모니터링 값
-    'MFC28_R.POS'         # MFC P.POS 위치 모니터링 값
+    'Temp_Act_C'],            # 중앙 위치 실제 온도
+    ['Temp_Act_CL',           # 중앙 하부 위치 실제 온도
+    'Temp_Act_L']    
 ]
 
 # 공정 모니터링 변수
@@ -127,51 +127,38 @@ def extract_date(tname):
     return int(m.group(1)) if m else 0
 
 def get_last_tablename():
-    conn = psycopg2.connect(
-        dbname="postgres",
-        user="keti",
-        password="keti1234!",
-        host="localhost",
-        port=5432
-    )
-
+    conn = psycopg2.connect(dbname='postgres', user='keti', password='keti1234!', host='localhost', port=5432)
     cur = conn.cursor()
-
-    # 'rawdata%'로 시작하는 테이블명 가져오기
     cur.execute("""
-        SELECT table_name
-        FROM information_schema.tables
-        WHERE table_schema = 'public'
-        AND table_name LIKE 'rawdata%';
+        SELECT table_name FROM information_schema.tables
+        WHERE table_schema='public' AND table_name LIKE 'rawdata%';
     """)
-
-    tables = cur.fetchall()
-
-
-    sorted_tables = sorted(
-        [t[0] for t in tables if re.match(r'rawdata\d+$', t[0])],
-        key=extract_date,
-        reverse=True
-    )
-    if sorted_tables:
-        latest_table = sorted_tables[0] 
-        if len(sorted_tables) > 1:
-            latest_table2 = sorted_tables[1]
-        else:
-            latest_table2 = ""
-    else:
-        latest_table = ""
-        latest_table2 = ""
-    
-    cur.execute(f'SELECT MAX("Timestamp") FROM "{latest_table}"')
+    tables = [t[0] for t in cur.fetchall() if re.match(r'rawdata\d+$', t[0])]
+    tables.sort(key=extract_date, reverse=True)
+    latest = tables[0] if tables else ''
+    prev = tables[1] if len(tables) > 1 else ''
+    cur.execute(f'SELECT MAX("Timestamp") FROM "{latest}"')
     result = cur.fetchone()
+    if result: last_ts = result[0]
+    else: last_ts = ""
+    cur.close(); conn.close()
+    return latest, prev, last_ts
+
+
+def get_last_pred_times(conn):
+    cur = conn.cursor()
+    times = {}
+    for step in predict_steps:
+        max_ts = None
+        for col in predict_columns:
+            tbl = f'pred_{step}_{col.replace(".","_").replace(" ","_").replace("-","_")}'
+            cur.execute(f"SELECT MAX(\"Timestamp\") FROM \"{tbl}\"")
+            r = cur.fetchone()[0]
+            if r and (not max_ts or r > max_ts):
+                max_ts = r
+        times[step] = max_ts
     cur.close()
-    conn.close()
-    latest_timestamp = ""
-    if result:
-        latest_timestamp = result[0]
-            
-    return latest_table, latest_table2, latest_timestamp
+    return times
 
 
 def insert_violation(conn, cur, timestamp, col, step_id, step_name, val, limit_type, threshold):
@@ -424,15 +411,9 @@ if __name__ == '__main__':
     conn.close()
     
     obj_id_list = []
-    cnt = 1
-    tasks = []
-    for predict_column in predict_columns:
-        tasks.append(predict_column)
-        if cnt % 3 == 0 or cnt == len(predict_columns):
-            obj_id_list.append(ray_predict.remote(selected_cols, tasks, window_size, predict_steps))
-            tasks = []
-        cnt+=1
-    
+
+    for task in tasks:
+        obj_id_list.append(ray_predict.remote(selected_cols, task, window_size, predict_steps))
     while len(obj_id_list):
         done, obj_id_list = ray.wait(obj_id_list)
         ray.get(done[0])
