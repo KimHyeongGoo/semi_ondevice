@@ -81,7 +81,6 @@ def fetch_trace_data(start_ts, end_ts, start_table, end_table):
     return final_df
 
 
-
 def predict_thickness(start_ts, end_ts, start_table, end_table):
     #print(start_ts, end_ts, start_table, end_table)
     data = fetch_trace_data(start_ts, end_ts, start_table, end_table)
@@ -293,7 +292,7 @@ def extract_process_ranges_incrementally():
                         insert_trace_info_with_thickness(cur, current_proc["start_time"], ts, current_proc["start_table"], table, thicknesses)
                         print(current_proc["start_time"], ts, thicknesses, '\n')
                     current_proc = None
-                elif step in ("IDLE", "", "NAN", "NULL"):
+                elif step in ("", "NAN", "NULL", "None", "nan"):
                     if last_ts:
                         duration = last_ts - current_proc["start_time"]
                         if duration >= timedelta(hours=1):
