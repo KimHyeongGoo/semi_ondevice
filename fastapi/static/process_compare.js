@@ -1,4 +1,8 @@
 let predictColumns = [];
+let allProcesses = [];
+let pageIndex = 0;
+let pageSize = 0;
+let selectedStart = null;
 
 async function loadColumns() {
     const res = await fetch('/api/model_columns');
@@ -6,18 +10,25 @@ async function loadColumns() {
 }
 
 async function loadProcesses() {
-    const res = await fetch('/api/trace_info?limit=20');
-    const data = await res.json();
-    renderProcessList(data);
-    if (data.length > 0) {
-        selectProcess(document.querySelector('.process-box'));
-    }
+    const res = await fetch('/api/trace_info?limit=50');
+    allProcesses = (await res.json()).reverse();
+    updateLayout();
 }
 
-function renderProcessList(processes) {
-    const container = document.getElementById('process-list');
+function calcLayout() {
+    const container = document.getElementById('process-container');
+    const boxWidth = 220 + 16;
+    const cols = Math.max(1, Math.floor(container.clientWidth / boxWidth));
+    pageSize = cols;
+}
+
+
+function renderPage() {
+    const container = document.getElementById('process-container');
     container.innerHTML = '';
-    processes.forEach(proc => {
+    const start = pageIndex * pageSize;
+    const slice = allProcesses.slice(start, start + pageSize);
+    slice.forEach(proc => {
         const box = document.createElement('div');
         box.className = 'process-box';
         box.innerHTML = `
@@ -27,9 +38,27 @@ function renderProcessList(processes) {
         `;
         box.dataset.start = proc.start_time;
         box.dataset.end = proc.end_time;
+        if (proc.start_time === selectedStart) box.classList.add('active');
         box.addEventListener('click', () => selectProcess(box));
         container.appendChild(box);
     });
+    if (!selectedStart && slice.length > 0) {
+        selectProcess(container.querySelector('.process-box'));
+    }
+    document.getElementById('prevPage').disabled = pageIndex === 0;
+    const totalPages = Math.ceil(allProcesses.length / pageSize);
+    document.getElementById('nextPage').disabled = pageIndex >= totalPages - 1;
+}
+
+function updateLayout() {
+    const prevSize = pageSize;
+    calcLayout();
+    const totalPages = Math.ceil(allProcesses.length / pageSize);
+    if (pageIndex > totalPages - 1) pageIndex = Math.max(0, totalPages - 1);
+    if (prevSize !== pageSize) {
+        pageIndex = totalPages - 1;
+    }
+    renderPage();
 }
 
 function selectProcess(box) {
@@ -76,4 +105,18 @@ async function loadCharts(start, end) {
 window.addEventListener('DOMContentLoaded', async () => {
     await loadColumns();
     await loadProcesses();
+    window.addEventListener('resize', updateLayout);
+    document.getElementById('prevPage').addEventListener('click', () => {
+        if (pageIndex > 0) {
+            pageIndex--;
+            renderPage();
+        }
+    });
+    document.getElementById('nextPage').addEventListener('click', () => {
+        const totalPages = Math.ceil(allProcesses.length / pageSize);
+        if (pageIndex < totalPages - 1) {
+            pageIndex++;
+            renderPage();
+        }
+    });
 });

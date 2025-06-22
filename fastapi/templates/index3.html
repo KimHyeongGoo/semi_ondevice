@@ -43,12 +43,25 @@
             color: #fff;
         }
 
-        #process-list {
-            display: flex;
-            flex-direction: row-reverse;
+        #process-container {
+            display: grid;
+            grid-auto-flow: column;
+            grid-template-rows: repeat(1, auto);
             gap: 16px;
-            margin-bottom: 20px;
-            overflow-x: auto;
+        }
+
+        .page-nav {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 10px;
+            margin-bottom: 10px;
+            gap: 20px;
+        }
+
+        .page-nav button {
+            padding: 6px 12px;
+            font-size: 16px;
         }
 
         .process-box {
@@ -91,7 +104,12 @@
         <a href="/index3.html" class="{% if active_tab == 'index3' %}active{% endif %}">STANDARD 공정 셋팅값 비교</a>
     </div>
     <h2>STANDARD 공정 셋팅값 비교</h2>
-    <div id="process-list"></div>
+    <div id="process-container" class="process-container"></div>
+    <div class="page-nav">
+        <button id="prevPage">◀</button>
+        <button id="nextPage">▶</button>
+    </div>
+        
     <div id="charts-container"></div>
 
     <script src="/static/process_compare.js" defer></script>
