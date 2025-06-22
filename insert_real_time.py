@@ -226,7 +226,7 @@ def insert_leaked_data(file_path):
     collected_rows = {}
     for csv_file in csv_files:
         try:
-            with open(csv_file, 'r', encoding='utf-8') as f:
+            with open(csv_file, 'r', encoding='utf-8-sig') as f:
                 reader = csv.reader(f)
                 header = next(reader, [])
                 file_headers[csv_file] = header
@@ -254,7 +254,7 @@ def insert_leaked_data(file_path):
 
 def seek_last_line(file_path, last_offset):
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, 'r', encoding='utf-8-sig') as f:
             if last_offset == 0:
                 reader = csv.reader(f)
                 header = next(reader, [])
