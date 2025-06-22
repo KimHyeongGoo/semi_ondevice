@@ -191,6 +191,8 @@ def get_trace_pred_chart_data(param, start, end):
             SELECT DATE_TRUNC('second', "Timestamp") AS ts, "{param}"
             FROM "{raw_table}"
             WHERE "Timestamp" BETWEEN %s::timestamp AND %s::timestamp
+            AND "ProcessRecipeStepID" >= 100
+            AND "ProcessRecipeStepID" < 160
             ORDER BY ts ASC
             """,
             (from_ts, to_ts),
@@ -199,12 +201,23 @@ def get_trace_pred_chart_data(param, start, end):
 
         cur.execute(
             f"""
+            SELECT MIN("Timestamp"), MAX("Timestamp")
+            FROM "{raw_table}"
+            WHERE "Timestamp" BETWEEN %s::timestamp AND %s::timestamp
+            AND "ProcessRecipeStepID" >= 100 AND "ProcessRecipeStepID" < 160
+            """,
+            (from_ts, to_ts),
+        )
+        filtered_from_ts, filtered_to_ts = cur.fetchone()
+
+        cur.execute(
+            f"""
             SELECT DATE_TRUNC('second', "Timestamp") AS ts, "{param}"
             FROM trace_pred_data
             WHERE "Timestamp" BETWEEN %s::timestamp AND %s::timestamp
             ORDER BY ts ASC
             """,
-            (from_ts, to_ts),
+            (filtered_from_ts, filtered_to_ts),
         )
         preds = [{"x": str(ts), "y": val} for ts, val in cur.fetchall()]
     except Exception as e:

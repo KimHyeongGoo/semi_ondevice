@@ -80,8 +80,17 @@ async function loadCharts(start, end) {
             .then(json => {
                 const all = json.actual.concat(json.predicted);
                 const vals = all.map(d => d.y ?? d.value);
-                const yMin = Math.min(...vals);
-                const yMax = Math.max(...vals);
+                const values = all.map(d => d.value);
+                let yMin, yMax;
+                if (col.startsWith("Temp_Act")) {
+                    yMin = Math.min(...vals) - 100;
+                    yMax = Math.max(...vals) + 100;
+                }
+                console.log(col, yMin, yMax);
+                const canvas = document.getElementById(`chart-${col}`);
+                if (Chart.getChart(canvas)) {
+                    Chart.getChart(canvas).destroy();
+                }
                 new Chart(document.getElementById(`chart-${col}`), {
                     type: 'line',
                     data: {
