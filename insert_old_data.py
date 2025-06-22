@@ -142,9 +142,11 @@ def insert_missing_data(base_path):
             continue
 
         try:
-            with open(csv_file, 'r', encoding='utf-8-sig') as f:
-                reader = csv.reader(f)
+            with open(csv_file, 'r', encoding='utf-8', errors='ignore') as f:
+                lines = (line.replace('\x00', '') for line in f)
+                reader = csv.reader(lines)
                 header = next(reader, None)
+                header = [col.lstrip('\ufeff') for col in header]
                 if header != columns:
                     print(
                         f"[{csv_file}] 헤더가 예상과 다릅니다. 파일 헤더: {header}"
@@ -158,6 +160,7 @@ def insert_missing_data(base_path):
                 for raw_row in reader:
                     if not raw_row:
                         continue
+                    raw_row = [val.lstrip('\ufeff') for val in raw_row]
                     row = [
                         transform_value(raw_row[index_map[c]]) if index_map[c] is not None else None
                         for c in columns
@@ -182,5 +185,5 @@ def insert_missing_data(base_path):
                     collected_rows={}
         except Exception as e:
             print(f"[{csv_file}] 읽기 중 오류 발생: {e}")
-    print(f'누락 데이터 저장 완료')
+    print(f'초기 데이터 저장 완료')
     

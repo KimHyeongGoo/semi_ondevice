@@ -104,6 +104,16 @@ async def get_logs():
         port=5432
     )
     cur = conn.cursor()
+
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS realtime_violation_log (
+            "Timestamp" TIMESTAMP  PRIMARY KEY,
+            parameter TEXT NOT NULL,
+            message TEXT NOT NULL,
+            UNIQUE ("Timestamp", parameter)
+        );
+    """)
+    conn.commit()
     
     cur.execute("""
         SELECT "Timestamp", parameter, message FROM realtime_violation_log

@@ -53,6 +53,7 @@ def get_latest_data(columns, duration=300, step=10):
                     "step_name": str(step_name) if step_name is not None else None
                 })
         except Exception as e:
+            conn.rollback()  # 🔴 실패한 트랜잭션 롤백
             # 예측 테이블이 없으면 예측값 없이 실제값만 반환
             preds = []
         result[col] = {

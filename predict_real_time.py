@@ -305,8 +305,7 @@ def insert_pred_data(predict_column, predict_step, pred_date, pred_data, last_st
             "Timestamp" TIMESTAMP PRIMARY KEY,
             "Parameter" REAL,
             "ProcessRecipeStepID" INTEGER,
-            "ProcessRecipeStepName" TEXT,
-            UNIQUE ("Timestamp", "Parameter")
+            "ProcessRecipeStepName" TEXT
         );
         """
         cur.execute(create_query)
@@ -315,15 +314,32 @@ def insert_pred_data(predict_column, predict_step, pred_date, pred_data, last_st
         insert_query = f"""
         INSERT INTO "{save_table_name}" ("Timestamp", "Parameter", "ProcessRecipeStepID", "ProcessRecipeStepName")
         VALUES (%s::timestamp, %s::real, %s::integer, %s::text)
-        ON CONFLICT ("Timestamp", "Parameter") DO NOTHING
+        ON CONFLICT ("Timestamp") DO NOTHING
         """
         cur.execute(insert_query, (pred_date, float(pred_data), int(last_step_id), str(last_step_name)))
         conn.commit()
         #print(predict_column, "END")
+        try:
+            # 최신 Timestamp 조회
+            cur.execute(f'SELECT MAX("Timestamp") FROM "{save_table_name}"')
+            latest_ts = cur.fetchone()[0]
+            if latest_ts:
+                delete_before = latest_ts - timedelta(hours=2)
+                cur.execute(f'''
+                    DELETE FROM "{save_table_name}"
+                    WHERE "Timestamp" < %s
+                ''', (delete_before,))
+                conn.commit()
+        except Exception as e:
+            logg(f"[PID|{os.getpid()}].log", f"insert_pred_data() 오래된 데이터 삭제 오류")
+            logg(f"[PID|{os.getpid()}].log", str(e))
     except Exception as e:
         proc_pid = os.getpid()
         logg(f"[PID|{proc_pid}].log", "insert_pred_data() 오류발생")
         logg(f"[PID|{proc_pid}].log", str(e))
+
+    
+        
     cur.close(); conn.close()
 
 
@@ -351,7 +367,7 @@ def ray_predict(selected_cols, predict_columns, window_size, predict_steps, mode
         for predict_column in predict_columns:
             loss_func = 'mae'
             scaler_ys[predict_column] = joblib.load(os.path.join(scaler_path,f'scaler_y_{predict_column}.pkl'))
-            if predict_column == "VG11": 
+            if predict_column == "VG11 Press value": 
                 # 커스텀 weighted loss 함수 생성
                 y_low, y_high = scaler_ys[predict_column].transform([[0]]), scaler_ys[predict_column].transform([[9]])
                 loss_func = get_weighted_mae(y_low, y_high, 100.0)
@@ -374,27 +390,14 @@ def ray_predict(selected_cols, predict_columns, window_size, predict_steps, mode
         now_raw_time = last_raw_time
         try:
             end = datetime.strptime(now_raw_time, "%Y-%m-%d %H:%M:%S.%f")
-            start = datetime.strptime(now_raw_time, "%Y-%m-%d %H:%M:%S.%f") - timedelta(seconds=window_size)
+            start = datetime.strptime(now_raw_time, "%Y-%m-%d %H:%M:%S.%f") - timedelta(seconds=window_size+5)
             start = start.strftime("%Y-%m-%d %H:%M:%S.%f")
             end = end.strftime("%Y-%m-%d %H:%M:%S.%f")
         except:
             end = datetime.strptime(now_raw_time, "%Y-%m-%d %H:%M:%S")
-            start = datetime.strptime(now_raw_time, "%Y-%m-%d %H:%M:%S") - timedelta(seconds=window_size)
+            start = datetime.strptime(now_raw_time, "%Y-%m-%d %H:%M:%S") - timedelta(seconds=window_size+5)
             start = start.strftime("%Y-%m-%d %H:%M:%S")
             end = end.strftime("%Y-%m-%d %H:%M:%S")
-
-        '''
-        try:
-            start = datetime.strptime(now_raw_time, "%Y-%m-%d %H:%M:%S.%f") - timedelta(seconds=window_size+1)
-            end = start + timedelta(seconds=window_size+2)
-            start = start.strftime("%Y-%m-%d %H:%M:%S.%f")
-            end = end.strftime("%Y-%m-%d %H:%M:%S.%f")
-        except:
-            start = datetime.strptime(now_raw_time, "%Y-%m-%d %H:%M:%S") - timedelta(seconds=window_size+1)
-            end = start + timedelta(seconds=window_size+2)
-            start = start.strftime("%Y-%m-%d %H:%M:%S")
-            end = end.strftime("%Y-%m-%d %H:%M:%S")
-        '''
         if len(start) == 26: start = start[:-3]
         if len(end) == 26: end = end[:-3]
         # 2. 데이터 쿼리
@@ -410,7 +413,6 @@ def ray_predict(selected_cols, predict_columns, window_size, predict_steps, mode
         data.fillna(method='ffill', inplace=True)
         #print(1,len(data))
         # 빈 시점 탐색
-        continue_flag = False
         new_rows = []
         for i in range(len(data) - 1):
             row_current = data.iloc[i]
@@ -421,11 +423,8 @@ def ray_predict(selected_cols, predict_columns, window_size, predict_steps, mode
             # 현재 행 추가
             new_rows.append(row_current)
             # 4초 이상 데이터가 빌경우 skip
-            if diff >= 4:
-                continue_flag = True
-                break
             # 간격이 1.5초 초과 시 보간 대상
-            elif diff > 1.5:
+            if diff > 1.5:
                 # 1초 간격으로 Timestamp 생성 (ts_current 제외, ts_next 제외)
                 n_inserts = int(diff)  # 초 단위로 보간
                 for j in range(1, n_inserts):
@@ -434,14 +433,13 @@ def ray_predict(selected_cols, predict_columns, window_size, predict_steps, mode
                     interpolated = row_current.copy()
                     interpolated['Timestamp'] = new_ts
                     new_rows.append(interpolated)
-        if continue_flag:# 중간에 2초이상 빈 데이터가 있을경우
-            time.sleep(0.1)
             continue
         # 마지막 행 추가
         new_rows.append(data.iloc[-1])
         # DataFrame으로 변환 후 정렬
         data = pd.DataFrame(new_rows).reset_index(drop=True)
-        #print(2,len(data))
+        #print(start,end, len(data))
+        #print(data)
         if len(data) < window_size: # 시퀀스 데이터 부족
             time.sleep(0.1)
             continue

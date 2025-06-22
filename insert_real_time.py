@@ -37,7 +37,6 @@ def find_csv_files(base_dir):
     csv_files.sort()
     return csv_files
 
-
 # 날짜 파싱 및 정렬
 def extract_date(tname):
     m = re.search(r'rawdata(\d+)', tname)
@@ -106,14 +105,10 @@ def transform_value(val):
 def insert_row(row):
     # row는 columns 순서의 값 리스트
     row = [transform_value(v) for v in row]
-    if len(row) > 17 and row[17] == "0":
-        row[18] = "IDLE"
-    if len(row) > 17 and row[17] == "998":
-        row[17] = "0"
     #print(row)
     # 2. 날짜 기반 테이블 이름
-    
     timestamp_str = row[0]
+    print(row)
     #date_part = datetime.strptime(timestamp_str, "%Y-%m-%d %H:%M:%S.%f").strftime("%d%H")
     date_part = datetime.strptime(timestamp_str, "%Y-%m-%d %H:%M:%S.%f").strftime("%Y%m%d")
     table_name = f"rawdata{date_part}"
@@ -124,7 +119,7 @@ def insert_row(row):
     create_sql = f'''
     CREATE TABLE IF NOT EXISTS "{table_name}" (
         {columns_sql},
-        UNIQUE ("Timestamp")
+        PRIMARY KEY ("Timestamp")
     );
     '''
     conn = psycopg2.connect(
@@ -173,7 +168,7 @@ def insert_rows(rows, table_name):
     create_sql = f'''
     CREATE TABLE IF NOT EXISTS "{table_name}" (
         {columns_sql},
-        UNIQUE ("Timestamp")
+        PRIMARY KEY ("Timestamp")
     );
     '''
     cur.execute(create_sql)
@@ -226,11 +221,13 @@ def insert_leaked_data(file_path):
     collected_rows = {}
     for csv_file in csv_files:
         try:
-            with open(csv_file, 'r', encoding='utf-8-sig') as f:
+            with open(csv_file, 'r', encoding='utf-8') as f:
                 reader = csv.reader(f)
                 header = next(reader, [])
+                header = [col.lstrip('\ufeff') for col in header]
                 file_headers[csv_file] = header
                 for values in reader:
+                    values = [val.lstrip('\ufeff') for val in values]
                     if not values:
                         continue
                     row_dict = {header[i]: values[i] for i in range(len(values))}
@@ -239,9 +236,13 @@ def insert_leaked_data(file_path):
                     # 현재 시간으로 타임스탬프 덮어쓰기
                     now_ts = row[0]
                     #table_suffix = datetime.strptime(now_ts, "%Y-%m-%d %H:%M:%S.%f").strftime("%d%H")
-                    table_suffix = datetime.strptime(now_ts, "%Y-%m-%d %H:%M:%S.%f").strftime("%Y%m%d")
-                    table_name = f"rawdata{table_suffix}"
-                    collected_rows.setdefault(table_name, []).append(row)
+                    try:
+                        table_suffix = datetime.strptime(now_ts, "%Y-%m-%d %H:%M:%S.%f").strftime("%Y%m%d")
+                        table_name = f"rawdata{table_suffix}"
+                        collected_rows.setdefault(table_name, []).append(row)
+                    except:
+                        print(csv_file)
+                        continue
         except Exception as e:
             print(f"Error reading file {csv_file}: {e}")
     for table_name, rows in collected_rows.items():
@@ -254,10 +255,11 @@ def insert_leaked_data(file_path):
 
 def seek_last_line(file_path, last_offset):
     try:
-        with open(file_path, 'r', encoding='utf-8-sig') as f:
+        with open(file_path, 'r', encoding='utf-8') as f:
             if last_offset == 0:
                 reader = csv.reader(f)
                 header = next(reader, [])
+                header = [col.lstrip('\ufeff') for col in header]
                 file_headers[file_path] = header
                 new_rows = list(reader)
             else:
@@ -265,10 +267,13 @@ def seek_last_line(file_path, last_offset):
                 header = file_headers.get(file_path, [])
                 new_rows = list(csv.reader(f))
             file_offsets[0] = f.tell()
-
+        print(new_rows)
         if new_rows:
             for values in new_rows:
+                values = [val.lstrip('\ufeff') for val in values]
                 if not values:
+                    print(file_path)
+                    print(values)
                     continue
                 row_dict = {header[i]: values[i] for i in range(len(values))}
                 row = [row_dict.get(col) for col in columns]
@@ -290,7 +295,7 @@ def is_valid_hourly_csv(base):
 # watchdog 프로세스 함수
 class CSVUpdateHandler(FileSystemEventHandler):
     def on_modified(self, event): # 파일이 수정되었을떄
-        #print("[MODIFIED]", event.src_path)
+        print("[MODIFIED]", event.src_path)
         if event.is_directory or not event.src_path.endswith(".csv") or not is_valid_hourly_csv(os.path.basename(event.src_path).replace(".csv", "")):
             return
         file_path = event.src_path
@@ -309,7 +314,7 @@ class CSVUpdateHandler(FileSystemEventHandler):
     
 if __name__ == '__main__':
     print(f"감시대상경로 : {os.path.abspath(realtime_path)}")
-    '''
+    
     # ① DB 연결 설정
     conn = psycopg2.connect(
         dbname="postgres",
@@ -336,7 +341,7 @@ if __name__ == '__main__':
     cur.close()
     conn.close()
     print("✅ 모든 public 테이블 제거 완료")
-    '''
+    
     
     print("초기 데이터 저장중..\n")
     insert_missing_data(realtime_path)
