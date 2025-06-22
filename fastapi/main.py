@@ -97,6 +97,11 @@ async def api_model_columns():
             col = fname[len("192_patchtst_"):-6]
             cols.append(col)
     cols.sort()
+    new_cols = []
+    for col in predict_columns:
+        if col in cols:
+            new_cols.append(col)
+    return JSONResponse(new_cols)
     return JSONResponse(cols)
 
 @app.get("/api/logs")
