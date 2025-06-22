@@ -12,6 +12,7 @@ from zoneinfo import ZoneInfo
 from insert_old_data import insert_missing_data
 
 
+realtime_path = "../realtimedata" # 감시할 디렉토리 경로
 # 파일별로 마지막 읽은 위치 저장
 file_offsets = [0]
 # CSV 파일의 헤더 보관
@@ -307,7 +308,6 @@ class CSVUpdateHandler(FileSystemEventHandler):
 
     
 if __name__ == '__main__':
-    realtime_path = "../realtimedata" # 감시할 디렉토리 경로
     print(f"감시대상경로 : {os.path.abspath(realtime_path)}")
     '''
     # ① DB 연결 설정
