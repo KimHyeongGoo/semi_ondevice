@@ -93,8 +93,8 @@ async def api_trace_info(limit: int = 10):
 async def api_model_columns():
     cols = []
     for fname in os.listdir("../model"):
-        if fname.startswith("new_mae_192_patchtst_") and fname.endswith(".keras"):
-            col = fname[len("new_mae_192_patchtst_"):-6]
+        if fname.startswith("192_patchtst_") and fname.endswith(".keras"):
+            col = fname[len("192_patchtst_"):-6]
             cols.append(col)
     cols.sort()
     return JSONResponse(cols)

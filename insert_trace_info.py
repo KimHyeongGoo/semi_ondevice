@@ -237,13 +237,14 @@ def predict_trace_parameter(start_ts, end_ts, start_table, end_table, model_path
             # 예측값 생성 (1-step만 사용하는 경우)
             pred_values = [float(y_pred[i, 0]) for i in range(len(y_pred))]
             pred_datas[predict_column] = pred_values
+            print(predict_column, len(pred_values))
 
             # time_data 길이 조정: pred_values와 동일한 길이로 맞춤
             if len(pred_datas[predict_column]) < len(time_data):
                 time_data = time_data.iloc[:len(pred_values)].reset_index(drop=True)
 
         except Exception as e:
-            print("ray_predict() : 데이터 전처리 오류발생")
+            print("predict parameter : 데이터 전처리 오류발생")
             print(str(e))
             continue
     pred_df = pd.DataFrame(pred_datas)
@@ -584,7 +585,7 @@ def drop_trace_and_proc_tables():
     
 # 🕒 30분 간격 루프
 if __name__ == '__main__':
-    drop_trace_and_proc_tables()
+    #drop_trace_and_proc_tables()
     print_existing_trace_info()  
     try:
         while True:

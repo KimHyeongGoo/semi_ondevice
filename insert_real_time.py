@@ -315,7 +315,7 @@ class CSVUpdateHandler(FileSystemEventHandler):
     
 if __name__ == '__main__':
     print(f"감시대상경로 : {os.path.abspath(realtime_path)}")
-    
+    '''
     # ① DB 연결 설정
     conn = psycopg2.connect(
         dbname="postgres",
@@ -342,7 +342,7 @@ if __name__ == '__main__':
     cur.close()
     conn.close()
     print("✅ 모든 public 테이블 제거 완료")
-    
+    '''
     
     print("초기 데이터 저장중..\n")
     insert_missing_data(realtime_path)
