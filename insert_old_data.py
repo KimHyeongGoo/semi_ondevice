@@ -142,7 +142,7 @@ def insert_missing_data(base_path):
             continue
 
         try:
-            with open(csv_file, 'r', encoding='utf-8', errors='ignore') as f:
+            with open(csv_file, 'r', encoding='utf-8-sig', errors='ignore') as f:
                 lines = (line.replace('\x00', '') for line in f)
                 reader = csv.reader(lines)
                 header = next(reader, None)

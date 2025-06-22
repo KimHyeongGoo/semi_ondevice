@@ -11,7 +11,7 @@ from tensorflow.keras.models import load_model
 from tensorflow.keras import layers
 import tensorflow as tf
 
-selected_cols = ['PPExecStepID', 'MFC1_N2-1', 'MFC2_N2-2', 'MFC3_N2-3', 'MFC4_N2-4', 'MFC26_F.PWR', 'MFC27_L.POS', 'MFC28_R.POS', 'MFC7_DCS', 'MFC8_NH3', 'MFC9_F2', 'APC Valve Value (Angle)', 'VG11 Press value', 'VG12 Press value', 'VG13 Press value', 'Temp_Act_U', 'Temp_Act_CU', 'Temp_Act_C', 'Temp_Act_CL', 'Temp_Act_L', 'ValveAct_2:2', 'ValveAct_3:3', 'ValveAct_4:4', 'ValveAct_5:5', 'ValveAct_9:9', 'ValveAct_12:12', 'ValveAct_14:14', 'ValveAct_16:16', 'ValveAct_26:26', 'ValveAct_28:28', 'ValveAct_29:29', 'ValveAct_60:71', 'ValveAct_63:75', 'ValveAct_73:83', 'ValveAct_80:DPO', 'ValveAct_89:RF', 'ValveAct_90:PST']
+selected_cols = ['ProcessRecipeStepID', 'MFC1_N2-1', 'MFC2_N2-2', 'MFC3_N2-3', 'MFC4_N2-4', 'MFC26_F.PWR', 'MFC27_L.POS', 'MFC28_R.POS', 'MFC7_DCS', 'MFC8_NH3', 'MFC9_F2', 'APC Valve Value (Angle)', 'VG11 Press value', 'VG12 Press value', 'VG13 Press value', 'Temp_Act_U', 'Temp_Act_CU', 'Temp_Act_C', 'Temp_Act_CL', 'Temp_Act_L', 'ValveAct_2:2', 'ValveAct_3:3', 'ValveAct_4:4', 'ValveAct_5:5', 'ValveAct_9:9', 'ValveAct_12:12', 'ValveAct_14:14', 'ValveAct_16:16', 'ValveAct_26:26', 'ValveAct_28:28', 'ValveAct_29:29', 'ValveAct_60:71', 'ValveAct_63:75', 'ValveAct_73:83', 'ValveAct_80:DPO', 'ValveAct_89:RF', 'ValveAct_90:PST']
 step_reverse_dict = {'END': 2, 'STANDBY': 0, 'START': 1, 'B.UP': 17, 'WAIT': 3, 'S.P-1': 74, 'S.P-2': 75, 'R.UP1': 25, 'STAB1': 22, 'S.P-3': 76, 'M.P-3': 81, 'L.CHK': 72, 'PREPRG1': 44, 'EVAC1': 99, 'EVAC2': 100, 'N-EVA1': 111, 'CLOSE1': 128, 'SI-FL1': 119, 'SI-EVA1': 117, 'CHANGE': 152, 'N-PRE1': 113, 'N-FL1': 115, 'N-FL2': 116, 'pre-NH3P': 110, 'DEPO1': 49, 'post_NH3P': 135, 'N2PRG1': 103, 'SI-EVA4': 149, 'A.VAC2': 85, 'A.PRG2': 90, 'A.VAC1': 84, 'A.PRG1': 89, 'N2PRG2': 104, 'N2PRG3': 105, 'A.VAC3': 86, 'A.PRG3': 91, 'A.VAC4': 87, 'A.PRG4': 92, 'CYCLE1': 130, 'A.PRG5': 93, 'R.DOWN1': 31, 'B.FILL1': 94, 'B.FILL2': 95, 'B.FILL3': 96, 'B.FILL4': 97, 'B.FILL5': 98, 'B.DOWN': 18, 'None': 0, 'nan': 0, 'NaN': 0, 'null': 0, 'NULL': 0, 'IDLE': 0}
 column_types = {'Timestamp': 'TIMESTAMP', 'ObservableTimestamp': 'TEXT', 'EquipmentStatus': 'INTEGER', 'AlarmState': 'BOOLEAN', 'O2Density_Monitor_Value': 'REAL', 'O2Density_Set_Value': 'REAL', 'PMstatus': 'INTEGER', 'PPExecname': 'TEXT', 'PPExecStepSeqNo': 'INTEGER', 'PPExecStepID': 'INTEGER', 'PPExecStepName': 'TEXT', 'ActiveCjobID': 'TEXT', 'ActivePjobID': 'TEXT', 'PMStoredProcessRecipeName': 'TEXT', 'ProcessRecipeEndRemainTime': 'TEXT', 'ProcessRecipeStepTime': 'TEXT', 'ProcessRecipeStepRemainTime': 'TEXT', 'ProcessRecipeStepID': 'INTEGER', 'ProcessRecipeStepName': 'TEXT', 'ProcessRecipeStepSeqNo': 'INTEGER', 'ProcessRecipeTotalTime': 'TEXT', 'Temp_Set_U': 'REAL', 'Temp_HT_Power_U': 'REAL', 'Temp_Monitor_U': 'REAL', 'Temp_TC_Monitor_U': 'REAL', 'Temp_TC_Cascade_U ': 'REAL', 'Temp_Act_U': 'REAL', 'Temp_HT_Power_Cascade_U': 'REAL', 'Temp_Set_CU': 'REAL', 'Temp_HT_Power_CU': 'REAL', 'Temp_Monitor_CU': 'REAL', 'Temp_TC_Monitor_CU': 'REAL', 'Temp_TC_Cascade_CU': 'REAL', 'Temp_Act_CU': 'REAL', 'Temp_HT_Power_Cascade_CU': 'REAL', 'Temp_Set_C': 'REAL', 'Temp_HT_Power_C': 'REAL', 'Temp_Monitor_C': 'REAL', 'Temp_TC_Monitor_C': 'REAL', 'Temp_TC_Cascade_C': 'REAL', 'Temp_Act_C': 'REAL', 'Temp_HT_Power_Cascade_C': 'REAL', 'Temp_Set_CL': 'REAL', 'Temp_HT_Power_CL': 'REAL', 'Temp_Monitor_CL': 'REAL', 'Temp_TC_Monitor_CL': 'REAL', 'Temp_TC_Cascade_CL': 'REAL', 'Temp_Act_CL': 'REAL', 'Temp_HT_Power_Cascade_CL': 'REAL', 'Temp_Set_L': 'REAL', 'Temp_HT_Power_L': 'REAL', 'Temp_Monitor_L': 'REAL', 'Temp_TC_Monitor_L': 'REAL', 'Temp_TC_Cascade_L': 'REAL', 'Temp_Act_L': 'REAL', 'Temp_HT_Power_Cascade_L': 'REAL', 'APC Valve Value (Angle)': 'REAL', 'VG13_LeakPressure_Monitor': 'REAL', 'VG11_LeakPressure_Monitor': 'REAL', 'VG13_LeakQuantity_Monitor': 'REAL', 'VG11_LeakQuantity_Monitor': 'REAL', 'VG13 Press value': 'REAL', 'VG11 Press value': 'REAL', 'PJobProcessingState': 'INTEGER', 'ValveAct_1:1': 'REAL', 'ValveAct_2:2': 'REAL', 'ValveAct_3:3': 'REAL', 'ValveAct_4:4': 'REAL', 'ValveAct_5:5': 'REAL', 'ValveAct_9:9': 'REAL', 'ValveAct_11:11': 'REAL', 'ValveAct_12:12': 'REAL', 'ValveAct_14:14': 'REAL', 'ValveAct_15:15': 'REAL', 'ValveAct_16:16': 'REAL', 'ValveAct_26:26': 'REAL', 'ValveAct_28:28': 'REAL', 'ValveAct_29:29': 'REAL', 'ValveAct_30:30': 'REAL', 'ValveAct_60:71': 'REAL', 'ValveAct_63:75': 'REAL', 'ValveAct_73:83': 'REAL', 'ValveAct_75:85': 'REAL', 'ValveAct_76:86': 'REAL', 'ValveAct_80:DPO': 'REAL', 'ValveAct_86:HT1': 'REAL', 'ValveAct_87:HT2': 'REAL', 'ValveAct_88:HT3': 'REAL', 'ValveAct_89:RF': 'REAL', 'ValveAct_90:PST': 'REAL', 'ValveAct_95:WAT': 'REAL', 'SubRecipeLoopSettingValue': 'INTEGER', 'SubRecipeLoopMoniterValue': 'INTEGER', 'VG12_LeakPressure_Monitor': 'REAL', 'VG12 Press value': 'REAL', 'MFC1_N2-1': 'REAL', 'MFC2_N2-2': 'REAL', 'MFC3_N2-3': 'REAL', 'MFC4_N2-4': 'REAL', 'MFC7_DCS': 'REAL', 'MFC8_NH3': 'REAL', 'MFC9_F2': 'REAL', 'MFC10_N2-R': 'REAL', 'MFC11_NO': 'REAL', 'MFC12_DCSMFM_7': 'REAL', 'MFC16_MFC51 N2': 'REAL', 'MFC26_F.PWR': 'REAL', 'MFC27_L.POS': 'REAL', 'MFC28_R.POS': 'REAL', 'AUX1_MS1': 'REAL', 'AUX2_MS321': 'REAL', 'AUX3_MS2': 'REAL', 'AUX4_MS3': 'REAL', 'AUX5_MS5': 'REAL', 'AUX8_MS8': 'REAL', 'AUX9_MS9': 'REAL', 'AUX16_VG21': 'REAL', 'AUX18_VG12': 'REAL', 'AUX19_VG11': 'REAL', 'AUX20_VG13': 'REAL', 'AUX21_M.WAT': 'REAL', 'AUX22_FS101': 'REAL', 'AUX23_FS102': 'REAL', 'AUX24_FS104': 'REAL', 'AUX26_FS106': 'REAL', 'AUX28_FS111': 'REAL', 'AUX29_FS105': 'REAL', 'AUX33_G.PS1': 'REAL', 'AUX34_G.PS2': 'REAL', 'AUX35_G.PS3': 'REAL', 'AUX36_G.PS4': 'REAL', 'AUX37_G.PS5': 'REAL', 'AUX38_G.PS6': 'REAL', 'AUX45_G.PS13': 'REAL', 'AUX46_G.PS14': 'REAL', 'AUX47_G.PS15': 'REAL', 'AUX48_G.PS16': 'REAL', 'AUX50_Vpp': 'REAL', 'AUX51_Vdc': 'REAL', 'AUX52_R.PWR': 'REAL', 'AUX53_DCS_IN': 'REAL', 'AUX54_IGS_DCS': 'REAL', 'AUX56_DCS1_PIP': 'REAL', 'AUX58_PURGE-1': 'REAL', 'AUX59_DCS_TANK': 'REAL', 'AUX64_REC-1': 'REAL', 'AUX65_REC-2-1': 'REAL', 'AUX66_REC-2-2': 'REAL', 'AUX67_IGS_N2-1': 'REAL', 'AUX69_SEALCAP': 'REAL', 'AUX72_RAXIS': 'REAL', 'AUX73_APC_RING': 'REAL', 'AUX74_APC_OUT': 'REAL', 'AUX89_JH1': 'REAL', 'AUX90_JH2': 'REAL', 'AUX91_JH3': 'REAL', 'AUX92_JH4': 'REAL', 'AUX93_JH5': 'REAL', 'AUX94_JH6': 'REAL', 'AUX95_JH7': 'REAL', 'AUX96_JH8': 'REAL', 'AUX97_JH9': 'REAL', 'AUX98_JH10': 'REAL', 'AUX99_JH11': 'REAL', 'AUX100_JH12': 'REAL', 'AUX101_JH13': 'REAL'}
 temp_add_columns = [
@@ -202,7 +202,6 @@ def predict_trace_parameter(start_ts, end_ts, start_table, end_table, model_path
     data.fillna(method='ffill', inplace=True)
     time_data = data['Timestamp'] + timedelta(seconds=window_size -1 + predict_step)
     time_data = data['Timestamp'].iloc[window_size - 1 + predict_step:].reset_index(drop=True)
-    data = data[selected_cols]
     pred_datas = {}
     for predict_column in predict_columns:
         scaler_y = joblib.load(os.path.join(scaler_path,f'scaler_y_{predict_column}.pkl'))
@@ -225,6 +224,7 @@ def predict_trace_parameter(start_ts, end_ts, start_table, end_table, model_path
                     add_columns.append(add_col+temp_pos)
             else:
                 scaler_X = joblib.load(os.path.join(scaler_path,'scaler_X.pkl'))
+            #print(predict_column, add_columns)
             sequence_data = data[selected_cols + add_columns]
             X_scaled = scaler_X.transform(sequence_data.values)
             X_seq = create_sequence(X_scaled, window_size, predict_step)
@@ -233,11 +233,14 @@ def predict_trace_parameter(start_ts, end_ts, start_table, end_table, model_path
                 scaler_y.inverse_transform(y_pred_scaled[:, [i]])[:, 0]
                 for i in range(3)
             ], axis=1)
-            for i in range(len(time_data)):
-                try:
-                    pred_datas[predict_column].append(float(y_pred[i, 0]))
-                except:
-                    pred_datas[predict_column] = [float(y_pred[i, 0])]
+            #print(y_pred[:, 0])
+            # 예측값 생성 (1-step만 사용하는 경우)
+            pred_values = [float(y_pred[i, 0]) for i in range(len(y_pred))]
+            pred_datas[predict_column] = pred_values
+
+            # time_data 길이 조정: pred_values와 동일한 길이로 맞춤
+            if len(pred_datas[predict_column]) < len(time_data):
+                time_data = time_data.iloc[:len(pred_values)].reset_index(drop=True)
 
         except Exception as e:
             print("ray_predict() : 데이터 전처리 오류발생")
@@ -254,7 +257,7 @@ def predict_thickness(start_ts, end_ts, start_table, end_table):
     X_all = []
     data = data[selected_cols]
     data.fillna(method='ffill', inplace=True)
-    tdf = data[(data['PPExecStepID'] >= 100) & (data['PPExecStepID'] < 160)]
+    tdf = data[(data['ProcessRecipeStepID'] >= 100) & (data['ProcessRecipeStepID'] < 160)]
     if len(tdf) <= 300:
         return []
     end_i = tdf.index[-1]+1
@@ -331,6 +334,7 @@ def print_existing_trace_info():
             {thickness_cols_sql}
         );
     """)
+    conn.commit()
 
     # 저장된 모든 공정 구간 출력
     cur.execute("""
@@ -370,6 +374,7 @@ def insert_trace_pred(pred_df):
     );
     '''
     cur.execute(create_sql)
+    conn.commit()
     try:
         # INSERT
         placeholders = ','.join(['%s'] * len( ['Timestamp'] + predict_columns))
@@ -445,6 +450,7 @@ def extract_process_ranges_incrementally():
             {thickness_cols_sql}
         );
     """)
+    conn.commit()
 
     # 2. 마지막 저장된 공정 end_time 조회
     cur.execute("SELECT MAX(end_time) FROM trace_info;")

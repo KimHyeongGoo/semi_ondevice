@@ -167,8 +167,7 @@ def insert_rows(rows, table_name):
         for col in columns])
     create_sql = f'''
     CREATE TABLE IF NOT EXISTS "{table_name}" (
-        {columns_sql},
-        PRIMARY KEY ("Timestamp")
+        {columns_sql}
     );
     '''
     cur.execute(create_sql)
@@ -221,7 +220,8 @@ def insert_leaked_data(file_path):
     collected_rows = {}
     for csv_file in csv_files:
         try:
-            with open(csv_file, 'r', encoding='utf-8') as f:
+            with open(csv_file, 'r', encoding='utf-8-sig') as f:
+                f = (line.replace('\x00', '') for line in f)
                 reader = csv.reader(f)
                 header = next(reader, [])
                 header = [col.lstrip('\ufeff') for col in header]
@@ -255,7 +255,8 @@ def insert_leaked_data(file_path):
 
 def seek_last_line(file_path, last_offset):
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, 'r', encoding='utf-8-sig') as f:
+            f = (line.replace('\x00', '') for line in f)
             if last_offset == 0:
                 reader = csv.reader(f)
                 header = next(reader, [])
