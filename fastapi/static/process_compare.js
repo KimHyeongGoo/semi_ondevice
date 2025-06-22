@@ -46,7 +46,7 @@ async function loadCharts(start, end) {
         chartBox.className = 'chart-box';
         chartBox.innerHTML = `<h4>${col}</h4><canvas id="chart-${col}"></canvas>`;
         container.appendChild(chartBox);
-        fetch(`/api/event_chart?param=${encodeURIComponent(col)}&start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}&step=10`)
+        fetch(`/api/trace_pred_chart?param=${encodeURIComponent(col)}&start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`)
             .then(res => res.json())
             .then(json => {
                 const all = json.actual.concat(json.predicted);

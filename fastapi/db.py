@@ -163,3 +163,55 @@ def get_trace_info(limit=10):
     cur.close()
     conn.close()
     return result
+
+def get_trace_pred_chart_data(param, start, end):
+    """Return actual and predicted data from trace_pred_data table."""
+    conn = psycopg2.connect(
+        dbname="postgres",
+        user="keti",
+        password="keti1234!",
+        host="localhost",
+        port=5432,
+    )
+    cur = conn.cursor()
+
+    from_ts = parser.parse(start)
+    to_ts = parser.parse(end)
+
+    date_suffix = from_ts.strftime("%Y%m%d")
+    raw_table = f"rawdata{date_suffix}"
+
+    if len(str(from_ts)) >= 26:
+        from_ts = str(from_ts)[:23]
+        to_ts = str(to_ts)[:23]
+
+    try:
+        cur.execute(
+            f"""
+            SELECT DATE_TRUNC('second', "Timestamp") AS ts, "{param}"
+            FROM "{raw_table}"
+            WHERE "Timestamp" BETWEEN %s::timestamp AND %s::timestamp
+            ORDER BY ts ASC
+            """,
+            (from_ts, to_ts),
+        )
+        actuals = [{"x": str(ts), "y": val} for ts, val in cur.fetchall()]
+
+        cur.execute(
+            f"""
+            SELECT DATE_TRUNC('second', "Timestamp") AS ts, "{param}"
+            FROM trace_pred_data
+            WHERE "Timestamp" BETWEEN %s::timestamp AND %s::timestamp
+            ORDER BY ts ASC
+            """,
+            (from_ts, to_ts),
+        )
+        preds = [{"x": str(ts), "y": val} for ts, val in cur.fetchall()]
+    except Exception as e:
+        actuals, preds = [], []
+        print("[get_trace_pred_chart_data ERROR]", e)
+
+    cur.close()
+    conn.close()
+
+    return {"actual": actuals, "predicted": preds}

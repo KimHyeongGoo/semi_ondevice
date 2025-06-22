@@ -7,7 +7,12 @@ from dateutil import parser
 import yaml
 import os
 import psycopg2
-from db import get_latest_data, get_trace_info, get_event_chart_data
+from db import (
+    get_latest_data,
+    get_trace_info,
+    get_event_chart_data,
+    get_trace_pred_chart_data,
+)
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -136,6 +141,11 @@ async def get_logs():
 @app.get("/api/event_chart")
 async def event_chart(param: str, start: str = Query(...), end: str = Query(...), step: int = 10):
     data = get_event_chart_data(param, start, end, step)
+    return JSONResponse(data)
+
+@app.get("/api/trace_pred_chart")
+async def trace_pred_chart(param: str, start: str = Query(...), end: str = Query(...)):
+    data = get_trace_pred_chart_data(param, start, end)
     return JSONResponse(data)
 
 @app.get("/logview.html", response_class=HTMLResponse)
