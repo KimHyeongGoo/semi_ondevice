@@ -113,7 +113,9 @@ def insert_missing_data(base_path):
             
         oldest_timestamp = result[0]
     else:
-        oldest_timestamp = datetime.strptime("2025-03-05 23:59:59.100", "%Y-%m-%d %H:%M:%S.%f")
+        now = datetime.now()
+        formatted_time = now.strftime("%Y-%m-%d %H:%M:%S.%f")
+        oldest_timestamp = datetime.strptime(formatted_time, "%Y-%m-%d %H:%M:%S.%f")
     print(f"Oldest Timestamp in DB: {oldest_timestamp}")
 
     # 2. 정규표현식 필터링 포함한 CSV 파일 탐색
