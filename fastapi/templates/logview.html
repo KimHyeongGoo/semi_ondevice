@@ -46,7 +46,7 @@
             <div id="charts-container"></div>
         </div>
         <div id="info-area">
-            <h3>파라미터별 실제값-예측값 차이 정보<br>(값차이가 10%이상 10초이상인 경우 이상징후로 판단)</h3>
+            <h3>파라미터별 실제값-예측값 차이 정보<br>(값차이가 10%이상 10초이상인 경우 감지됨)</h3>
             <div id="diff-info"></div>
         </div>
     </div>
@@ -105,6 +105,11 @@
         }
         new ResizeObserver(updateInfoHeight).observe(chartsContainerEl);
 
+        function formatLocal(ts) {
+            const d = new Date(ts);
+            const p = n => String(n).padStart(2, '0');
+            return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+        }
 
         const highlightPlugin = {
             id: 'highlightRegion',
@@ -131,13 +136,15 @@
                     let lastTime = null;
                     let maxDiff = 0;
                     const segments = [];
+                    const regions = [];
 
                     json.actual.forEach(a => {
                         const pv = predMap.get(a.x);
                         const t = new Date(a.x).getTime();
                         if (pv === undefined) {
                             if (segStart !== null && (lastTime - segStart) >= 10000) {
-                                segments.push({ start: new Date(segStart).toISOString(), end: new Date(lastTime).toISOString(), max: maxDiff });
+                                regions.push({ start: segStart, end: lastTime });
+                                segments.push({ start: formatLocal(segStart), end: formatLocal(lastTime), max: maxDiff });
                             }
                             segStart = null; maxDiff = 0; return;
                         }
@@ -147,7 +154,8 @@
                             else { maxDiff = Math.max(maxDiff, diffPct); }
                         } else if (segStart !== null) {
                             if (lastTime !== null && (lastTime - segStart) >= 10000) {
-                                segments.push({ start: new Date(segStart).toISOString(), end: new Date(lastTime).toISOString(), max: maxDiff });
+                                regions.push({ start: segStart, end: lastTime });
+                                segments.push({ start: formatLocal(segStart), end: formatLocal(lastTime), max: maxDiff });
                             }
                             segStart = null; maxDiff = 0;
                         }
@@ -155,7 +163,8 @@
                     });
 
                     if (segStart !== null && lastTime - segStart >= 10000) {
-                        segments.push({ start: new Date(segStart).toISOString(), end: new Date(lastTime).toISOString(), max: maxDiff });
+                        regions.push({ start: segStart, end: lastTime });
+                        segments.push({ start: formatLocal(segStart), end: formatLocal(lastTime), max: maxDiff });
                     }
 
                     if (segments.length === 0) return; // 차이 큰 구간이 없으면 차트 생략
@@ -188,7 +197,7 @@
                         options: {
                             animation: false,
                             plugins: {
-                                highlightRegion: { regions: segments }
+                                highlightRegion: { regions }
                             },
                             scales: {
                                 x: { type: 'time', time: { tooltipFormat: 'HH:mm:ss' }, title: { display: true, text: '시간' } },
@@ -200,7 +209,7 @@
                     const infoDiv = document.createElement('div');
                     infoDiv.innerHTML = `<h4>${p}</h4>` + segments.map(s => {
                         const dur = (new Date(s.end) - new Date(s.start)) / 1000;
-                        return `<div>${s.start.replace('T', ' ').replace('Z', ' ')} ~ ${s.end.replace('T', ' ').replace('Z', ' ')}<br>최대 값차이 : ${(s.max).toFixed(2)}%<br>지속시간 : ${dur.toFixed(0)}초<br></div>`;
+                        return `<div>${s.start} ~ ${s.end}<br>최대 값차이 : ${(s.max).toFixed(2)}%<br>지속시간 : ${dur.toFixed(0)}초<br></div>`;
                     }).join('');
                     diffInfoDiv.appendChild(infoDiv);
                 });

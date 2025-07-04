@@ -4,6 +4,13 @@ let pageIndex = 0;
 let pageSize = 0;
 let selectedStart = null;
 let diffInfoDiv, chartsContainerEl, infoAreaEl;
+let loadId = 0;
+
+function formatLocal(ts) {
+    const d = new Date(ts);
+    const p = n => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+}
 
 const highlightPlugin = {
     id: 'highlightRegion',
@@ -64,7 +71,7 @@ function renderPage() {
         container.appendChild(box);
     });
     if (!selectedStart && slice.length > 0) {
-        selectProcess(container.querySelector('.process-box'));
+        selectProcess(container.lastElementChild);
     }
     document.getElementById('prevPage').disabled = pageIndex === 0;
     const totalPages = Math.ceil(allProcesses.length / pageSize);
@@ -90,6 +97,7 @@ function selectProcess(box) {
 }
 
 async function loadCharts(start, end) {
+    const current = ++loadId;
     chartsContainerEl.innerHTML = '';
 
     predictColumns.forEach(col => {
@@ -97,18 +105,21 @@ async function loadCharts(start, end) {
         fetch(`/api/trace_pred_chart?param=${encodeURIComponent(col)}&start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`)
             .then(res => res.json())
             .then(json => {
+                if (current !== loadId) return;
                 const predMap = new Map(json.predicted.map(d => [d.x, d.y]));
                 let segStart = null;
                 let lastTime = null;
                 let maxDiff = 0;
                 const segments = [];
+                const regions = [];
 
                 json.actual.forEach(a => {
                     const pv = predMap.get(a.x);
                     const t = new Date(a.x).getTime();
                     if (pv === undefined) {
                         if (segStart !== null && (lastTime - segStart) >= 10000) {
-                            segments.push({ start: new Date(segStart).toISOString(), end: new Date(lastTime).toISOString(), max: maxDiff });
+                            regions.push({ start: segStart, end: lastTime });
+                            segments.push({ start: formatLocal(segStart), end: formatLocal(lastTime), max: maxDiff });
                         }
                         segStart = null; maxDiff = 0; return;
                     }
@@ -118,7 +129,8 @@ async function loadCharts(start, end) {
                         else { maxDiff = Math.max(maxDiff, diffPct); }
                     } else if (segStart !== null) {
                         if (lastTime !== null && (lastTime - segStart) >= 10000) {
-                            segments.push({ start: new Date(segStart).toISOString(), end: new Date(lastTime).toISOString(), max: maxDiff });
+                            regions.push({ start: segStart, end: lastTime });
+                            segments.push({ start: formatLocal(segStart), end: formatLocal(lastTime), max: maxDiff });
                         }
                         segStart = null; maxDiff = 0;
                     }
@@ -126,7 +138,8 @@ async function loadCharts(start, end) {
                 });
 
                 if (segStart !== null && lastTime - segStart >= 10000) {
-                    segments.push({ start: new Date(segStart).toISOString(), end: new Date(lastTime).toISOString(), max: maxDiff });
+                    regions.push({ start: segStart, end: lastTime });
+                    segments.push({ start: formatLocal(segStart), end: formatLocal(lastTime), max: maxDiff });
                 }
                 if (segments.length === 0) return;
 
@@ -150,7 +163,7 @@ async function loadCharts(start, end) {
                     },
                     options: {
                         animation: false,
-                        plugins: { highlightRegion: { regions: segments } },
+                        plugins: { highlightRegion: { regions } },
                         scales: {
                             x: { type: 'time', time: { tooltipFormat: 'HH:mm:ss' } },
                             y: { min: yMin, max: yMax }
@@ -161,7 +174,7 @@ async function loadCharts(start, end) {
                 const infoDiv = document.createElement('div');
                 infoDiv.innerHTML = `<h4>${col}</h4>` + segments.map(s => {
                     const dur = (new Date(s.end) - new Date(s.start)) / 1000;
-                    return `<div>${s.start.replace('T', ' ').replace('Z', ' ')} ~ ${s.end.replace('T', ' ').replace('Z', ' ')}<br>최대 값차이 : ${(s.max).toFixed(2)}%<br>지속시간 : ${dur.toFixed(0)}초<br></div>`;
+                    return `<div>${s.start} ~ ${s.end}<br>최대 값차이 : ${(s.max).toFixed(2)}%<br>지속시간 : ${dur.toFixed(0)}초<br></div>`;
                 }).join('');
                 diffInfoDiv.appendChild(infoDiv);
             });

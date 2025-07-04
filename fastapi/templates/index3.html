@@ -90,7 +90,7 @@
 
         #charts-container {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            grid-template-columns: repeat(2, minmax(400px, 1fr));
             gap: 20px;
             margin-top: 20px;
         }
@@ -132,7 +132,7 @@
             <div id="charts-container"></div>
         </div>
         <div id="info-area">
-            <h3>차이 정보</h3>
+            <h3>파라미터별 실제값-예측값 차이 정보<br>(값차이가 10%이상 10초이상인 경우 감지됨)</h3>
             <div id="diff-info"></div>
         </div>
     </div>
