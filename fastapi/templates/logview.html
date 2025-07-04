@@ -26,7 +26,6 @@
 
         #info-area {
             flex: 1;
-            max-height: 80vh;
             overflow-y: auto;
         }
 
@@ -47,7 +46,7 @@
             <div id="charts-container"></div>
         </div>
         <div id="info-area">
-            <h3>차이 정보</h3>
+            <h3>파라미터별 실제값-예측값 차이 정보<br>(값차이가 10%이상 10초이상인 경우 이상징후로 판단)</h3>
             <div id="diff-info"></div>
         </div>
     </div>
@@ -99,12 +98,20 @@
 
         const diffInfoDiv = document.getElementById('diff-info');
 
+        const chartsContainerEl = document.getElementById('charts-container');
+        const infoAreaEl = document.getElementById('info-area');
+        function updateInfoHeight() {
+            infoAreaEl.style.maxHeight = chartsContainerEl.offsetHeight + 'px';
+        }
+        new ResizeObserver(updateInfoHeight).observe(chartsContainerEl);
+
+
         const highlightPlugin = {
             id: 'highlightRegion',
             beforeDatasetsDraw(chart, args, opts) {
                 const { ctx, chartArea: { top, bottom }, scales: { x } } = chart;
                 ctx.save();
-                ctx.fillStyle = 'rgba(255, 205, 86, 0.3)';
+                ctx.fillStyle = 'rgba(173, 255, 47, 0.4)';
                 (opts.regions || []).forEach(r => {
                     const xStart = x.getPixelForValue(r.start);
                     const xEnd = x.getPixelForValue(r.end);
@@ -158,6 +165,8 @@
                     chartBox.className = 'chart-box';
                     chartBox.innerHTML = `<h4>${p}</h4><canvas id="chart-${p}" width="100%"></canvas>`;
                     container.appendChild(chartBox);
+                    updateInfoHeight();
+
 
                     const yValues = json.actual.concat(json.predicted).map(d => d.y ?? d.value);
                     const yMin = Math.min(...yValues);
