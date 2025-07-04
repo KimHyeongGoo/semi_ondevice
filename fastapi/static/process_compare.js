@@ -80,7 +80,6 @@ async function loadCharts(start, end) {
             .then(json => {
                 const all = json.actual.concat(json.predicted);
                 const vals = all.map(d => d.y ?? d.value);
-                const values = all.map(d => d.value);
                 let yMin, yMax;
                 if (col.startsWith("Temp_Act")) {
                     yMin = Math.min(...vals) - 100;

@@ -324,9 +324,20 @@ def insert_pred_data(predict_column, predict_step, pred_date, pred_data, last_st
             cur.execute(f'SELECT MAX("Timestamp") FROM "{save_table_name}"')
             latest_ts = cur.fetchone()[0]
             if latest_ts:
-                delete_before = latest_ts - timedelta(hours=2)
+                delete_before = latest_ts - timedelta(hours=48)
                 cur.execute(f'''
                     DELETE FROM "{save_table_name}"
+                    WHERE "Timestamp" < %s
+                ''', (delete_before,))
+                conn.commit()
+            # 최신 Timestamp 조회
+            violation_table = 'realtime_violation_log'
+            cur.execute(f'SELECT MAX("Timestamp") FROM "{violation_table}"')
+            latest_ts = cur.fetchone()[0]
+            if latest_ts:
+                delete_before = latest_ts - timedelta(hours=48)
+                cur.execute(f'''
+                    DELETE FROM "{violation_table}"
                     WHERE "Timestamp" < %s
                 ''', (delete_before,))
                 conn.commit()
@@ -404,7 +415,6 @@ def ray_predict(selected_cols, predict_columns, window_size, predict_steps, mode
         add_columns = []
         for predict_column in predict_columns:
             if 'Temp_Act_' in predict_column:
-                scaler_X = joblib.load(os.path.join(scaler_path,f'scaler_X_{predict_column}.pkl'))
                 temp_pos = predict_column.split('_')[-1]
                 for add_col in temp_add_columns:
                     add_columns.append(add_col+temp_pos)
