@@ -256,19 +256,21 @@ def insert_leaked_data(file_path):
 def seek_last_line(file_path, last_offset):
     try:
         with open(file_path, 'r', encoding='utf-8-sig') as f:
-            f = (line.replace('\x00', '') for line in f)
             if last_offset == 0:
-                reader = csv.reader(f)
+                reader = csv.reader((line.replace('\x00', '') for line in f))
                 header = next(reader, [])
                 header = [col.lstrip('\ufeff') for col in header]
                 file_headers[file_path] = header
                 new_rows = list(reader)
+                file_offsets[0] = f.tell()  # 여긴 reader가 다 읽은 후라 f.tell()도 의미가 없을 수 있음
             else:
                 f.seek(last_offset)
+                lines = (line.replace('\x00', '') for line in f)
+                reader = csv.reader(lines)
                 header = file_headers.get(file_path, [])
-                new_rows = list(csv.reader(f))
-            file_offsets[0] = f.tell()
-        print(new_rows)
+                new_rows = list(reader)
+                file_offsets[0] = f.tell()
+            print(new_rows)
         if new_rows:
             for values in new_rows:
                 values = [val.lstrip('\ufeff') for val in values]

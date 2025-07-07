@@ -174,7 +174,7 @@ async function loadCharts(start, end) {
                 const infoDiv = document.createElement('div');
                 infoDiv.innerHTML = `<h4>${col}</h4>` + segments.map(s => {
                     const dur = (new Date(s.end) - new Date(s.start)) / 1000;
-                    return `<div>${s.start} ~ ${s.end}<br>최대 값차이 : ${(s.max).toFixed(2)}%<br>지속시간 : ${dur.toFixed(0)}초<br></div>`;
+                    return `<div>{<br>start : ${s.start},<br>end : ${s.end},<br>diff : ${(s.max).toFixed(2)}%,<br>duration : ${dur.toFixed(0)}초<br>},</div>`;
                 }).join('');
                 diffInfoDiv.appendChild(infoDiv);
             });

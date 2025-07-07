@@ -529,14 +529,13 @@ def extract_process_ranges_incrementally():
                     duration = ts - current_proc["start_time"]
                     if duration >= timedelta(hours=1):
                         thicknesses = predict_thickness(current_proc["start_time"], ts, current_proc["start_table"], table)
-                        if len(thicknesses) == 0:
-                            thicknesses = [0 for _ in range(45)]
-                        insert_trace_info_with_thickness(current_proc["start_time"], ts, current_proc["start_table"], table, thicknesses)
-                        print(current_proc["start_time"], ts, thicknesses, '\n')
-                        
-                        pred_df = predict_trace_parameter(current_proc["start_time"], ts, current_proc["start_table"], table)
-                        insert_trace_pred(pred_df)
-                        print(f"예측데이터 저장완료")
+                        if len(thicknesses) > 0:
+                            insert_trace_info_with_thickness(current_proc["start_time"], ts, current_proc["start_table"], table, thicknesses)
+                            print(current_proc["start_time"], ts, thicknesses, '\n')
+                            
+                            pred_df = predict_trace_parameter(current_proc["start_time"], ts, current_proc["start_table"], table)
+                            insert_trace_pred(pred_df)
+                            print(f"예측데이터 저장완료")
                         
                     current_proc = None
                 elif step in ("", "NAN", "NULL", "None", "nan"):
@@ -544,14 +543,13 @@ def extract_process_ranges_incrementally():
                         duration = last_ts - current_proc["start_time"]
                         if duration >= timedelta(hours=1):
                             thicknesses = predict_thickness(current_proc["start_time"], last_ts, current_proc["start_table"], last_table)
-                        if len(thicknesses) == 0:
-                            thicknesses = [0 for _ in range(45)]
-                            insert_trace_info_with_thickness(current_proc["start_time"], last_ts, current_proc["start_table"], last_table, thicknesses)
-                            print(current_proc["start_time"], last_ts, thicknesses, '\n')
-                            
-                            predict_trace_parameter(current_proc["start_time"], last_ts, current_proc["start_table"], last_table)
-                            insert_trace_pred(pred_df)
-                            print(f"예측데이터 저장완료")
+                            if len(thicknesses) > 0:
+                                insert_trace_info_with_thickness(current_proc["start_time"], last_ts, current_proc["start_table"], last_table, thicknesses)
+                                print(current_proc["start_time"], last_ts, thicknesses, '\n')
+                                
+                                predict_trace_parameter(current_proc["start_time"], last_ts, current_proc["start_table"], last_table)
+                                insert_trace_pred(pred_df)
+                                print(f"예측데이터 저장완료")
                             
                         current_proc = None
                 elif last_ts:
@@ -560,14 +558,13 @@ def extract_process_ranges_incrementally():
                         duration = last_ts - current_proc["start_time"]
                         if duration >= timedelta(hours=1):
                             thicknesses = predict_thickness(current_proc["start_time"], last_ts, current_proc["start_table"], last_table)
-                        if len(thicknesses) == 0:
-                            thicknesses = [0 for _ in range(45)]
-                            insert_trace_info_with_thickness(current_proc["start_time"], last_ts, current_proc["start_table"], last_table, thicknesses)
-                            print(f"⚠️ 중단 감지 → 저장됨: {current_proc['start_time']} ~ {last_ts}", thicknesses, '\n')
-                            
-                            pred_df = predict_trace_parameter(current_proc["start_time"], last_ts, current_proc["start_table"], last_table)
-                            insert_trace_pred(pred_df)
-                            print(f"예측데이터 저장완료")
+                            if len(thicknesses) > 0:
+                                insert_trace_info_with_thickness(current_proc["start_time"], last_ts, current_proc["start_table"], last_table, thicknesses)
+                                print(f"⚠️ 중단 감지 → 저장됨: {current_proc['start_time']} ~ {last_ts}", thicknesses, '\n')
+                                
+                                pred_df = predict_trace_parameter(current_proc["start_time"], last_ts, current_proc["start_table"], last_table)
+                                insert_trace_pred(pred_df)
+                                print(f"예측데이터 저장완료")
                             
                         else:
                             print(f"⚠️ 중단 감지 → 무시됨(1시간 미만): {current_proc['start_time']} ~ {last_ts}\n")
