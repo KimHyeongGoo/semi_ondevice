@@ -40,6 +40,11 @@
 
 <body>
     <h2 id="title">이벤트 로그 리포트</h2>
+    <!-- 1) 로그 복사/다운로드 버튼 추가 -->
+    <div id="log-tools" style="margin-bottom: 10px;">
+        <button id="copy-log-json">📋 JSON 복사</button>
+        <button id="download-log-json">⬇️ JSON 다운로드</button>
+    </div>
     <pre id="log-content" style="margin-bottom: 10px; font-size: 16px; font-weight: bold; white-space: pre-wrap;"></pre>
     <div id="layout-container">
         <div id="charts-area">
@@ -58,7 +63,17 @@
             const tzOffset = date.getTimezoneOffset() * 60000;
             return new Date(date - tzOffset).toISOString();
         }
-
+        // JSON/Blob 다운로드 유틸
+        function downloadBlob(content, filename, type) {
+            const blob = new Blob([content], { type });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
         const params = new URLSearchParams(window.location.search);
         const info = JSON.parse(decodeURIComponent(params.get("info")));
         const time = new Date(info.time);
@@ -93,7 +108,25 @@
         fetch(`/api/log_detail?time=${encodeURIComponent(info.time)}&parameter=${encodeURIComponent(param)}`)
             .then(res => res.json())
             .then(data => {
-                document.getElementById("log-content").innerText = data.message || "(메시지 없음)";
+                // message가 객체일 수도 있어서 stringify
+                const msgText = typeof data.message === 'string'
+                    ? data.message
+                    : JSON.stringify(data.message, null, 2);
+
+                // 1) 화면에 출력
+                document.getElementById("log-content").innerText = msgText;
+
+                // 2) 복사 버튼
+                document.getElementById("copy-log-json").onclick = () => {
+                    navigator.clipboard.writeText(msgText)
+                        .then(() => alert('로그 JSON이 클립보드에 복사되었습니다.'))
+                        .catch(err => alert('복사 실패: ' + err));
+                };
+
+                // 3) 다운로드 버튼
+                document.getElementById("download-log-json").onclick = () => {
+                    downloadBlob(msgText, 'log.json', 'application/json');
+                };
             });
 
         const diffInfoDiv = document.getElementById('diff-info');

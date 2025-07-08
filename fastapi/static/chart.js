@@ -21,8 +21,9 @@ function parseTimeString(tstr) {
 }
 
 function createCharts() {
-    columns.forEach(col => {
+    columns.forEach((col, idx) => {
         const ctx = document.getElementById(`chart-${col}`).getContext("2d");
+        const isLast = idx == columns.length - 1;
         charts[col] = new Chart(ctx, {
             type: 'line',
             data: {
@@ -34,10 +35,29 @@ function createCharts() {
                 ]
             },
             options: {
+                plugins: {
+                    title: {
+                        display: true,
+                        text: col,
+                        position: 'left',
+                        padding: { top: 8, bottom: 4 },
+                        font: { size: 14, weight: 'bold' }
+                    },
+                    legend: { display: true, position: 'top' }
+                },
                 animation: false,
                 parsing: false,
+                responsive: true,
+                maintainAspectRatio: false,  // HTML height를 따르도록
                 scales: {
-                    x: { type: "time", time: { tooltipFormat: 'HH:mm:ss', displayFormats: { second: 'HH:mm:ss' } }, title: { display: true, text: "Time" } },
+                    // x: { type: "time", time: { tooltipFormat: 'HH:mm:ss', displayFormats: { second: 'HH:mm:ss' } }, title: { display: true, text: "Time" } },
+                    x: {
+                        type: 'time',
+                        display: isLast,                // 축 전체 표시 여부
+                        ticks: { display: isLast },     // 눈금 레이블 표시 여부
+                        title: { display: isLast, text: 'Time' },
+                        grid: { display: false }
+                    },
                     y: { title: { display: true, text: "Value" } }
                 }
             }
