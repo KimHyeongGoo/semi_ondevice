@@ -43,7 +43,8 @@
         }
 
         .chart-box {
-            padding: 0;
+            position: relative;
+            padding: 0 70px 0 0;
             border: none;
             height: 130px;
             background: none;
@@ -52,7 +53,7 @@
 
         canvas {
 
-            width: 95% !important;
+            width: 100% !important;
 
         }
 
@@ -197,6 +198,70 @@
             background-color: #007bff;
             color: #fff;
         }
+
+        .toggle-item {
+            display: inline-flex;
+            align-items: center;
+            margin-right: 12px;
+        }
+
+        .toggle-container {
+            position: absolute;
+            top: 50%;
+            right: 8px;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            font-size: 12px;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 40px;
+            height: 20px;
+            margin-right: 6px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 20px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 14px;
+            width: 14px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked+.slider {
+            background-color: #2196F3;
+        }
+
+        input:checked+.slider:before {
+            transform: translateX(20px);
+        }
     </style>
 </head>
 
@@ -227,21 +292,19 @@
     </div>
     <br>
 
-    <div>
-        <strong>차트 출력 ON/OFF</strong><br>
-        {% for col in columns %}
-        <label style="margin-right: 10px;">
-            <input type="checkbox" class="toggle-chart" data-col="{{ col }}" checked>
-            {{ col }}
-        </label>
-        {% endfor %}
-    </div><br>
 
     <div id="layout-container">
         <div id="charts-container">
             {% for col in columns %}
-            <div id="chart-box-{{ col }}" class="chart-box">
+            <div id="chart-box-{{ col }}" class="chart-box" data-order="{{ loop.index }}">
                 <label class="chart-title"><strong>{{ col }}</strong></label>
+                <div class="toggle-container">
+                    <span class="toggle-text">숨기기</span>
+                    <label class="switch">
+                        <input type="checkbox" class="toggle-chart" data-col="{{ col }}" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
                 <canvas id="chart-{{ col }}"></canvas>
             </div>
             {% endfor %}

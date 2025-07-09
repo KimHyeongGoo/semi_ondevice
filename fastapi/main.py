@@ -45,6 +45,7 @@ predict_columns = [
 ]
 
 LIMIT_PATH = "limits.yaml"
+SETTINGS_PATH = "settings.yaml"
 
 @app.get("/", response_class=HTMLResponse)
 async def get_page(request: Request):
@@ -76,6 +77,24 @@ async def get_data(duration: int = 300, step: int = 10):
             limits = yaml.safe_load(f)
     data["limits"] = limits
     return JSONResponse(data)
+
+
+@app.get("/api/settings")
+async def get_settings():
+    if os.path.exists(SETTINGS_PATH):
+        with open(SETTINGS_PATH, 'r') as f:
+            settings = yaml.safe_load(f) or {}
+    else:
+        settings = {}
+    return JSONResponse(settings)
+
+
+@app.post("/api/settings")
+async def save_settings(request: Request):
+    body = await request.json()
+    with open(SETTINGS_PATH, "w") as f:
+        yaml.dump(body, f)
+    return JSONResponse({"status": "saved"})
 
 @app.post("/api/save_limits")
 async def save_limits(request: Request):

@@ -2,6 +2,7 @@ const charts = {};
 const columns = Array.from(document.querySelectorAll(".toggle-chart")).map(cb => cb.dataset.col);
 let selectedDuration = 300; // 기본값: 5분
 let selectedStep = 10; //
+let hiddenColumns = [];
 let limits = {};
 const stepNames = {
     2: 'END', 0: 'STANDBY/IDLE', 1: 'START', 17: 'B.UP', 3: 'WAIT',
@@ -19,6 +20,49 @@ const stepNames = {
 function parseTimeString(tstr) {
     return new Date(tstr.replace(" ", "T").replace(/\.\d+$/, ''));
 }
+
+async function loadSettings() {
+    try {
+        const res = await fetch('/api/settings');
+        if (!res.ok) return;
+        const s = await res.json();
+        if (s.duration) selectedDuration = s.duration;
+        if (s.step) selectedStep = s.step;
+        hiddenColumns = s.hidden_columns || [];
+        document.getElementById('duration-select').value = String(selectedDuration);
+        document.getElementById('step-select').value = String(selectedStep);
+        document.querySelectorAll('.toggle-chart').forEach(cb => {
+            const col = cb.dataset.col;
+            cb.checked = !hiddenColumns.includes(col);
+            const canvas = document.querySelector(`#chart-${col}`);
+            if (canvas) canvas.style.display = cb.checked ? 'block' : 'none';
+            const box = document.getElementById(`chart-box-${col}`);
+            if (box) box.style.order = cb.checked ? box.dataset.order : 999;
+            const text = cb.closest('.toggle-container').querySelector('.toggle-text');
+            if (text) text.textContent = cb.checked ? '숨기기' : col;
+        });
+    } catch (e) {
+        console.error('failed to load settings', e);
+    }
+}
+
+async function saveSettings() {
+    const hidden = [];
+    document.querySelectorAll('.toggle-chart').forEach(cb => {
+        if (!cb.checked) hidden.push(cb.dataset.col);
+    });
+    const body = { duration: selectedDuration, step: selectedStep, hidden_columns: hidden };
+    try {
+        await fetch('/api/settings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        });
+    } catch (e) {
+        console.error('failed to save settings', e);
+    }
+}
+
 
 function createCharts() {
     columns.forEach((col, idx) => {
@@ -117,6 +161,12 @@ async function fetchAndUpdate() {
         chart.options.scales.x.min = xMin;
         chart.options.scales.x.max = xMax;
         chart.update();
+
+        const cb = document.querySelector(`.toggle-chart[data-col="${col}"]`);
+        const canvas = document.getElementById(`chart-${col}`);
+        if (cb && canvas) {
+            canvas.style.display = cb.checked ? 'block' : 'none';
+        }
     });
 }
 
@@ -254,7 +304,11 @@ async function fetchLogs() {
 
 
 // 초기 실행
-window.addEventListener("DOMContentLoaded", () => {
+window.addEventListener("DOMContentLoaded", async () => {
+    document.querySelectorAll('.chart-box').forEach(box => {
+        box.style.order = box.dataset.order;
+    });
+    await loadSettings();
     createCharts();
     fetchAndUpdate();
     setInterval(fetchAndUpdate, 1000);
@@ -264,19 +318,26 @@ window.addEventListener("DOMContentLoaded", () => {
     document.getElementById("duration-select").addEventListener("change", e => {
         selectedDuration = parseInt(e.target.value);
         fetchAndUpdate();
+        saveSettings();
     });
 
     document.getElementById("step-select").addEventListener("change", e => {
         selectedStep = parseInt(e.target.value);
         fetchAndUpdate();
+        saveSettings();
     });
 
 
     document.querySelectorAll(".toggle-chart").forEach(cb => {
         cb.addEventListener("change", () => {
             const col = cb.dataset.col;
+            const canvas = document.querySelector(`#chart-${col}`);
+            if (canvas) canvas.style.display = cb.checked ? "block" : "none";
             const box = document.getElementById(`chart-box-${col}`);
-            box.style.display = cb.checked ? "block" : "none";
+            if (box) box.style.order = cb.checked ? box.dataset.order : 999;
+            const text = cb.closest('.toggle-container').querySelector('.toggle-text');
+            if (text) text.textContent = cb.checked ? '숨기기' : col;
+            saveSettings();
         });
     });
 
