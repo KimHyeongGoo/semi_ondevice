@@ -50,8 +50,8 @@ tasks = [
     'VG13 Press value'],                 # Baratron Gauge(의 압력 모니터링 값 (프로세스외 작용)
     ['Temp_Act_U',            # 상부 위치 실제 온도
     'Temp_Act_CU',           # 중앙 상부 위치 실제 온도
-    'Temp_Act_C'],            # 중앙 위치 실제 온도
-    ['Temp_Act_CL',           # 중앙 하부 위치 실제 온도
+    'Temp_Act_C',            # 중앙 위치 실제 온도
+    'Temp_Act_CL',           # 중앙 하부 위치 실제 온도
     'Temp_Act_L']    
 ]
 
@@ -329,21 +329,39 @@ def insert_pred_data(pool, predict_column, predict_steps, pred_dates, pred_datas
     try:
         cur = conn.cursor()
         try:
-            predict_column_modified = predict_column.replace('.', '_').replace(' ', '_').replace('-', '_')
-            for idx, predict_step in enumerate(predict_steps):
-                save_table_name = f"pred_{predict_step}_{predict_column_modified}"
-                insert_query = f"""
-                INSERT INTO "{save_table_name}" ("Timestamp", "Parameter", "ProcessRecipeStepID", "ProcessRecipeStepName")
-                VALUES (%s::timestamp, %s::real, %s::integer, %s::text)
-                ON CONFLICT ("Timestamp") DO NOTHING
-                """
-                rows = [(
-                    pred_dates[idx],
-                    float(pred_datas[0, idx]),
-                    int(last_step_ids[idx]),
-                    str(last_step_names[idx])
-                )]
-                cur.executemany(insert_query, rows)
+            if type(predict_column) == type([]):
+                for col_idx, predict_col in enumerate(predict_column):
+                    predict_column_modified = predict_col.replace('.', '_').replace(' ', '_').replace('-', '_')
+                    for idx, predict_step in enumerate(predict_steps):
+                        save_table_name = f"pred_{predict_step}_{predict_column_modified}"
+                        insert_query = f"""
+                        INSERT INTO "{save_table_name}" ("Timestamp", "Parameter", "ProcessRecipeStepID", "ProcessRecipeStepName")
+                        VALUES (%s::timestamp, %s::real, %s::integer, %s::text)
+                        ON CONFLICT ("Timestamp") DO NOTHING
+                        """
+                        rows = [(
+                            pred_dates[idx],
+                            float(pred_datas[0, idx, col_idx]),
+                            int(last_step_ids[idx]),
+                            str(last_step_names[idx])
+                        )]
+                        cur.executemany(insert_query, rows)
+            else:
+                predict_column_modified = predict_column.replace('.', '_').replace(' ', '_').replace('-', '_')
+                for idx, predict_step in enumerate(predict_steps):
+                    save_table_name = f"pred_{predict_step}_{predict_column_modified}"
+                    insert_query = f"""
+                    INSERT INTO "{save_table_name}" ("Timestamp", "Parameter", "ProcessRecipeStepID", "ProcessRecipeStepName")
+                    VALUES (%s::timestamp, %s::real, %s::integer, %s::text)
+                    ON CONFLICT ("Timestamp") DO NOTHING
+                    """
+                    rows = [(
+                        pred_dates[idx],
+                        float(pred_datas[0, idx]),
+                        int(last_step_ids[idx]),
+                        str(last_step_names[idx])
+                    )]
+                    cur.executemany(insert_query, rows)
             conn.commit()
             #print(predict_column, "END")
         
@@ -447,6 +465,18 @@ def ray_predict(selected_cols, predict_columns, window_size, predict_steps, mode
         scaler_X = joblib.load(os.path.join(scaler_path,'scaler_X.pkl'))
         for predict_column in predict_columns:
             loss_func = 'mae'
+            
+            if 'Temp_Act' in predict_column:
+                loaded_models['Temp_Act'] = load_model(os.path.join(model_path,f'192_patchtst_Temp.keras'), custom_objects={
+                    'PatchEmbedding': PatchEmbedding,
+                    'PositionalEncoding': PositionalEncoding,
+                    'loss': loss_func
+                })
+                scaler_X = joblib.load(os.path.join(scaler_path,'scaler_X_Temp.pkl'))
+                scaler_ys['Temp_Act'] = joblib.load(os.path.join(scaler_path,f'scaler_y_Temp.pkl'))
+                break
+            
+                
             scaler_ys[predict_column] = joblib.load(os.path.join(scaler_path,f'scaler_y_{predict_column}.pkl'))
             if predict_column == "VG11 Press value": 
                 # 커스텀 weighted loss 함수 생성
@@ -457,7 +487,7 @@ def ray_predict(selected_cols, predict_columns, window_size, predict_steps, mode
                 'PositionalEncoding': PositionalEncoding,
                 'loss': loss_func
             })
-            if predict_column == "MFC1_N2-1" or predict_column == "MFC2_N2-2" or predict_column == "MFC3_N2-3" or predict_column == "MFC4_N2-4" or predict_column == "MFC27_L.POS" or predict_column == "MFC28_R.POS" or predict_column == "VG12 Press value" or predict_column == "VG13 Press value":
+            if check_columns(predict_column):
                 loaded_models_main[predict_column] = load_model(os.path.join(model_path,f'192_patchtst_{predict_column}_main.keras'), custom_objects={
                     'PatchEmbedding': PatchEmbedding,
                     'PositionalEncoding': PositionalEncoding,
@@ -547,12 +577,6 @@ def ray_predict(selected_cols, predict_columns, window_size, predict_steps, mode
         for predict_column in predict_columns:
             # 3. 데이터 전처리
             try:
-                add_columns = []
-                if 'Temp_Act_' in predict_column:
-                    scaler_X = joblib.load(os.path.join(scaler_path,f'scaler_X_{predict_column}.pkl'))
-                    temp_pos = predict_column.split('_')[-1]
-                    for add_col in temp_add_columns:
-                        add_columns.append(add_col+temp_pos)
                 sequence_data = data[selected_cols + add_columns]
             except Exception as e:
                 logg(f"[PID|{proc_pid}].log", "ray_predict() : 데이터 전처리 오류발생")
@@ -562,7 +586,8 @@ def ray_predict(selected_cols, predict_columns, window_size, predict_steps, mode
             
             # 4. 예측 (모델 추론)
             try:
-                if check_columns(predict_column) and is_main_proc(sequence_data.iloc[0]['ProcessRecipeStepID']) and is_main_proc(sequence_data.iloc[-1]['ProcessRecipeStepID']):
+                if check_columns(predict_column) and is_main_proc(step_data.iloc[0]['ProcessRecipeStepID']):
+                    #logg(f"[PID|{proc_pid}].log", "main proc")
                     X_data = scaler_X_main.transform(sequence_data.values)
                     pred_scaled = loaded_models_main[predict_column].predict(np.array([X_data]), verbose=0)
                     pred_datas = np.stack([
@@ -571,11 +596,19 @@ def ray_predict(selected_cols, predict_columns, window_size, predict_steps, mode
                         ], axis=1)
                 else:
                     X_data = scaler_X.transform(sequence_data.values)
-                    pred_scaled = loaded_models[predict_column].predict(np.array([X_data]), verbose=0)
-                    pred_datas = np.stack([
-                            scaler_ys[predict_column].inverse_transform(pred_scaled[:, [i]])[:, 0]
-                            for i in range(3)
-                        ], axis=1)
+                    if 'Temp_Act' in predict_column:
+                        pred_scaled = loaded_models['Temp_Act'].predict(np.array([X_data]), verbose=0)
+                        y_pred_reshaped = pred_scaled.reshape(-1, len(predict_steps), len(predict_columns))
+                        pred_datas = np.stack([
+                                scaler_ys['Temp_Act'].inverse_transform(y_pred_reshaped[:, i, :])
+                                for i in range(len(predict_steps))
+                            ], axis=1)
+                    else:
+                        pred_scaled = loaded_models[predict_column].predict(np.array([X_data]), verbose=0)
+                        pred_datas = np.stack([
+                                scaler_ys[predict_column].inverse_transform(pred_scaled[:, [i]])[:, 0]
+                                for i in range(len(predict_steps))
+                            ], axis=1)
                 pred_dates = []
                 for predict_step in predict_steps:
                     try:
@@ -617,48 +650,91 @@ def ray_predict(selected_cols, predict_columns, window_size, predict_steps, mode
                         
             # 6. 에측데이터 저장
             #start_time_proc = time.time()     
-            insert_pred_data(pool, predict_column, predict_steps, pred_dates, pred_datas, last_step_ids, last_step_names)
+            if 'Temp_Act' in predict_column:
+                insert_pred_data(pool, predict_columns, predict_steps, pred_dates, pred_datas, last_step_ids, last_step_names)
+                for col_idx, predict_column in enumerate(predict_columns):
+                    for idx, predict_step in enumerate(predict_steps):
+                        pred_date = pred_dates[idx]
+                        pred_data = pred_datas[0,idx,col_idx]
+                        last_step_id = last_step_ids[idx]
+                        last_step_name = last_step_names[idx]
+                        #print(pred_date, pred_data)
+                        
+                        #start_time_proc = time.time()
+                        # 7. 상하한선 터치 이벤트 데이터 저장
+                        try:   
+                            if last_step_id != -1 and pred_data is not None:
+                                # limits.yaml 읽기
+                                limits = {}
+                                if os.path.exists("./fastapi/limits.yaml"):
+                                    with open("./fastapi/limits.yaml", "r", encoding="utf-8") as f:
+                                        limits = yaml.safe_load(f)
+                                    step_limits = limits.get(predict_column, {}).get(str(last_step_id))
+                                    if step_limits:
+                                        if "min" in step_limits and pred_data <= step_limits["min"]:
+                                            insert_violation(pool, str(pred_date), predict_column, last_step_id, last_step_name, pred_data, 'min', step_limits["min"])
+                                        elif "max" in step_limits and pred_data >= step_limits["max"]:
+                                            insert_violation(pool, str(pred_date), predict_column, last_step_id, last_step_name, pred_data, 'max', step_limits["max"])
+                            elif pred_data is not None:
+                                limits = {}
+                                if os.path.exists("./fastapi/limits.yaml"):
+                                    with open("./fastapi/limits.yaml", "r", encoding="utf-8") as f:
+                                        limits = yaml.safe_load(f)
+                                    step_limits = limits.get(predict_column, {}).get('all')
+                                    if step_limits:
+                                        if "min" in step_limits and pred_data <= step_limits["min"]:
+                                            insert_violation(pool, str(pred_date), predict_column, last_step_id, last_step_name, pred_data, 'min', step_limits["min"])
+                                        elif "max" in step_limits and pred_data >= step_limits["max"]:
+                                            insert_violation(pool, str(pred_date), predict_column, last_step_id, last_step_name, pred_data, 'max', step_limits["max"])
+                            #logg(f"[PID|{proc_pid}].log", f"⏱ 소요 시간4: {time.time() - start_time_proc:.3f}초")
+                        except Exception as e:
+                            logg(f"[PID|{proc_pid}].log", "ray_predict() : 상하한 터치 이벤트 처리시 오류발생")
+                            logg(f"[PID|{proc_pid}].log", str(e))
+                            time.sleep(0.1)
+                            continue
+                break
+            else:
+                insert_pred_data(pool, predict_column, predict_steps, pred_dates, pred_datas, last_step_ids, last_step_names)
             #logg(f"[PID|{proc_pid}].log", f"⏱ 소요 시간3: {time.time() - start_time_proc:.3f}초")
-            
-            for idx, predict_step in enumerate(predict_steps):
-                pred_date = pred_dates[idx]
-                pred_data = pred_datas[0,idx]
-                last_step_id = last_step_ids[idx]
-                last_step_name = last_step_names[idx]
-                #print(pred_date, pred_data)
-                
-                #start_time_proc = time.time()
-                # 7. 상하한선 터치 이벤트 데이터 저장
-                try:   
-                    if last_step_id != -1 and pred_data is not None:
-                        # limits.yaml 읽기
-                        limits = {}
-                        if os.path.exists("./fastapi/limits.yaml"):
-                            with open("./fastapi/limits.yaml", "r", encoding="utf-8") as f:
-                                limits = yaml.safe_load(f)
-                            step_limits = limits.get(predict_column, {}).get(str(last_step_id))
-                            if step_limits:
-                                if "min" in step_limits and pred_data <= step_limits["min"]:
-                                    insert_violation(pool, str(pred_date), predict_column, last_step_id, last_step_name, pred_data, 'min', step_limits["min"])
-                                elif "max" in step_limits and pred_data >= step_limits["max"]:
-                                    insert_violation(pool, str(pred_date), predict_column, last_step_id, last_step_name, pred_data, 'max', step_limits["max"])
-                    elif pred_data is not None:
-                        limits = {}
-                        if os.path.exists("./fastapi/limits.yaml"):
-                            with open("./fastapi/limits.yaml", "r", encoding="utf-8") as f:
-                                limits = yaml.safe_load(f)
-                            step_limits = limits.get(predict_column, {}).get('all')
-                            if step_limits:
-                                if "min" in step_limits and pred_data <= step_limits["min"]:
-                                    insert_violation(pool, str(pred_date), predict_column, last_step_id, last_step_name, pred_data, 'min', step_limits["min"])
-                                elif "max" in step_limits and pred_data >= step_limits["max"]:
-                                    insert_violation(pool, str(pred_date), predict_column, last_step_id, last_step_name, pred_data, 'max', step_limits["max"])
-                    #logg(f"[PID|{proc_pid}].log", f"⏱ 소요 시간4: {time.time() - start_time_proc:.3f}초")
-                except Exception as e:
-                    logg(f"[PID|{proc_pid}].log", "ray_predict() : 상하한 터치 이벤트 처리시 오류발생")
-                    logg(f"[PID|{proc_pid}].log", str(e))
-                    time.sleep(0.1)
-                    continue
+                for idx, predict_step in enumerate(predict_steps):
+                    pred_date = pred_dates[idx]
+                    pred_data = pred_datas[0,idx]
+                    last_step_id = last_step_ids[idx]
+                    last_step_name = last_step_names[idx]
+                    #print(pred_date, pred_data)
+                    
+                    #start_time_proc = time.time()
+                    # 7. 상하한선 터치 이벤트 데이터 저장
+                    try:   
+                        if last_step_id != -1 and pred_data is not None:
+                            # limits.yaml 읽기
+                            limits = {}
+                            if os.path.exists("./fastapi/limits.yaml"):
+                                with open("./fastapi/limits.yaml", "r", encoding="utf-8") as f:
+                                    limits = yaml.safe_load(f)
+                                step_limits = limits.get(predict_column, {}).get(str(last_step_id))
+                                if step_limits:
+                                    if "min" in step_limits and pred_data <= step_limits["min"]:
+                                        insert_violation(pool, str(pred_date), predict_column, last_step_id, last_step_name, pred_data, 'min', step_limits["min"])
+                                    elif "max" in step_limits and pred_data >= step_limits["max"]:
+                                        insert_violation(pool, str(pred_date), predict_column, last_step_id, last_step_name, pred_data, 'max', step_limits["max"])
+                        elif pred_data is not None:
+                            limits = {}
+                            if os.path.exists("./fastapi/limits.yaml"):
+                                with open("./fastapi/limits.yaml", "r", encoding="utf-8") as f:
+                                    limits = yaml.safe_load(f)
+                                step_limits = limits.get(predict_column, {}).get('all')
+                                if step_limits:
+                                    if "min" in step_limits and pred_data <= step_limits["min"]:
+                                        insert_violation(pool, str(pred_date), predict_column, last_step_id, last_step_name, pred_data, 'min', step_limits["min"])
+                                    elif "max" in step_limits and pred_data >= step_limits["max"]:
+                                        insert_violation(pool, str(pred_date), predict_column, last_step_id, last_step_name, pred_data, 'max', step_limits["max"])
+                        #logg(f"[PID|{proc_pid}].log", f"⏱ 소요 시간4: {time.time() - start_time_proc:.3f}초")
+                    except Exception as e:
+                        logg(f"[PID|{proc_pid}].log", "ray_predict() : 상하한 터치 이벤트 처리시 오류발생")
+                        logg(f"[PID|{proc_pid}].log", str(e))
+                        time.sleep(0.1)
+                        continue
             # 8. 오래된 데이터 삭제
             if cnt%3600==0:
                 conn = pool.getconn()
