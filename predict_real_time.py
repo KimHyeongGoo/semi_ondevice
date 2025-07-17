@@ -35,25 +35,18 @@ else:
 window_size = 192  
 predict_steps = [10, 20, 30]  
 #예측할 칼럼 리스트
-tasks = [      
-    ['MFC7_DCS',          
-    'MFC8_NH3',          
-    'MFC26_F.PWR'],
-    ['MFC1_N2-1',
-    'MFC2_N2-2',         
-    'MFC3_N2-3'], 
-    ['MFC4_N2-4',          
-    'MFC27_L.POS',        
-    'MFC28_R.POS'],        
-    ['VG11 Press value',              
-    'VG12 Press value',                 # Baratron Gauge(의 압력 모니터링 값 (프로세스외 작용)
-    'VG13 Press value'],                 # Baratron Gauge(의 압력 모니터링 값 (프로세스외 작용)
-    ['Temp_Act_U',            # 상부 위치 실제 온도
-    'Temp_Act_CU',           # 중앙 상부 위치 실제 온도
-    'Temp_Act_C',            # 중앙 위치 실제 온도
-    'Temp_Act_CL',           # 중앙 하부 위치 실제 온도
-    'Temp_Act_L']    
+tasks = [
+    ['MFC7_DCS','MFC8_NH3','MFC26_F.PWR'],
+    ['MFC1_N2-1','MFC2_N2-2','MFC3_N2-3'],
+    ['MFC4_N2-4','MFC27_L.POS','MFC28_R.POS'],
+    ['VG11 Press value','VG12 Press value','VG13 Press value'],
+    ['Temp_Act_U','Temp_Act_CU','Temp_Act_C','Temp_Act_CL','Temp_Act_L'],
 ]
+
+param_table_map = {}
+for idx, cols in enumerate(tasks):
+    for col in cols:
+        param_table_map[col] = f"pred_proc{idx}"
 
 temp_add_columns = [
     'Temp_Set_', #'Temp_Set_'
@@ -323,45 +316,35 @@ def get_data_by_start_end(pool, selected_cols, start, end, add_columns):
 
             
                 
-def insert_pred_data(pool, predict_column, predict_steps, pred_dates, pred_datas, last_step_ids, last_step_names):
+def insert_pred_data(pool, table_name, col_names, predict_steps, pred_dates, pred_datas, last_step_ids, last_step_names):
     conn = pool.getconn()
     cur = None
     try:
         cur = conn.cursor()
+        cur.execute("SET synchronous_commit TO OFF;")
         try:
-            if type(predict_column) == type([]):
-                for col_idx, predict_col in enumerate(predict_column):
-                    predict_column_modified = predict_col.replace('.', '_').replace(' ', '_').replace('-', '_')
-                    for idx, predict_step in enumerate(predict_steps):
-                        save_table_name = f"pred_{predict_step}_{predict_column_modified}"
-                        insert_query = f"""
-                        INSERT INTO "{save_table_name}" ("Timestamp", "Parameter", "ProcessRecipeStepID", "ProcessRecipeStepName")
-                        VALUES (%s::timestamp, %s::real, %s::integer, %s::text)
-                        ON CONFLICT ("Timestamp") DO NOTHING
-                        """
-                        rows = [(
-                            pred_dates[idx],
-                            float(pred_datas[0, idx, col_idx]),
-                            int(last_step_ids[idx]),
-                            str(last_step_names[idx])
-                        )]
-                        cur.executemany(insert_query, rows)
-            else:
-                predict_column_modified = predict_column.replace('.', '_').replace(' ', '_').replace('-', '_')
-                for idx, predict_step in enumerate(predict_steps):
-                    save_table_name = f"pred_{predict_step}_{predict_column_modified}"
-                    insert_query = f"""
-                    INSERT INTO "{save_table_name}" ("Timestamp", "Parameter", "ProcessRecipeStepID", "ProcessRecipeStepName")
-                    VALUES (%s::timestamp, %s::real, %s::integer, %s::text)
-                    ON CONFLICT ("Timestamp") DO NOTHING
-                    """
-                    rows = [(
-                        pred_dates[idx],
-                        float(pred_datas[0, idx]),
-                        int(last_step_ids[idx]),
-                        str(last_step_names[idx])
-                    )]
-                    cur.executemany(insert_query, rows)
+            for idx, predict_step in enumerate(predict_steps):
+                col_sql = ', '.join(['"Timestamp"', '"PredictStep"'] + [f'"{c}"' for c in col_names] + ['"ProcessRecipeStepID"', '"ProcessRecipeStepName"'])
+                placeholders = ', '.join(['%s'] * (2 + len(col_names) + 2))
+                insert_query = f"""
+                INSERT INTO "{table_name}" ({col_sql})
+                VALUES ({placeholders})
+                ON CONFLICT ("Timestamp") DO NOTHING
+                """
+                values = [
+                    pred_dates[idx],
+                    int(predict_step),
+                ]
+                if len(pred_datas.shape) == 3:
+                    for col_idx in range(len(col_names)):
+                        values.append(float(pred_datas[0, idx, col_idx]))
+                else:
+                    values.append(float(pred_datas[0, idx]))
+                values += [
+                    int(last_step_ids[idx]),
+                    str(last_step_names[idx])
+                ]
+                cur.execute(insert_query, values)
             conn.commit()
             #print(predict_column, "END")
         
@@ -376,30 +359,29 @@ def insert_pred_data(pool, predict_column, predict_steps, pred_dates, pred_datas
 
 
 def is_main_proc(step_id):
-    if int(step_id) == 111:
-        return True
-    if int(step_id) == 128:
-        return True
-    if int(step_id) == 119:
-        return True
-    if int(step_id) == 117:
-        return True
-    if int(step_id) == 152:
-        return True
-    if int(step_id) == 113:
-        return True
-    if int(step_id) == 115:
-        return True
-    if int(step_id) == 116:
-        return True
-    return False
+    main_proc_ids = {111, 128, 119, 117, 152, 113, 115, 116}
+    try:
+        return int(step_id) in main_proc_ids
+    except (TypeError, ValueError):
+        return False
 
 def check_columns(col):
-    if col == 'MFC1_N2-1' or col == 'MFC2_N2-2' or col == 'MFC3_N2-3' or col == 'MFC4_N2-4':
+    """Check if the given column has a corresponding auxiliary model."""
+
+    main_cols = {
+        'MFC1_N2-1',
+        'MFC2_N2-2',
+        'MFC3_N2-3',
+        'MFC4_N2-4',
+        'MFC27_L.POS',
+        'MFC28_R.POS',
+        'VG12 Press value',
+        'VG13 Press value',
+    }
+    if col in main_cols:
         return True
-    if col == 'MFC27_L.POS' or col == 'MFC28_R.POS' or col == 'VG12 Pressure value' or col == 'VG13 Pressure value':
-        return True
-    return False
+    else:
+        return False
             
 
 # 학습 시 loss weighting:
@@ -413,7 +395,7 @@ def get_weighted_mae(lval, hval, add_wight):
 
 # 각 칼럼별 예측 수행
 @ray.remote
-def ray_predict(selected_cols, predict_columns, window_size, predict_steps, model_path = './model', scaler_path = './model/scaler'):
+def ray_predict(proc_idx, selected_cols, predict_columns, window_size, predict_steps, model_path = './model', scaler_path = './model/scaler'):
     #print(predict_columns)
     proc_pid = os.getpid()
     next_pred_start_ts = ""
@@ -442,20 +424,21 @@ def ray_predict(selected_cols, predict_columns, window_size, predict_steps, mode
     cur = None
     try:
         cur = conn.cursor()
-        for predict_column in predict_columns:
-            for predict_step in predict_steps:
-                predict_column_modified = predict_column.replace('.', '_').replace(' ', '_').replace('-', '_')
-                save_table_name = f"pred_{predict_step}_{predict_column_modified}"
-                # 테이블 생성 (없을 경우)
-                create_query = f"""
-                CREATE TABLE IF NOT EXISTS "{save_table_name}" (
-                    "Timestamp" TIMESTAMP PRIMARY KEY,
-                    "Parameter" REAL,
-                    "ProcessRecipeStepID" INTEGER,
-                    "ProcessRecipeStepName" TEXT
-                );
-                """
-                cur.execute(create_query)
+        table_name = f"pred_proc{proc_idx}"
+        cols = [c.replace('.', '_').replace(' ', '_').replace('-', '_') for c in predict_columns]
+        col_defs = ', '.join([f'"{c}" REAL' for c in cols])
+        create_query = f"""
+        CREATE TABLE IF NOT EXISTS "{table_name}" (
+            "Timestamp" TIMESTAMP,
+            "PredictStep" INTEGER,
+            {col_defs},
+            "ProcessRecipeStepID" INTEGER,
+            "ProcessRecipeStepName" TEXT,
+            PRIMARY KEY ("Timestamp")
+        );
+        """
+        cur.execute(create_query)
+        conn.commit()
     finally:
         if cur:
             cur.close()
@@ -573,9 +556,43 @@ def ray_predict(selected_cols, predict_columns, window_size, predict_steps, mode
         
         if len(last_date) == 26: last_date = last_date[:-3]
         #print(predict_column,last_raw_time, start, last_date)
-        step_data = data[["ProcessRecipeStepRemainTime", "ProcessRecipeStepID", "ProcessRecipeStepName"]]   
-        for predict_column in predict_columns:
-            # 3. 데이터 전처리
+        step_data = data[["ProcessRecipeStepRemainTime", "ProcessRecipeStepID", "ProcessRecipeStepName"]]
+        # 3. 데이터 전처리 및 예측
+        try:
+            sequence_data = data[selected_cols + add_columns]
+        except Exception as e:
+            logg(f"[PID|{proc_pid}].log", "ray_predict() : 데이터 전처리 오류발생")
+            logg(f"[PID|{proc_pid}].log", str(e))
+            time.sleep(0.1)
+            continue
+
+        last_step_ids = []
+        last_step_names = []
+        for predict_step in predict_steps:
+            try:
+                remain_str = step_data.iloc[-1]['ProcessRecipeStepRemainTime']
+                if remain_str == "00:00:00":
+                    last_remain_sec = 100
+                else:
+                    h, m, s = map(int, remain_str.split(":"))
+                    last_remain_sec = h * 3600 + m * 60 + s
+                if last_remain_sec >= predict_step:
+                    last_step_id = step_data.iloc[-1]["ProcessRecipeStepID"]
+                    last_step_name = step_data.iloc[-1]["ProcessRecipeStepName"]
+                else:
+                    last_step_id = -1
+                    last_step_name = 'UNKNOWN'
+            except:
+                last_step_id = -1
+                last_step_name = 'UNKNOWN'
+            last_step_ids.append(last_step_id)
+            last_step_names.append(last_step_name)
+        #logg(f"[PID|{proc_pid}].log", f"⏱ 소요 시간2: {time.time() - start_time_proc:.3f}초")
+
+        # 6. 예측데이터 저장
+        all_pred_datas = np.zeros((1, len(predict_steps), len(predict_columns)))
+        temp_handled = False
+        for col_idx, p_col in enumerate(predict_columns):
             try:
                 sequence_data = data[selected_cols + add_columns]
             except Exception as e:
@@ -583,178 +600,102 @@ def ray_predict(selected_cols, predict_columns, window_size, predict_steps, mode
                 logg(f"[PID|{proc_pid}].log", str(e))
                 time.sleep(0.1)
                 continue
-            
-            # 4. 예측 (모델 추론)
+
             try:
-                if check_columns(predict_column) and is_main_proc(step_data.iloc[0]['ProcessRecipeStepID']):
-                    #logg(f"[PID|{proc_pid}].log", "main proc")
+                if check_columns(p_col) and is_main_proc(step_data.iloc[0]['ProcessRecipeStepID']):
                     X_data = scaler_X_main.transform(sequence_data.values)
-                    pred_scaled = loaded_models_main[predict_column].predict(np.array([X_data]), verbose=0)
+                    pred_scaled = loaded_models_main[p_col].predict(np.array([X_data]), verbose=0)
                     pred_datas = np.stack([
-                            scaler_ys_main[predict_column].inverse_transform(pred_scaled[:, [i]])[:, 0]
-                            for i in range(3)
+                            scaler_ys_main[p_col].inverse_transform(pred_scaled[:, [i]])[:, 0]
+                            for i in range(len(predict_steps))
                         ], axis=1)
+                    all_pred_datas[0, :, col_idx] = pred_datas[0]
                 else:
                     X_data = scaler_X.transform(sequence_data.values)
-                    if 'Temp_Act' in predict_column:
+                    if 'Temp_Act' in p_col and not temp_handled:
                         pred_scaled = loaded_models['Temp_Act'].predict(np.array([X_data]), verbose=0)
                         y_pred_reshaped = pred_scaled.reshape(-1, len(predict_steps), len(predict_columns))
-                        pred_datas = np.stack([
+                        tmp = np.stack([
                                 scaler_ys['Temp_Act'].inverse_transform(y_pred_reshaped[:, i, :])
                                 for i in range(len(predict_steps))
                             ], axis=1)
+                        all_pred_datas[0, :, :] = tmp[0, :, :]
+                        temp_handled = True
+                    elif 'Temp_Act' in p_col and temp_handled:
+                        continue
                     else:
-                        pred_scaled = loaded_models[predict_column].predict(np.array([X_data]), verbose=0)
+                        pred_scaled = loaded_models[p_col].predict(np.array([X_data]), verbose=0)
                         pred_datas = np.stack([
-                                scaler_ys[predict_column].inverse_transform(pred_scaled[:, [i]])[:, 0]
+                                scaler_ys[p_col].inverse_transform(pred_scaled[:, [i]])[:, 0]
                                 for i in range(len(predict_steps))
                             ], axis=1)
-                pred_dates = []
-                for predict_step in predict_steps:
-                    try:
-                        pred_date = datetime.strptime(last_date, "%Y-%m-%d %H:%M:%S.%f") + timedelta(seconds=predict_step)
-                    except:
-                        pred_date = datetime.strptime(last_date, "%Y-%m-%d %H:%M:%S") + timedelta(seconds=predict_step)
-                    pred_dates.append(pred_date)
+                        all_pred_datas[0, :, col_idx] = pred_datas[0]
             except Exception as e:
                 logg(f"[PID|{proc_pid}].log", "ray_predict() : model predict 오류발생")
                 logg(f"[PID|{proc_pid}].log", str(e))
                 time.sleep(0.1)
                 continue
-            
-            #logg(f"[PID|{proc_pid}].log", f"⏱ 소요 시간1: {time.time() - start_time_proc:.3f}초")
-            #start_time_proc = time.time()
-            # 5. 상하한선 터치 검사
-            last_step_ids = []
-            last_step_names = []
-            for predict_step in predict_steps:
+
+        pred_dates = []
+        for predict_step in predict_steps:
+            try:
+                pred_date = datetime.strptime(last_date, "%Y-%m-%d %H:%M:%S.%f") + timedelta(seconds=predict_step)
+            except:
+                pred_date = datetime.strptime(last_date, "%Y-%m-%d %H:%M:%S") + timedelta(seconds=predict_step)
+            pred_dates.append(pred_date)
+
+        insert_pred_data(pool, table_name, cols, predict_steps, pred_dates, all_pred_datas, last_step_ids, last_step_names)
+
+        for col_idx, p_col in enumerate(predict_columns):
+            for idx, predict_step in enumerate(predict_steps):
+                pred_date = pred_dates[idx]
+                pred_data = all_pred_datas[0, idx, col_idx]
+                last_step_id = last_step_ids[idx]
+                last_step_name = last_step_names[idx]
                 try:
-                    remain_str = step_data.iloc[-1]['ProcessRecipeStepRemainTime']  
-                    if remain_str == "00:00:00":
-                        last_remain_sec = 100
-                    else:
-                        h, m, s = map(int, remain_str.split(":"))
-                        last_remain_sec = h * 3600 + m * 60 + s
-                    if last_remain_sec >= predict_step:
-                        last_step_id = step_data.iloc[-1]["ProcessRecipeStepID"]
-                        last_step_name = step_data.iloc[-1]["ProcessRecipeStepName"]
-                    else:
-                        last_step_id = -1
-                        last_step_name = 'UNKNOWN'               
-                except:
-                        last_step_id = -1
-                        last_step_name = 'UNKNOWN'
-                last_step_ids.append(last_step_id)
-                last_step_names.append(last_step_name)  
-            #logg(f"[PID|{proc_pid}].log", f"⏱ 소요 시간2: {time.time() - start_time_proc:.3f}초")      
-                        
-            # 6. 에측데이터 저장
-            #start_time_proc = time.time()     
-            if 'Temp_Act' in predict_column:
-                insert_pred_data(pool, predict_columns, predict_steps, pred_dates, pred_datas, last_step_ids, last_step_names)
-                for col_idx, predict_column in enumerate(predict_columns):
-                    for idx, predict_step in enumerate(predict_steps):
-                        pred_date = pred_dates[idx]
-                        pred_data = pred_datas[0,idx,col_idx]
-                        last_step_id = last_step_ids[idx]
-                        last_step_name = last_step_names[idx]
-                        #print(pred_date, pred_data)
-                        
-                        #start_time_proc = time.time()
-                        # 7. 상하한선 터치 이벤트 데이터 저장
-                        try:   
-                            if last_step_id != -1 and pred_data is not None:
-                                # limits.yaml 읽기
-                                limits = {}
-                                if os.path.exists("./fastapi/limits.yaml"):
-                                    with open("./fastapi/limits.yaml", "r", encoding="utf-8") as f:
-                                        limits = yaml.safe_load(f)
-                                    step_limits = limits.get(predict_column, {}).get(str(last_step_id))
-                                    if step_limits:
-                                        if "min" in step_limits and pred_data <= step_limits["min"]:
-                                            insert_violation(pool, str(pred_date), predict_column, last_step_id, last_step_name, pred_data, 'min', step_limits["min"])
-                                        elif "max" in step_limits and pred_data >= step_limits["max"]:
-                                            insert_violation(pool, str(pred_date), predict_column, last_step_id, last_step_name, pred_data, 'max', step_limits["max"])
-                            elif pred_data is not None:
-                                limits = {}
-                                if os.path.exists("./fastapi/limits.yaml"):
-                                    with open("./fastapi/limits.yaml", "r", encoding="utf-8") as f:
-                                        limits = yaml.safe_load(f)
-                                    step_limits = limits.get(predict_column, {}).get('all')
-                                    if step_limits:
-                                        if "min" in step_limits and pred_data <= step_limits["min"]:
-                                            insert_violation(pool, str(pred_date), predict_column, last_step_id, last_step_name, pred_data, 'min', step_limits["min"])
-                                        elif "max" in step_limits and pred_data >= step_limits["max"]:
-                                            insert_violation(pool, str(pred_date), predict_column, last_step_id, last_step_name, pred_data, 'max', step_limits["max"])
-                            #logg(f"[PID|{proc_pid}].log", f"⏱ 소요 시간4: {time.time() - start_time_proc:.3f}초")
-                        except Exception as e:
-                            logg(f"[PID|{proc_pid}].log", "ray_predict() : 상하한 터치 이벤트 처리시 오류발생")
-                            logg(f"[PID|{proc_pid}].log", str(e))
-                            time.sleep(0.1)
-                            continue
-                break
-            else:
-                insert_pred_data(pool, predict_column, predict_steps, pred_dates, pred_datas, last_step_ids, last_step_names)
-            #logg(f"[PID|{proc_pid}].log", f"⏱ 소요 시간3: {time.time() - start_time_proc:.3f}초")
-                for idx, predict_step in enumerate(predict_steps):
-                    pred_date = pred_dates[idx]
-                    pred_data = pred_datas[0,idx]
-                    last_step_id = last_step_ids[idx]
-                    last_step_name = last_step_names[idx]
-                    #print(pred_date, pred_data)
-                    
-                    #start_time_proc = time.time()
-                    # 7. 상하한선 터치 이벤트 데이터 저장
-                    try:   
-                        if last_step_id != -1 and pred_data is not None:
-                            # limits.yaml 읽기
-                            limits = {}
-                            if os.path.exists("./fastapi/limits.yaml"):
-                                with open("./fastapi/limits.yaml", "r", encoding="utf-8") as f:
-                                    limits = yaml.safe_load(f)
-                                step_limits = limits.get(predict_column, {}).get(str(last_step_id))
-                                if step_limits:
-                                    if "min" in step_limits and pred_data <= step_limits["min"]:
-                                        insert_violation(pool, str(pred_date), predict_column, last_step_id, last_step_name, pred_data, 'min', step_limits["min"])
-                                    elif "max" in step_limits and pred_data >= step_limits["max"]:
-                                        insert_violation(pool, str(pred_date), predict_column, last_step_id, last_step_name, pred_data, 'max', step_limits["max"])
-                        elif pred_data is not None:
-                            limits = {}
-                            if os.path.exists("./fastapi/limits.yaml"):
-                                with open("./fastapi/limits.yaml", "r", encoding="utf-8") as f:
-                                    limits = yaml.safe_load(f)
-                                step_limits = limits.get(predict_column, {}).get('all')
-                                if step_limits:
-                                    if "min" in step_limits and pred_data <= step_limits["min"]:
-                                        insert_violation(pool, str(pred_date), predict_column, last_step_id, last_step_name, pred_data, 'min', step_limits["min"])
-                                    elif "max" in step_limits and pred_data >= step_limits["max"]:
-                                        insert_violation(pool, str(pred_date), predict_column, last_step_id, last_step_name, pred_data, 'max', step_limits["max"])
-                        #logg(f"[PID|{proc_pid}].log", f"⏱ 소요 시간4: {time.time() - start_time_proc:.3f}초")
-                    except Exception as e:
-                        logg(f"[PID|{proc_pid}].log", "ray_predict() : 상하한 터치 이벤트 처리시 오류발생")
-                        logg(f"[PID|{proc_pid}].log", str(e))
-                        time.sleep(0.1)
-                        continue
-            # 8. 오래된 데이터 삭제
+                    if last_step_id != -1 and pred_data is not None:
+                        limits = {}
+                        if os.path.exists("./fastapi/limits.yaml"):
+                            with open("./fastapi/limits.yaml", "r", encoding="utf-8") as f:
+                                limits = yaml.safe_load(f)
+                            step_limits = limits.get(p_col, {}).get(str(last_step_id))
+                            if step_limits:
+                                if "min" in step_limits and pred_data <= step_limits["min"]:
+                                    insert_violation(pool, str(pred_date), p_col, last_step_id, last_step_name, pred_data, 'min', step_limits["min"])
+                                elif "max" in step_limits and pred_data >= step_limits["max"]:
+                                    insert_violation(pool, str(pred_date), p_col, last_step_id, last_step_name, pred_data, 'max', step_limits["max"])
+                    elif pred_data is not None:
+                        limits = {}
+                        if os.path.exists("./fastapi/limits.yaml"):
+                            with open("./fastapi/limits.yaml", "r", encoding="utf-8") as f:
+                                limits = yaml.safe_load(f)
+                            step_limits = limits.get(p_col, {}).get('all')
+                            if step_limits:
+                                if "min" in step_limits and pred_data <= step_limits["min"]:
+                                    insert_violation(pool, str(pred_date), p_col, last_step_id, last_step_name, pred_data, 'min', step_limits["min"])
+                                elif "max" in step_limits and pred_data >= step_limits["max"]:
+                                    insert_violation(pool, str(pred_date), p_col, last_step_id, last_step_name, pred_data, 'max', step_limits["max"])
+                except Exception as e:
+                    logg(f"[PID|{proc_pid}].log", "ray_predict() : 상하한 터치 이벤트 처리시 오류발생")
+                    logg(f"[PID|{proc_pid}].log", str(e))
+                    time.sleep(0.1)
+                    continue            # 8. 오래된 데이터 삭제
             if cnt%3600==0:
                 conn = pool.getconn()
                 cur = None
                 try:
                     cur = conn.cursor()
                     try:
-                        predict_column_modified = predict_column.replace('.', '_').replace(' ', '_').replace('-', '_')
-                        for predict_step in predict_steps:
-                            save_table_name = f"pred_{predict_step}_{predict_column_modified}"
-                            # 최신 Timestamp 조회
-                            cur.execute(f'SELECT "Timestamp" FROM "{save_table_name}" ORDER BY "Timestamp" DESC LIMIT 1')
-                            latest_ts = cur.fetchone()[0]
-                            if latest_ts:
-                                delete_before = latest_ts - timedelta(hours=48)
-                                cur.execute(f'''
-                                    DELETE FROM "{save_table_name}"
-                                    WHERE "Timestamp" < %s
-                                ''', (delete_before,))
-                                conn.commit()
+                        save_table_name = table_name
+                        cur.execute(f'SELECT "Timestamp" FROM "{save_table_name}" ORDER BY "Timestamp" DESC LIMIT 1')
+                        latest_ts = cur.fetchone()[0]
+                        if latest_ts:
+                            delete_before = latest_ts - timedelta(hours=48)
+                            cur.execute(f'''
+                                DELETE FROM "{save_table_name}"
+                                WHERE "Timestamp" < %s
+                            ''', (delete_before,))
+                            conn.commit()
                         # 최신 Timestamp 조회
                         violation_table = 'realtime_violation_log'
                         cur.execute(f'SELECT "Timestamp" FROM "{violation_table}" ORDER BY "Timestamp" DESC LIMIT 1')
@@ -806,8 +747,9 @@ if __name__ == '__main__':
     
     obj_id_list = []
 
-    for task in tasks:
-        obj_id_list.append(ray_predict.remote(selected_cols, task, window_size, predict_steps))
+    for idx, task in enumerate(tasks):
+        obj_id_list.append(ray_predict.remote(idx, selected_cols, task, window_size, predict_steps))
+    
     while len(obj_id_list):
         done, obj_id_list = ray.wait(obj_id_list)
         ray.get(done[0])

@@ -209,6 +209,15 @@ def create_sequence(X, window, pred_step):
     return np.array(X_seqs)
 
 
+
+def check_columns(col):
+    if col == 'MFC1_N2-1' or col == 'MFC2_N2-2' or col == 'MFC3_N2-3' or col == 'MFC4_N2-4':
+        return True
+    if col == 'MFC27_L.POS' or col == 'MFC28_R.POS' or col == 'VG12 Pressure value' or col == 'VG13 Pressure value':
+        return True
+    return False
+
+
 def predict_trace_parameter(start_ts, end_ts, start_table, end_table, model_path = './model', scaler_path = './model/scaler'):
     data = fetch_trace_data(start_ts, end_ts, start_table, end_table)
     data['ProcessRecipeStepID'] = data['ProcessRecipeStepID'].replace(255, 0)
@@ -216,50 +225,87 @@ def predict_trace_parameter(start_ts, end_ts, start_table, end_table, model_path
     time_data = data['Timestamp'] + timedelta(seconds=window_size -1 + predict_step)
     time_data = data['Timestamp'].iloc[window_size - 1 + predict_step:].reset_index(drop=True)
     pred_datas = {}
+    Temp_flag = False
     for predict_column in predict_columns:
-        scaler_y = joblib.load(os.path.join(scaler_path,f'scaler_y_{predict_column}.pkl'))
         loss_func = 'mae'
         if predict_column == "VG11": 
             # 커스텀 weighted loss 함수 생성
             y_low, y_high = scaler_y.transform([[0]]), scaler_y.transform([[9]])
             loss_func = get_weighted_mae(y_low, y_high, 100.0)
-        with tf.device(select_tf_device()):
-            loaded_model = load_model(
-                os.path.join(model_path, f'192_patchtst_{predict_column}.keras'),
-                custom_objects={
-                    'PatchEmbedding': PatchEmbedding,
-                    'PositionalEncoding': PositionalEncoding,
-                    'loss': loss_func
-                }
-            )
         try:
             add_columns = []
             if 'Temp_Act_' in predict_column:
-                scaler_X = joblib.load(os.path.join(scaler_path,f'scaler_X_{predict_column}.pkl'))
-                temp_pos = predict_column.split('_')[-1]
-                for add_col in temp_add_columns:
-                    add_columns.append(add_col+temp_pos)
+                if Temp_flag:
+                    continue
+                Temp_flag = True
+                scaler_X = joblib.load(os.path.join(scaler_path,f'scaler_X_Temp.pkl'))
+                scaler_y = joblib.load(os.path.join(scaler_path,f'scaler_y_Temp.pkl'))
+                for temp_pos in ['U', 'CU', 'C', 'CL', 'L']:
+                    for add_col in temp_add_columns:
+                        add_columns.append(add_col+temp_pos)
+                loaded_model = load_model(
+                    os.path.join(model_path, f'192_patchtst_Temp.keras'),
+                    custom_objects={
+                        'PatchEmbedding': PatchEmbedding,
+                        'PositionalEncoding': PositionalEncoding,
+                        'loss': loss_func
+                    }
+                )
+            elif check_columns(predict_column):
+                loaded_model = load_model(os.path.join(model_path,f'192_patchtst_{predict_column}_main.keras'), custom_objects={
+                    'PatchEmbedding': PatchEmbedding,
+                    'PositionalEncoding': PositionalEncoding,
+                    'loss': loss_func
+                })
+                scaler_X = joblib.load(os.path.join(scaler_path,'scaler_X_main.pkl'))
+                scaler_y = joblib.load(os.path.join(scaler_path,f'scaler_y_{predict_column}_main.pkl'))
             else:
                 scaler_X = joblib.load(os.path.join(scaler_path,'scaler_X.pkl'))
+                scaler_y = joblib.load(os.path.join(scaler_path,f'scaler_y_{predict_column}.pkl'))
+                loaded_model = load_model(
+                    os.path.join(model_path, f'192_patchtst_{predict_column}.keras'),
+                    custom_objects={
+                        'PatchEmbedding': PatchEmbedding,
+                        'PositionalEncoding': PositionalEncoding,
+                        'loss': loss_func
+                    }
+                )
             #print(predict_column, add_columns)
             sequence_data = data[selected_cols + add_columns]
             X_scaled = scaler_X.transform(sequence_data.values)
-            X_seq = create_sequence(X_scaled, window_size, predict_step)
-            with tf.device(select_tf_device()):
-                y_pred_scaled = loaded_model.predict(X_seq, verbose=0)
-            y_pred = np.stack([
-                scaler_y.inverse_transform(y_pred_scaled[:, [i]])[:, 0]
-                for i in range(3)
-            ], axis=1)
-            #print(y_pred[:, 0])
-            # 예측값 생성 (1-step만 사용하는 경우)
-            pred_values = [float(y_pred[i, 0]) for i in range(len(y_pred))]
-            pred_datas[predict_column] = pred_values
-            print(predict_column, len(pred_values))
-
-            # time_data 길이 조정: pred_values와 동일한 길이로 맞춤
-            if len(pred_datas[predict_column]) < len(time_data):
-                time_data = time_data.iloc[:len(pred_values)].reset_index(drop=True)
+            if 'Temp_Act' in predict_column:
+                X_seq = create_sequence(X_scaled, window_size, predict_step)
+                with tf.device(select_tf_device()):
+                    y_pred_scaled = loaded_model.predict(X_seq, verbose=0)
+                    y_pred = np.stack([
+                        scaler_y.inverse_transform(y_pred_scaled[:, step, :])
+                        for i in range(3)
+                    ], axis=1)
+                #print(y_pred[:, 0])
+                # 예측값 생성 (1-step만 사용하는 경우)
+                for j, predict_column in enumerate(['Temp_Act_U', 'Temp_Act_CU', 'Temp_Act_C', 'Temp_Act_CL', 'Temp_Act_L']):
+                    pred_values = [float(y_pred[i, 0 , j]) for i in range(len(y_pred))]
+                    pred_datas[predict_column] = pred_values
+                    #print(predict_column, len(pred_values))
+                    # time_data 길이 조정: pred_values와 동일한 길이로 맞춤
+                    if len(pred_datas[predict_column]) < len(time_data):
+                        time_data = time_data.iloc[:len(pred_values)].reset_index(drop=True)
+            else:
+                X_seq = create_sequence(X_scaled, window_size, predict_step)
+                with tf.device(select_tf_device()):
+                    y_pred_scaled = loaded_model.predict(X_seq, verbose=0)
+                    y_pred = np.stack([
+                        scaler_y.inverse_transform(y_pred_scaled[:, [i]])[:, 0]
+                        for i in range(3)
+                    ], axis=1)
+                #print(y_pred[:, 0])
+                # 예측값 생성 (1-step만 사용하는 경우)
+                pred_values = [float(y_pred[i, 0]) for i in range(len(y_pred))]
+                pred_datas[predict_column] = pred_values
+                #print(predict_column, len(pred_values))
+                # time_data 길이 조정: pred_values와 동일한 길이로 맞춤
+                if len(pred_datas[predict_column]) < len(time_data):
+                    time_data = time_data.iloc[:len(pred_values)].reset_index(drop=True)
 
         except Exception as e:
             print("predict parameter : 데이터 전처리 오류발생")

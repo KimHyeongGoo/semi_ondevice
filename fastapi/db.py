@@ -4,6 +4,19 @@ from zoneinfo import ZoneInfo
 import os
 from dateutil import parser
 
+tasks = [
+    ['MFC7_DCS','MFC8_NH3','MFC26_F.PWR'],
+    ['MFC1_N2-1','MFC2_N2-2','MFC3_N2-3'],
+    ['MFC4_N2-4','MFC27_L.POS','MFC28_R.POS'],
+    ['VG11 Press value','VG12 Press value','VG13 Press value'],
+    ['Temp_Act_U','Temp_Act_CU','Temp_Act_C','Temp_Act_CL','Temp_Act_L'],
+]
+
+param_table_map = {}
+for idx, cols in enumerate(tasks):
+    for col in cols:
+        param_table_map[col] = f"pred_proc{idx}"
+        
 def get_latest_data(columns, duration=300, step=10):
     tz = ZoneInfo("Asia/Seoul")
     conn = psycopg2.connect(
@@ -24,7 +37,7 @@ def get_latest_data(columns, duration=300, step=10):
 
     for col in columns:
         col_modified = col.replace(' ', '_').replace('.', '_').replace('-', '_')
-        pred_table = f"pred_{step}_{col_modified}"
+        table_name = param_table_map.get(col)
 
         # 실제값
         cur.execute(f"""
@@ -36,26 +49,25 @@ def get_latest_data(columns, duration=300, step=10):
         
         # 예측값 + Step ID 포함
         preds = []
-        try:
-            cur.execute(f"""
-                SELECT DATE_TRUNC('second', "Timestamp") AS ts, "Parameter", "ProcessRecipeStepID", "ProcessRecipeStepName"
-                FROM "{pred_table}"
-                WHERE "Timestamp" >= %s
-                ORDER BY "Timestamp" ASC
-            """, (from_time,))
+        if table_name:
+            try:
+                cur.execute(f"""
+                    SELECT DATE_TRUNC('second', "Timestamp") AS ts, "{col_modified}", "ProcessRecipeStepID", "ProcessRecipeStepName"
+                    FROM "{table_name}"
+                    WHERE "PredictStep" = %s AND "Timestamp" >= %s
+                    ORDER BY "Timestamp" ASC
+                """, (step, from_time))
 
-            for row in cur.fetchall():
-                ts, val, step_id, step_name = row
-                preds.append({
-                    "time": str(ts),
-                    "value": val,
-                    "step_id": int(step_id) if step_id is not None else None,
-                    "step_name": str(step_name) if step_name is not None else None
-                })
-        except Exception as e:
-            conn.rollback()  # 🔴 실패한 트랜잭션 롤백
-            # 예측 테이블이 없으면 예측값 없이 실제값만 반환
-            preds = []
+                for row in cur.fetchall():
+                    ts, val, step_id, step_name = row
+                    preds.append({
+                        "time": str(ts),
+                        "value": val,
+                        "step_id": int(step_id) if step_id is not None else None,
+                        "step_name": str(step_name) if step_name is not None else None
+                    })
+            except Exception:
+                conn.rollback()
         result[col] = {
             "actual": actuals,
             "predicted": preds
@@ -82,7 +94,7 @@ def get_event_chart_data(param, start, end, step=10):
 
     raw_table = f"rawdata{date_suffix}"
     param_modified = param.replace(' ', '_').replace('.', '_').replace('-', '_')
-    pred_table = f"pred_{step}_{param_modified}"
+    table_name = param_table_map.get(param)
 
     if len(str(from_ts)) >= 26:
         from_ts = str(from_ts)[:23]
@@ -100,16 +112,19 @@ def get_event_chart_data(param, start, end, step=10):
         )
         actuals = [{"x": str(ts), "y": val} for ts, val in cur.fetchall()]
 
-        cur.execute(
-            f"""
-            SELECT DATE_TRUNC('second', "Timestamp") AS ts, "Parameter"
-            FROM "{pred_table}"
-            WHERE "Timestamp" BETWEEN %s::timestamp AND %s::timestamp
-            ORDER BY ts ASC
-            """,
-            (from_ts, to_ts),
-        )
-        preds = [{"x": str(ts), "y": val} for ts, val in cur.fetchall()]
+        if table_name:
+            cur.execute(
+                f"""
+                SELECT DATE_TRUNC('second', "Timestamp") AS ts, "{param_modified}"
+                FROM "{table_name}"
+                WHERE "PredictStep" = %s AND "Timestamp" BETWEEN %s::timestamp AND %s::timestamp
+                ORDER BY ts ASC
+                """,
+                (step, from_ts, to_ts),
+            )
+            preds = [{"x": str(ts), "y": val} for ts, val in cur.fetchall()]
+        else:
+            preds = []
     except Exception as e:
         actuals, preds = [], []
         print("[get_event_chart_data ERROR]", e)

@@ -57,7 +57,7 @@ def main():
         current_idx = (current_idx + 1) % total_rows
         time.sleep(SLEEP_SEC)
 
-        if now_hour > prev_hour:
+        if now_hour > prev_hour or (now_hour == '00' and prev_hour == '23'):
             # 새 파일에 헤더 포함 첫 줄 쓰기
             row = df.iloc[current_idx].copy()
             row = replace_timestamp(row)

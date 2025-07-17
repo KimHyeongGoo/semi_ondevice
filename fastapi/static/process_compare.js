@@ -38,7 +38,7 @@ async function loadColumns() {
 }
 
 async function loadProcesses() {
-    const res = await fetch('/api/trace_info?limit=50');
+    const res = await fetch('/api/trace_info?limit=200');
     allProcesses = (await res.json()).reverse();
     updateLayout();
 }
@@ -117,7 +117,7 @@ async function loadCharts(start, end) {
                     const pv = predMap.get(a.x);
                     const t = new Date(a.x).getTime();
                     if (pv === undefined) {
-                        if (segStart !== null && (lastTime - segStart) >= 10000) {
+                        if (segStart !== null && (lastTime - segStart) >= 15000) {
                             regions.push({ start: segStart, end: lastTime });
                             segments.push({ start: formatLocal(segStart), end: formatLocal(lastTime), max: maxDiff });
                         }
@@ -128,7 +128,7 @@ async function loadCharts(start, end) {
                         if (segStart === null) { segStart = t; maxDiff = diffPct; }
                         else { maxDiff = Math.max(maxDiff, diffPct); }
                     } else if (segStart !== null) {
-                        if (lastTime !== null && (lastTime - segStart) >= 10000) {
+                        if (lastTime !== null && (lastTime - segStart) >= 15000) {
                             regions.push({ start: segStart, end: lastTime });
                             segments.push({ start: formatLocal(segStart), end: formatLocal(lastTime), max: maxDiff });
                         }
@@ -137,7 +137,7 @@ async function loadCharts(start, end) {
                     lastTime = t;
                 });
 
-                if (segStart !== null && lastTime - segStart >= 10000) {
+                if (segStart !== null && lastTime - segStart >= 15000) {
                     regions.push({ start: segStart, end: lastTime });
                     segments.push({ start: formatLocal(segStart), end: formatLocal(lastTime), max: maxDiff });
                 }
