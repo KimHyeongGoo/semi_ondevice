@@ -12,6 +12,7 @@ from db import (
     get_trace_info,
     get_event_chart_data,
     get_trace_pred_chart_data,
+    get_process_range,
 )
 
 app = FastAPI()
@@ -102,6 +103,20 @@ async def save_limits(request: Request):
     with open(LIMIT_PATH, "w") as f:
         yaml.dump(body, f)
     return JSONResponse({"status": "saved"})
+
+@app.get("/api/limits")
+async def api_limits():
+    if os.path.exists(LIMIT_PATH):
+        with open(LIMIT_PATH, 'r') as f:
+            lim = yaml.safe_load(f) or {}
+    else:
+        lim = {}
+    return JSONResponse(lim)
+
+@app.get("/api/process_range")
+async def api_process_range(time: str = Query(...)):
+    data = get_process_range(time)
+    return JSONResponse(data)
 
 @app.get("/api/trace_info")
 async def api_trace_info(limit: int = 10):

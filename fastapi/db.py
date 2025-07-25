@@ -179,7 +179,7 @@ def get_trace_info(limit=10):
     conn.close()
     return result
 
-def get_trace_pred_chart_data(param, start, end):
+def get_trace_pred_chart_data(param, start, end, step=10):
     """Return actual and predicted data from trace_pred_data table."""
     conn = psycopg2.connect(
         dbname="postgres",
@@ -195,6 +195,8 @@ def get_trace_pred_chart_data(param, start, end):
 
     date_suffix = from_ts.strftime("%Y%m%d")
     raw_table = f"rawdata{date_suffix}"
+    param_modified = param.replace(' ', '_').replace('.', '_').replace('-', '_')
+    table_name = param_table_map.get(param)
 
     if len(str(from_ts)) >= 26:
         from_ts = str(from_ts)[:23]
@@ -225,16 +227,19 @@ def get_trace_pred_chart_data(param, start, end):
         )
         filtered_from_ts, filtered_to_ts = cur.fetchone()
 
-        cur.execute(
-            f"""
-            SELECT DATE_TRUNC('second', "Timestamp") AS ts, "{param}"
-            FROM trace_pred_data
-            WHERE "Timestamp" BETWEEN %s::timestamp AND %s::timestamp
-            ORDER BY ts ASC
-            """,
-            (filtered_from_ts, filtered_to_ts),
-        )
-        preds = [{"x": str(ts), "y": val} for ts, val in cur.fetchall()]
+        
+        preds = []
+        if table_name:
+            cur.execute(
+                f"""
+                SELECT DATE_TRUNC('second', "Timestamp") AS ts, "{param_modified}"
+                FROM "{table_name}"
+                WHERE "PredictStep" = %s AND "Timestamp" BETWEEN %s::timestamp AND %s::timestamp
+                ORDER BY ts ASC
+                """,
+                (step, filtered_from_ts, filtered_to_ts),
+            )
+            preds = [{"x": str(ts), "y": val} for ts, val in cur.fetchall()]
     except Exception as e:
         actuals, preds = [], []
         print("[get_trace_pred_chart_data ERROR]", e)
@@ -243,3 +248,71 @@ def get_trace_pred_chart_data(param, start, end):
     conn.close()
 
     return {"actual": actuals, "predicted": preds}
+
+
+def get_process_range(target_time):
+    """Return process start and end timestamps around the given time."""
+    conn = psycopg2.connect(
+        dbname="postgres",
+        user="keti",
+        password="keti1234!",
+        host="localhost",
+        port=5432,
+    )
+    cur = conn.cursor()
+
+    ts = parser.parse(target_time)
+    date_suffix = ts.strftime("%Y%m%d")
+    raw_table = f"rawdata{date_suffix}"
+
+    start_time = ts
+    end_time = ts
+
+    try:
+        # 검색 범위: 주어진 시점 이전 데이터 중 최근 START 단계
+        cur.execute(
+            f"""
+            SELECT "Timestamp", "ProcessRecipeStepName"
+            FROM "{raw_table}"
+            WHERE "Timestamp" <= %s AND "ProcessRecipeStepName" IS NOT NULL
+            ORDER BY "Timestamp" DESC
+            LIMIT 20000
+            """,
+            (ts,)
+        )
+        rows = cur.fetchall()
+        for t, step in rows:
+            if (step or "").strip().upper() == "START":
+                start_time = t
+                break
+            else:
+                if rows:
+                    start_time = rows[-1][0]
+
+        # 주어진 시점 이후 데이터 중 종료로 판단되는 단계 탐색
+        cur.execute(
+            f"""
+            SELECT "Timestamp", "ProcessRecipeStepName"
+            FROM "{raw_table}"
+            WHERE "Timestamp" >= %s AND "ProcessRecipeStepName" IS NOT NULL
+            ORDER BY "Timestamp" ASC
+            LIMIT 20000
+            """,
+            (ts,)
+        )
+        rows = cur.fetchall()
+        for t, step in rows:
+            step = (step or "").strip().upper()
+            if step in ("END", "", "NAN", "NULL", "NONE", "IDLE", "NA", "NA", "NONE"):
+                end_time = t
+                break
+            else:
+                if rows:
+                    end_time = rows[-1][0]
+        #print( str(start_time), str(end_time))
+    except Exception as e:
+        print("[get_process_range ERROR]", e)
+
+    cur.close()
+    conn.close()
+    return {"start": str(start_time), "end": str(end_time)}

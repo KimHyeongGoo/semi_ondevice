@@ -17,7 +17,8 @@
             flex: 2;
         }
 
-        #charts-container {
+        #charts-container,
+        #process-charts-container {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
             gap: 20px;
@@ -48,7 +49,11 @@
     <pre id="log-content" style="margin-bottom: 10px; font-size: 16px; font-weight: bold; white-space: pre-wrap;"></pre>
     <div id="layout-container">
         <div id="charts-area">
+            <div id="main-chart"></div>
+            <h3>이상시점 문제 파라미터 차트</h3>
             <div id="charts-container"></div>
+            <h3>현재공정 전체 기간의 이상 파라미터 차트</h3>
+            <div id="process-charts-container"></div>
         </div>
         <div id="info-area">
             <h3>파라미터별 실제값-예측값 차이 정보<br>(값차이가 10%이상 10초이상인 경우 감지됨)</h3>
@@ -132,11 +137,17 @@
         const diffInfoDiv = document.getElementById('diff-info');
 
         const chartsContainerEl = document.getElementById('charts-container');
+        const processChartsEl = document.getElementById('process-charts-container');
+        const mainChartEl = document.getElementById('main-chart');
         const infoAreaEl = document.getElementById('info-area');
         function updateInfoHeight() {
-            infoAreaEl.style.maxHeight = chartsContainerEl.offsetHeight + 'px';
+            const h = chartsContainerEl.offsetHeight + processChartsEl.offsetHeight + mainChartEl.offsetHeight;
+            infoAreaEl.style.maxHeight = h + 'px';
         }
         new ResizeObserver(updateInfoHeight).observe(chartsContainerEl);
+        new ResizeObserver(updateInfoHeight).observe(processChartsEl);
+        new ResizeObserver(updateInfoHeight).observe(mainChartEl);
+
 
         function formatLocal(ts) {
             const d = new Date(ts);
@@ -160,78 +171,75 @@
         };
         Chart.register(highlightPlugin);
 
-        predictColumns.forEach(p => {
-            fetch(`/api/event_chart?param=${encodeURIComponent(p)}&start=${start}&end=${end}&step=${selectedStep}`)
-                .then(res => res.json())
-                .then(json => {
-                    const predMap = new Map(json.predicted.map(d => [d.x, d.y]));
-                    let segStart = null;
-                    let lastTime = null;
-                    let maxDiff = 0;
-                    const segments = [];
-                    const regions = [];
 
-                    json.actual.forEach(a => {
-                        const pv = predMap.get(a.x);
-                        const t = new Date(a.x).getTime();
-                        if (pv === undefined) {
-                            if (segStart !== null && (lastTime - segStart) >= 10000) {
-                                regions.push({ start: segStart, end: lastTime });
-                                segments.push({ start: formatLocal(segStart), end: formatLocal(lastTime), max: maxDiff });
-                            }
-                            segStart = null; maxDiff = 0; return;
-                        }
-                        const diffPct = Math.abs(a.y - pv) / (Math.abs(a.y) || 10) * 100;
-                        if (diffPct > 1) {
-                            if (segStart === null) { segStart = t; maxDiff = diffPct; }
-                            else { maxDiff = Math.max(maxDiff, diffPct); }
-                        } else if (segStart !== null) {
-                            if (lastTime !== null && (lastTime - segStart) >= 10000) {
-                                regions.push({ start: segStart, end: lastTime });
-                                segments.push({ start: formatLocal(segStart), end: formatLocal(lastTime), max: maxDiff });
-                            }
-                            segStart = null; maxDiff = 0;
-                        }
-                        lastTime = t;
-                    });
-
-                    if (segStart !== null && lastTime - segStart >= 10000) {
+        let limits = {};
+        let processRange = null;
+        function calcSegments(actual, predicted) {
+            const predMap = new Map(predicted.map(d => [d.x, d.y]));
+            let segStart = null;
+            let lastTime = null;
+            let maxDiff = 0;
+            const segments = [];
+            const regions = [];
+            actual.forEach(a => {
+                const pv = predMap.get(a.x);
+                const t = new Date(a.x).getTime();
+                if (pv === undefined) {
+                    regions.push({ start: segStart, end: lastTime });
+                    segments.push({ start: formatLocal(segStart), end: formatLocal(lastTime), max: maxDiff });
+                    segStart = null; maxDiff = 0; return;
+                }
+                const diffPct = Math.abs(a.y - pv) / (Math.abs(a.y) || 10) * 100;
+                if (diffPct > 1) {
+                    if (segStart === null) { segStart = t; maxDiff = diffPct; }
+                    else { maxDiff = Math.max(maxDiff, diffPct); }
+                } else if (segStart !== null) {
+                    if (lastTime !== null && (lastTime - segStart) >= 10000) {
                         regions.push({ start: segStart, end: lastTime });
                         segments.push({ start: formatLocal(segStart), end: formatLocal(lastTime), max: maxDiff });
                     }
+                    segStart = null; maxDiff = 0;
+                }
+                lastTime = t;
+            });
+            if (segStart !== null && lastTime - segStart >= 10000) {
+                regions.push({ start: segStart, end: lastTime });
+                segments.push({ start: formatLocal(segStart), end: formatLocal(lastTime), max: maxDiff });
+            }
+            return { segments, regions };
+        }
 
-                    if (segments.length === 0) return; // 차이 큰 구간이 없으면 차트 생략
-
-                    const container = document.getElementById('charts-container');
+        function drawMainChart() {
+            fetch(`/api/event_chart?param=${encodeURIComponent(param)}&start=${start}&end=${end}&step=${selectedStep}`)
+                .then(res => res.json())
+                .then(json => {
+                    const container = document.getElementById('main-chart');
                     const chartBox = document.createElement('div');
                     chartBox.className = 'chart-box';
-                    chartBox.innerHTML = `<h4>${p}</h4><canvas id="chart-${p}" width="100%"></canvas>`;
+                    chartBox.innerHTML = `<h4>${param}</h4><canvas id="main-chart-canvas" width="100%"></canvas>`;
                     container.appendChild(chartBox);
                     updateInfoHeight();
 
+                    const allVals = json.actual.concat(json.predicted).map(d => d.y ?? d.value);
+                    const lim = limits?.[param]?.['all'] || {};
+                    if (lim.max !== undefined) allVals.push(lim.max);
+                    if (lim.min !== undefined) allVals.push(lim.min);
+                    const yMin = Math.min(...allVals);
+                    const yMax = Math.max(...allVals);
 
-                    const yValues = json.actual.concat(json.predicted).map(d => d.y ?? d.value);
-                    const yMin = Math.min(...yValues);
-                    const yMax = Math.max(...yValues);
+                    const datasets = [
+                        { label: '예측값', data: json.predicted.map(d => ({ x: d.x, y: d.y })), borderColor: 'red', tension: 0.3 },
+                        { label: '실제값', data: json.actual.map(d => ({ x: d.x, y: d.y })), borderColor: 'blue', tension: 0.3 }
+                    ];
+                    if (lim.max !== undefined) datasets.push({ label: 'Upper Limit', data: json.actual.map(d => ({ x: d.x, y: lim.max })), borderColor: 'green', borderDash: [5, 5], pointRadius: 0 });
+                    if (lim.min !== undefined) datasets.push({ label: 'Lower Limit', data: json.actual.map(d => ({ x: d.x, y: lim.min })), borderColor: 'orange', borderDash: [5, 5], pointRadius: 0 });
+                    datasets.push({ label: '이상감지 시점', data: [{ x: time.toISOString(), y: yMin }, { x: time.toISOString(), y: yMax }], borderColor: 'black', borderDash: [5, 5], pointRadius: 0, fill: false, showLine: true });
 
-                    new Chart(document.getElementById(`chart-${p}`), {
+                    new Chart(document.getElementById('main-chart-canvas'), {
                         type: 'line',
-                        data: {
-                            datasets: [
-                                { label: '예측값', data: json.predicted.map(d => ({ x: d.x, y: d.y })), borderColor: 'red', tension: 0.3 },
-                                { label: '실제값', data: json.actual.map(d => ({ x: d.x, y: d.y })), borderColor: 'blue', tension: 0.3 },
-                                {
-                                    label: '이상감지 시점',
-                                    data: [{ x: time.toISOString(), y: yMin }, { x: time.toISOString(), y: yMax }],
-                                    borderColor: 'black', borderDash: [5, 5], pointRadius: 0, fill: false, showLine: true
-                                }
-                            ]
-                        },
+                        data: { datasets },
                         options: {
                             animation: false,
-                            plugins: {
-                                highlightRegion: { regions }
-                            },
                             scales: {
                                 x: { type: 'time', time: { tooltipFormat: 'HH:mm:ss' }, title: { display: true, text: '시간' } },
                                 y: { title: { display: true, text: '값' }, min: yMin, max: yMax }
@@ -239,13 +247,104 @@
                         }
                     });
 
-                    const infoDiv = document.createElement('div');
-                    infoDiv.innerHTML = `<h4>${p}</h4>` + segments.map(s => {
-                        const dur = (new Date(s.end) - new Date(s.start)) / 1000;
-                        return `<div>{<br>start : ${s.start},<br>end : ${s.end},<br>diff : ${(s.max).toFixed(2)}%,<br>duration : ${dur.toFixed(0)}초<br>},</div>`;
-                    }).join('');
-                    diffInfoDiv.appendChild(infoDiv);
                 });
+        }
+
+        function drawEventCharts() {
+            predictColumns.forEach(p => {
+                fetch(`/api/event_chart?param=${encodeURIComponent(p)}&start=${start}&end=${end}&step=${selectedStep}`)
+                    .then(res => res.json())
+                    .then(json => {
+                        const { segments, regions } = calcSegments(json.actual, json.predicted);
+                        if (segments.length === 0) return;
+                        const container = document.getElementById('charts-container');
+                        const chartBox = document.createElement('div');
+                        chartBox.className = 'chart-box';
+                        chartBox.innerHTML = `<h4>${p}</h4><canvas id="chart-${p}" width="100%"></canvas>`;
+                        container.appendChild(chartBox);
+                        updateInfoHeight();
+
+                        const yValues = json.actual.concat(json.predicted).map(d => d.y ?? d.value);
+                        const yMin = Math.min(...yValues);
+                        const yMax = Math.max(...yValues);
+
+                        new Chart(document.getElementById(`chart-${p}`), {
+                            type: 'line',
+                            data: {
+                                datasets: [
+                                    { label: '예측값', data: json.predicted.map(d => ({ x: d.x, y: d.y })), borderColor: 'red', tension: 0.3 },
+                                    { label: '실제값', data: json.actual.map(d => ({ x: d.x, y: d.y })), borderColor: 'blue', tension: 0.3 },
+                                    { label: '이상감지 시점', data: [{ x: time.toISOString(), y: yMin }, { x: time.toISOString(), y: yMax }], borderColor: 'black', borderDash: [5, 5], pointRadius: 0, fill: false, showLine: true }
+                                ]
+                            },
+                            options: {
+                                animation: false,
+                                plugins: { highlightRegion: { regions } },
+                                scales: {
+                                    x: { type: 'time', time: { tooltipFormat: 'HH:mm:ss' }, title: { display: true, text: '시간' } },
+                                    y: { title: { display: true, text: '값' }, min: yMin, max: yMax }
+                                }
+                            }
+                        });
+                    });
+            });
+        }
+
+        function drawProcessCharts() {
+            if (!processRange) return;
+            const { start: ps, end: pe } = processRange;
+            predictColumns.forEach(p => {
+                fetch(`/api/trace_pred_chart?param=${encodeURIComponent(p)}&start=${encodeURIComponent(ps)}&end=${encodeURIComponent(pe)}`)
+                    .then(res => res.json())
+                    .then(json => {
+                        const { segments, regions } = calcSegments(json.actual, json.predicted);
+                        if (segments.length === 0) return;
+                        const container = document.getElementById('process-charts-container');
+                        const chartBox = document.createElement('div');
+                        chartBox.className = 'chart-box';
+                        chartBox.innerHTML = `<h4>${p}</h4><canvas id="proc-chart-${p}" width="100%"></canvas>`;
+                        container.appendChild(chartBox);
+                        updateInfoHeight();
+
+                        const yValues = json.actual.concat(json.predicted).map(d => d.y ?? d.value);
+                        const yMin = Math.min(...yValues);
+                        const yMax = Math.max(...yValues);
+
+                        new Chart(document.getElementById(`proc-chart-${p}`), {
+                            type: 'line',
+                            data: {
+                                datasets: [
+                                    { label: '예측값', data: json.predicted.map(d => ({ x: d.x, y: d.y })), borderColor: 'red', tension: 0.3 },
+                                    { label: '실제값', data: json.actual.map(d => ({ x: d.x, y: d.y })), borderColor: 'blue', tension: 0.3 }
+                                ]
+                            },
+                            options: {
+                                animation: false,
+                                plugins: { highlightRegion: { regions } },
+                                scales: {
+                                    x: { type: 'time', time: { tooltipFormat: 'HH:mm:ss' } },
+                                    y: { min: yMin, max: yMax }
+                                }
+                            }
+                        });
+
+                        const infoDiv = document.createElement('div');
+                        infoDiv.innerHTML = `<h4>${p}</h4>` + segments.map(s => {
+                            const dur = (new Date(s.end) - new Date(s.start)) / 1000;
+                            return `<div>{<br>start : ${s.start},<br>end : ${s.end},<br>diff : ${(s.max).toFixed(2)}%,<br>duration : ${dur.toFixed(0)}초<br>},</div>`;
+                        }).join('');
+                        diffInfoDiv.appendChild(infoDiv);
+                    });
+            });
+        }
+
+        Promise.all([
+            fetch('/api/limits').then(res => res.json()).then(l => { limits = l; }),
+            fetch(`/api/process_range?time=${encodeURIComponent(info.time)}`).then(res => res.json()).then(r => { processRange = r; })
+        ]).then(() => {
+            drawMainChart();
+            drawEventCharts();
+            drawProcessCharts();
         });
     </script>
 </body>
