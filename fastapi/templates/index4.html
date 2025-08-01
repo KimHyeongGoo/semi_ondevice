@@ -57,6 +57,12 @@
         .chart-row {
             display: flex;
             gap: 12px;
+            align-items: center;
+        }
+
+        .param-label {
+            width: 120px;
+            font-weight: bold;
         }
 
         .chart-box {
@@ -70,6 +76,7 @@
 
         canvas {
             width: 100% !important;
+            height: 100% !important;
         }
 
         #log-panel {
@@ -99,9 +106,11 @@
     <div id="layout-container">
         <div id="charts-container">
             {% for col in columns %}
+            {% set safe = col.replace(' ', '_').replace('.', '_').replace('-', '_') %}
             <div class="chart-row">
-                <div class="chart-box"><canvas id="proc-{{ col }}"></canvas></div>
-                <div class="chart-box"><canvas id="recent-{{ col }}"></canvas></div>
+                <div class="param-label">{{ col }}</div>
+                <div class="chart-box"><canvas id="proc-{{ safe }}" width="400" height="120"></canvas></div>
+                <div class="chart-box"><canvas id="recent-{{ safe }}" width="400" height="120"></canvas></div>
             </div>
             {% endfor %}
         </div>

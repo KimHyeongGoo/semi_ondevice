@@ -25,10 +25,15 @@ Chart.register(highlightPlugin);
 function iso(t) { return new Date(t).toISOString(); }
 function formatLocal(t) { const d = new Date(t); return d.toLocaleString('sv').replace('T', ' '); }
 
+function safeId(name) {
+    return name.replace(/[ .-]/g, '_');
+}
+
 function createCharts() {
     columns.forEach(col => {
-        const pctx = document.getElementById(`proc-${col}`).getContext('2d');
-        const rctx = document.getElementById(`recent-${col}`).getContext('2d');
+        const id = safeId(col);
+        const pctx = document.getElementById(`proc-${id}`).getContext('2d');
+        const rctx = document.getElementById(`recent-${id}`).getContext('2d');
         processCharts[col] = new Chart(pctx, { type: 'line', data: { datasets: [{ label: '예측값', borderColor: 'red', tension: 0.3, data: [] }, { label: '실제값', borderColor: 'blue', tension: 0.3, data: [] }] }, options: { animation: false, plugins: { highlightRegion: { regions: [] } }, scales: { x: { type: 'time', time: { tooltipFormat: 'HH:mm:ss' } }, y: {} } } });
         recentCharts[col] = new Chart(rctx, { type: 'line', data: { datasets: [{ label: '예측값', borderColor: 'red', tension: 0.3, data: [] }, { label: '실제값', borderColor: 'blue', tension: 0.3, data: [] }] }, options: { animation: false, plugins: { highlightRegion: { regions: [] } }, scales: { x: { type: 'time', time: { tooltipFormat: 'HH:mm:ss' } }, y: {} } } });
     });
@@ -112,7 +117,7 @@ function updateCharts(col, data) {
     pChart.options.plugins.highlightRegion.regions = regions;
     pChart.update();
 
-    const recentStart = Date.now() - 120000;
+    const recentStart = Date.now() - 60000;
     const aRecent = data.actual.filter(d => new Date(d.x).getTime() >= recentStart);
     const pRecent = data.predicted.filter(d => new Date(d.x).getTime() >= recentStart);
     const { regions: reg2 } = calcSegments(aRecent, pRecent);
@@ -129,7 +134,7 @@ function fetchData() {
     if (!processStart) return;
     const now = new Date();
     const processStartTime = new Date(processStart).getTime();
-    const thirtyMinAgo = now.getTime() - 600000; // 30 minutes
+    const thirtyMinAgo = now.getTime() - 300000; // 5 minutes
     const startIso = new Date(Math.max(processStartTime, thirtyMinAgo)).toISOString();
     const nowIso = now.toISOString();
     columns.forEach(col => {
