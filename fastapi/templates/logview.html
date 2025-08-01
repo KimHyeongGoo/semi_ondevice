@@ -185,8 +185,10 @@
                 const pv = predMap.get(a.x);
                 const t = new Date(a.x).getTime();
                 if (pv === undefined) {
-                    regions.push({ start: segStart, end: lastTime });
-                    segments.push({ start: formatLocal(segStart), end: formatLocal(lastTime), max: maxDiff });
+                    if (segStart !== null && lastTime !== null && (lastTime - segStart) >= 10000) {
+                        regions.push({ start: segStart, end: lastTime });
+                        segments.push({ start: formatLocal(segStart), end: formatLocal(lastTime), max: maxDiff });
+                    }
                     segStart = null; maxDiff = 0; return;
                 }
                 const diffPct = Math.abs(a.y - pv) / (Math.abs(a.y) || 10) * 100;
