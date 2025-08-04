@@ -17,11 +17,6 @@ for idx, cols in enumerate(tasks):
     for col in cols:
         param_table_map[col] = f"pred_proc{idx}"
         
-def to_iso(ts):
-    """Return ISO formatted string with timezone info."""
-    if ts.tzinfo is None:
-        ts = ts.replace(tzinfo=ZoneInfo("Asia/Seoul"))
-    return ts.isoformat()
         
 def get_latest_data(columns, duration=300, step=10):
     tz = ZoneInfo("Asia/Seoul")
@@ -51,7 +46,7 @@ def get_latest_data(columns, duration=300, step=10):
             WHERE "Timestamp" >= %s
             ORDER BY "Timestamp" ASC
         """, (from_time,))
-        actuals = [{"time": to_iso(r[0]), "value": r[1]} for r in cur.fetchall()]
+        actuals = [{"time": str(r[0]), "value": r[1]} for r in cur.fetchall()]
         
         # 예측값 + Step ID 포함
         preds = []
@@ -67,7 +62,7 @@ def get_latest_data(columns, duration=300, step=10):
                 for row in cur.fetchall():
                     ts, val, step_id, step_name = row
                     preds.append({
-                        "time": to_iso(ts),
+                        "time": str(ts),
                         "value": val,
                         "step_id": int(step_id) if step_id is not None else None,
                         "step_name": str(step_name) if step_name is not None else None
@@ -116,7 +111,7 @@ def get_event_chart_data(param, start, end, step=10):
             """,
             (from_ts, to_ts),
         )
-        actuals = [{"x": to_iso(ts), "y": val} for ts, val in cur.fetchall()]
+        actuals = [{"x": str(ts), "y": val} for ts, val in cur.fetchall()]
 
         if table_name:
             cur.execute(
@@ -128,7 +123,7 @@ def get_event_chart_data(param, start, end, step=10):
                 """,
                 (step, from_ts, to_ts),
             )
-            preds = [{"x": to_iso(ts), "y": val} for ts, val in cur.fetchall()]
+            preds = [{"x": str(ts), "y": val} for ts, val in cur.fetchall()]
         else:
             preds = []
     except Exception as e:
@@ -220,7 +215,7 @@ def get_trace_pred_chart_data(param, start, end, step=10):
             """,
             (from_ts, to_ts),
         )
-        actuals = [{"x": to_iso(ts), "y": val} for ts, val in cur.fetchall()]
+        actuals = [{"x": str(ts), "y": val} for ts, val in cur.fetchall()]
 
         cur.execute(
             f"""
@@ -245,7 +240,7 @@ def get_trace_pred_chart_data(param, start, end, step=10):
                 """,
                 (step, filtered_from_ts, filtered_to_ts),
             )
-            preds = [{"x": to_iso(ts), "y": val} for ts, val in cur.fetchall()]
+            preds = [{"x": str(ts), "y": val} for ts, val in cur.fetchall()]
     except Exception as e:
         actuals, preds = [], []
         print("[get_trace_pred_chart_data ERROR]", e)
@@ -322,4 +317,4 @@ def get_process_range(target_time):
     cur.close()
     conn.close()
     
-    return {"start": to_iso(start_time), "end": to_iso(end_time)}
+    return {"start": str(start_time), "end": str(end_time)}

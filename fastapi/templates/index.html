@@ -8,8 +8,37 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            margin: 20px;
+            margin: 20px 20px 20px 160px;
             background-color: #f4f6f9;
+        }
+
+        #side-tabs {
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            width: 140px;
+            background-color: #343a40;
+            display: flex;
+            flex-direction: column;
+            padding-top: 60px;
+        }
+
+        #side-tabs a {
+            color: #adb5bd;
+            text-decoration: none;
+            padding: 12px 16px;
+            border-bottom: 1px solid #495057;
+        }
+
+        #side-tabs a.active {
+            background-color: #007bff;
+            color: #fff;
+        }
+
+        #side-tabs a.disabled {
+            color: #6c757d;
+            pointer-events: none;
         }
 
         h2 {
@@ -266,11 +295,16 @@
 </head>
 
 <body>
+    <div id="side-tabs">
+        <a href="#" class="active">1세부 ALD</a>
+        <a href="#" class="disabled">2세부 PVD</a>
+    </div>
     <div class="navbar">
         <a href="/" class="{% if active_tab == 'index' %}active{% endif %}">실시간 파라미터 예측</a>
         <a href="/index4.html" class="{% if active_tab == 'index4' %}active{% endif %}">실시간 이상감지</a>
         <a href="/index2.html" class="{% if active_tab == 'index2' %}active{% endif %}">공정 결과 추론</a>
         <a href="/index3.html" class="{% if active_tab == 'index3' %}active{% endif %}">STANDARD 공정 셋팅값 비교</a>
+        <a href="http://bigsoft.iptime.org:10100/" target="_blank">AI 어시스턴트</a>
     </div>
     <h2>실시간 데이터 모니터링</h2>
 

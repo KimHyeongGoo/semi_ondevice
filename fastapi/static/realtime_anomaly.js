@@ -22,20 +22,35 @@ const highlightPlugin = {
 };
 Chart.register(highlightPlugin);
 
-function iso(t) { return new Date(t).toISOString(); }
-function formatLocal(t) { const d = new Date(t); return d.toLocaleString('sv').replace('T', ' '); }
+function formatLocal(ts) {
+    const d = new Date(ts);
+    return d.toLocaleString('sv').replace('T', ' ');
+}
+
+function formatTime(ts) {
+    return String(ts).slice(11, 19);
+}
 
 function safeId(name) {
     return name.replace(/[ .-]/g, '_');
 }
 
 function createCharts() {
+    const xAxis = {
+        type: 'time',
+        time: { tooltipFormat: 'HH:mm:ss' },
+        ticks: {
+            callback: function (value) {
+                return formatTime(value);
+            }
+        }
+    };
     columns.forEach(col => {
         const id = safeId(col);
         const pctx = document.getElementById(`proc-${id}`).getContext('2d');
         const rctx = document.getElementById(`recent-${id}`).getContext('2d');
-        processCharts[col] = new Chart(pctx, { type: 'line', data: { datasets: [{ label: '예측값', borderColor: 'red', tension: 0.3, data: [] }, { label: '실제값', borderColor: 'blue', tension: 0.3, data: [] }] }, options: { animation: false, plugins: { highlightRegion: { regions: [] } }, scales: { x: { type: 'time', time: { tooltipFormat: 'HH:mm:ss' } }, y: {} } } });
-        recentCharts[col] = new Chart(rctx, { type: 'line', data: { datasets: [{ label: '예측값', borderColor: 'red', tension: 0.3, data: [] }, { label: '실제값', borderColor: 'blue', tension: 0.3, data: [] }] }, options: { animation: false, plugins: { highlightRegion: { regions: [] } }, scales: { x: { type: 'time', time: { tooltipFormat: 'HH:mm:ss' } }, y: {} } } });
+        processCharts[col] = new Chart(pctx, { type: 'line', data: { datasets: [{ label: '예측값', borderColor: 'red', tension: 0.3, data: [] }, { label: '실제값', borderColor: 'blue', tension: 0.3, data: [] }] }, options: { animation: false, plugins: { highlightRegion: { regions: [] } }, scales: { x: xAxis, y: {} } } });
+        recentCharts[col] = new Chart(rctx, { type: 'line', data: { datasets: [{ label: '예측값', borderColor: 'red', tension: 0.3, data: [] }, { label: '실제값', borderColor: 'blue', tension: 0.3, data: [] }] }, options: { animation: false, plugins: { highlightRegion: { regions: [] } }, scales: { x: xAxis, y: {} } } });
     });
 }
 
@@ -97,6 +112,14 @@ function updateLog() {
     logDiv.textContent = lines.join('\n');
 }
 
+function updateLogPanelHeight() {
+    const chartsEl = document.getElementById('charts-container');
+    const logPanel = document.getElementById('log-panel');
+    if (chartsEl && logPanel) {
+        logPanel.style.maxHeight = chartsEl.offsetHeight + 'px';
+    }
+}
+
 function addLogs(param, segments) {
     if (!logs[param]) logs[param] = [];
     segments.forEach(s => {
@@ -110,21 +133,57 @@ function addLogs(param, segments) {
 }
 
 function updateCharts(col, data) {
-    const { segments, regions } = calcSegments(data.actual, data.predicted);
+    const actual = data.actual;
+    const predicted = data.predicted;
+    const { segments, regions } = calcSegments(actual, predicted);
     const pChart = processCharts[col];
-    pChart.data.datasets[0].data = data.predicted.map(d => ({ x: d.x, y: d.y }));
-    pChart.data.datasets[1].data = data.actual.map(d => ({ x: d.x, y: d.y }));
+    pChart.data.datasets[0].data = predicted;
+    pChart.data.datasets[1].data = actual;
     pChart.options.plugins.highlightRegion.regions = regions;
+    const allTimestamps = actual.concat(predicted).map(d => new Date(d.x).getTime());
+    if (allTimestamps.length) {
+        pChart.options.scales.x.min = Math.min(...allTimestamps);
+        pChart.options.scales.x.max = Math.max(...allTimestamps);
+    }
+    const allVals = actual.concat(predicted).map(d => d.y);
+    if (allVals.length) {
+        const max = Math.max(...allVals);
+        const min = Math.min(...allVals);
+        let pad = 3;
+        if (col.startsWith('Temp_Act')) pad = 100;
+        else if (col.includes('VG11')) pad = 50;
+        pChart.options.scales.y.max = max + pad;
+        pChart.options.scales.y.min = min - pad;
+    }
     pChart.update();
 
-    const recentStart = Date.now() - 60000;
-    const aRecent = data.actual.filter(d => new Date(d.x).getTime() >= recentStart);
-    const pRecent = data.predicted.filter(d => new Date(d.x).getTime() >= recentStart);
+    const lastActual = actual.length ? new Date(actual[actual.length - 1].x).getTime() : 0;
+    const lastPred = predicted.length ? new Date(predicted[predicted.length - 1].x).getTime() : 0;
+    let recentEnd = Math.max(lastActual, lastPred);
+    if (!recentEnd) recentEnd = Date.now();
+    const recentStart = recentEnd - 60000;
+    const aRecent = actual.filter(d => new Date(d.x).getTime() >= recentStart);
+    const pRecent = predicted.filter(d => new Date(d.x).getTime() >= recentStart);
     const { regions: reg2 } = calcSegments(aRecent, pRecent);
     const rChart = recentCharts[col];
-    rChart.data.datasets[0].data = pRecent.map(d => ({ x: d.x, y: d.y }));
-    rChart.data.datasets[1].data = aRecent.map(d => ({ x: d.x, y: d.y }));
+    rChart.data.datasets[0].data = pRecent;
+    rChart.data.datasets[1].data = aRecent;
     rChart.options.plugins.highlightRegion.regions = reg2;
+    const recentTs = aRecent.concat(pRecent).map(d => new Date(d.x).getTime());
+    if (recentTs.length) {
+        rChart.options.scales.x.min = Math.min(...recentTs);
+        rChart.options.scales.x.max = Math.max(...recentTs);
+    }
+    const recentVals = aRecent.concat(pRecent).map(d => d.y);
+    if (recentVals.length) {
+        const max = Math.max(...recentVals);
+        const min = Math.min(...recentVals);
+        let pad = 3;
+        if (col.startsWith('Temp_Act')) pad = 100;
+        else if (col.includes('VG11')) pad = 50;
+        rChart.options.scales.y.max = max + pad;
+        rChart.options.scales.y.min = min - pad;
+    }
     rChart.update();
 
     addLogs(col, segments);
@@ -134,7 +193,7 @@ function fetchData() {
     if (!processStart) return;
     const now = new Date();
     const processStartTime = new Date(processStart).getTime();
-    const thirtyMinAgo = now.getTime() - 300000; // 5 minutes
+    const thirtyMinAgo = now.getTime() - 300000; // 10 minutes
     const startIso = new Date(Math.max(processStartTime, thirtyMinAgo)).toISOString();
     const nowIso = now.toISOString();
     columns.forEach(col => {
@@ -166,7 +225,10 @@ function checkProcess() {
 
 window.addEventListener('DOMContentLoaded', () => {
     createCharts();
+    updateLogPanelHeight();
     checkProcess();
     setInterval(checkProcess, 5000);
     setInterval(fetchData, 1000);
 });
+
+window.addEventListener('resize', updateLogPanelHeight);
