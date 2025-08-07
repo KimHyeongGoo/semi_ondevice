@@ -76,6 +76,13 @@ async def get_page4(request: Request):
         {"request": request, "columns": predict_columns, "active_tab": "index4"}
     )
     
+@app.get("/index5.html", response_class=HTMLResponse)
+async def get_assistant(request: Request):
+    return templates.TemplateResponse(
+        "index5.html",
+        {"request": request, "active_tab": "index5"}
+    )
+    
 @app.get("/api/data")
 async def get_data(duration: int = 300, step: int = 10):
     data = get_latest_data(predict_columns, duration, step)

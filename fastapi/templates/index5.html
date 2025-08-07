@@ -3,10 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>STANDARD 공정 셋팅값 비교</title>
-    <!-- Use the UMD build so Chart is available globally -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+    <title>AI 어시스턴트</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -72,73 +69,15 @@
             color: #fff;
         }
 
-        #process-container {
-            display: grid;
-            grid-auto-flow: column;
-            grid-template-rows: repeat(1, auto);
-            gap: 16px;
+        .iframe-container {
+            width: 100%;
+            height: calc(100vh - 120px);
         }
 
-        .page-nav {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin-top: 10px;
-            margin-bottom: 10px;
-            gap: 20px;
-        }
-
-        .page-nav button {
-            padding: 6px 12px;
-            font-size: 16px;
-        }
-
-        .process-box {
-            min-width: 220px;
-            background: #ffffff;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            padding: 8px;
-            cursor: pointer;
-        }
-
-        .process-box.active {
-            background: #e8f0fe;
-        }
-
-        #layout-container {
-            display: flex;
-            gap: 20px;
-            align-items: flex-start;
-        }
-
-        #charts-area {
-            flex: 2;
-        }
-
-
-        #charts-container {
-            display: grid;
-            grid-template-columns: repeat(2, minmax(400px, 1fr));
-            gap: 20px;
-            margin-top: 20px;
-        }
-
-        #info-area {
-            flex: 1;
-            overflow-y: auto;
-        }
-
-        .chart-box {
-            border: 1px solid #ccc;
-            padding: 12px;
-            border-radius: 8px;
-            background-color: #ffffff;
-        }
-
-        canvas {
-            width: 100% !important;
-            height: 300px;
+        .iframe-container iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
         }
     </style>
 </head>
@@ -155,24 +94,9 @@
         <a href="/index3.html" class="{% if active_tab == 'index3' %}active{% endif %}">STANDARD 공정 셋팅값 비교</a>
         <a href="/index5.html" class="{% if active_tab == 'assistant' %}active{% endif %}">AI 어시스턴트</a>
     </div>
-    <h2>STANDARD 공정 셋팅값 비교</h2>
-    <div id="process-container" class="process-container"></div>
-    <div class="page-nav">
-        <button id="prevPage">◀</button>
-        <button id="nextPage">▶</button>
+    <div class="iframe-container">
+        <iframe src="http://bigsoft.iptime.org:10100/"></iframe>
     </div>
-
-    <div id="layout-container">
-        <div id="charts-area">
-            <div id="charts-container"></div>
-        </div>
-        <div id="info-area">
-            <h3>파라미터별 실제값-예측값 차이 정보<br>(값차이가 10%이상 10초이상인 경우 감지됨)</h3>
-            <div id="diff-info"></div>
-        </div>
-    </div>
-
-    <script src="/static/process_compare.js" defer></script>
 </body>
 
 </html>
