@@ -123,7 +123,7 @@ function calcSegments(actual, predicted) {
             return;
         }
         const diff = Math.abs(a.y - pv) / (Math.abs(a.y) || 1) * 100;
-        if (diff > 10) {
+        if (diff > 8) {
             if (segStart === null) { segStart = t; maxDiff = diff; }
             else { maxDiff = Math.max(maxDiff, diff); }
         } else if (segStart !== null) {
@@ -176,12 +176,33 @@ function updateLogPanelHeight() {
     }
 }
 
+function trimLogEntries(limit = 20) {
+    const all = [];
+    Object.entries(logs).forEach(([param, arr]) => {
+        arr.forEach(l => all.push({ param, ...l }));
+    });
+    all.sort((a, b) => b.start - a.start);
+    const trimmed = all.slice(0, limit);
+    logs = {};
+    loggedIds.clear();
+    trimmed.forEach(l => {
+        if (!logs[l.param]) logs[l.param] = [];
+        logs[l.param].push({
+            start: l.start,
+            end: l.end,
+            diff: l.diff,
+            step_id: l.step_id,
+            step_name: l.step_name
+        });
+        loggedIds.add(`${l.param}-${l.start}-${l.end}`);
+    });
+}
+
 function addLogs(param, segments, actual) {
     if (!logs[param]) logs[param] = [];
     segments.forEach(s => {
-        const id = `${param}-${s.start}-${s.end}`;
-        if (!loggedIds.has(id)) {
-            loggedIds.add(id);
+        const isDup = logs[param].some(l => Math.abs(l.start - s.start) < 2000 && Math.abs(l.end - s.end) < 2000);
+        if (!isDup) {
             const steps = actual.filter(a => {
                 const t = new Date(a.x).getTime();
                 return t >= s.start && t <= s.end && a.step_id != null;
@@ -195,8 +216,10 @@ function addLogs(param, segments, actual) {
                 step_id: stepIds,
                 step_name: stepNames
             });
+            loggedIds.add(`${param}-${s.start}-${s.end}`);
         }
     });
+    trimLogEntries(20);
     updateLog();
 }
 
@@ -220,6 +243,7 @@ function updateCharts(col, data) {
         let pad = 3;
         if (col.startsWith('Temp_Act')) pad = 100;
         else if (col.includes('VG11')) pad = 1;
+        else if (col.includes('POS')) pad = 10;
         pChart.options.scales.y.max = max + pad;
         pChart.options.scales.y.min = min - pad;
     }
