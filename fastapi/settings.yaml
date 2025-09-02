@@ -1,3 +1,5 @@
 duration: 60
-hidden_columns: []
+hidden_columns:
+- MFC27_L.POS
+- MFC28_R.POS
 step: 30

@@ -108,14 +108,25 @@ def get_event_chart_data(param, start, end, step=10):
     try:
         cur.execute(
             f"""
-            SELECT DATE_TRUNC('second', "Timestamp") AS ts, "{param}"
+            SELECT DATE_TRUNC('second', "Timestamp") AS ts,
+                   "{param}",
+                   "ProcessRecipeStepID",
+                   "ProcessRecipeStepName"
             FROM "{raw_table}"
             WHERE "Timestamp" BETWEEN %s::timestamp AND %s::timestamp
             ORDER BY ts ASC
             """,
             (from_ts, to_ts),
         )
-        actuals = [{"x": str(ts), "y": val} for ts, val in cur.fetchall()]
+        actuals = [
+            {
+                "x": str(ts),
+                "y": val,
+                "step_id": step_id,
+                "step_name": step_name,
+            }
+            for ts, val, step_id, step_name in cur.fetchall()
+        ]
         if table_name:
             # Predicted 테이블 조회는 3시간 빼서 조회
 

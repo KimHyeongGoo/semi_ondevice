@@ -155,10 +155,13 @@ function updateLog() {
         logs[p].forEach((l, idx) => {
             const dur = Math.round((l.end - l.start) / 1000);
             lines.push('{');
-            lines.push(`start : ${formatLocal(l.start)},`);
-            lines.push(`end : ${formatLocal(l.end)},`);
-            lines.push(`diff : ${l.diff.toFixed(2)}%,`);
-            lines.push(`duration : ${dur}초`);
+            lines.push(`"parameter" : "${p}",`);
+            lines.push(`"start" : "${formatLocal(l.start)}",`);
+            lines.push(`"end" : "${formatLocal(l.end)}",`);
+            lines.push(`"duration" : ${dur},`);
+            lines.push(`"diff" : ${l.diff.toFixed(2)}%,`);
+            lines.push(`"step_id" : "[${l.step_id.join(', ')}]",`);
+            lines.push(`"step_name" : "[${l.step_name.join(', ')}]"`);
             lines.push('}' + (idx < logs[p].length - 1 ? ',' : ''));
         });
     });
@@ -173,13 +176,25 @@ function updateLogPanelHeight() {
     }
 }
 
-function addLogs(param, segments) {
+function addLogs(param, segments, actual) {
     if (!logs[param]) logs[param] = [];
     segments.forEach(s => {
         const id = `${param}-${s.start}-${s.end}`;
         if (!loggedIds.has(id)) {
             loggedIds.add(id);
-            logs[param].unshift({ start: s.start, end: s.end, diff: s.max });
+            const steps = actual.filter(a => {
+                const t = new Date(a.x).getTime();
+                return t >= s.start && t <= s.end && a.step_id != null;
+            });
+            const stepIds = [...new Set(steps.map(a => a.step_id))];
+            const stepNames = [...new Set(steps.map(a => a.step_name).filter(Boolean))];
+            logs[param].unshift({
+                start: s.start,
+                end: s.end,
+                diff: s.max,
+                step_id: stepIds,
+                step_name: stepNames
+            });
         }
     });
     updateLog();
@@ -241,7 +256,7 @@ function updateCharts(col, data) {
     setDatasetVisibility(rChart, visibilityMode);
     rChart.update();
 
-    addLogs(col, segments);
+    addLogs(col, segments, actual);
 }
 
 function fetchData() {
@@ -282,7 +297,7 @@ window.addEventListener('DOMContentLoaded', () => {
     createCharts();
     updateLogPanelHeight();
     checkProcess();
-    setInterval(checkProcess, 5000);
+    setInterval(checkProcess, 10000);
     setInterval(fetchData, 1000);
     const btn = document.getElementById('toggle-datasets');
     const updateBtn = () => { btn.textContent = visibilityLabels[visibilityMode]; };
