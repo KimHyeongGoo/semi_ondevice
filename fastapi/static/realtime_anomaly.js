@@ -115,19 +115,20 @@ function calcSegments(actual, predicted) {
         const pv = predMap.get(a.x);
         const t = new Date(a.x).getTime();
         if (pv === undefined) {
-            if (segStart !== null && last - segStart >= 10000) {
+            if (segStart !== null && last - segStart >= 4000) {
                 regions.push({ start: segStart, end: last });
                 segments.push({ start: segStart, end: last, max: maxDiff });
             }
             segStart = null; maxDiff = 0; last = t;
             return;
         }
+        const absDiff = Math.abs(a.y - pv);
         const diff = Math.abs(a.y - pv) / (Math.abs(a.y) || 1) * 100;
-        if (diff > 8) {
+        if (diff > 10 && absDiff > 0.25) {
             if (segStart === null) { segStart = t; maxDiff = diff; }
             else { maxDiff = Math.max(maxDiff, diff); }
         } else if (segStart !== null) {
-            if (last - segStart >= 10000) {
+            if (last - segStart >= 4000) {
                 regions.push({ start: segStart, end: last });
                 segments.push({ start: segStart, end: last, max: maxDiff });
             }
@@ -135,7 +136,7 @@ function calcSegments(actual, predicted) {
         }
         last = t;
     });
-    if (segStart !== null && last - segStart >= 10000) {
+    if (segStart !== null && last - segStart >= 4000) {
         regions.push({ start: segStart, end: last });
         segments.push({ start: segStart, end: last, max: maxDiff });
     }
@@ -144,28 +145,45 @@ function calcSegments(actual, predicted) {
 
 function updateLog() {
     const logDiv = document.getElementById('log-content');
+    logDiv.innerHTML = '';
     const params = Object.keys(logs).sort((a, b) => {
         const la = logs[a][0]?.start || 0;
         const lb = logs[b][0]?.start || 0;
         return lb - la; // most recent param first
     });
-    const lines = [];
+
     params.forEach(p => {
-        lines.push(p);
-        logs[p].forEach((l, idx) => {
+        const header = document.createElement('div');
+        header.className = 'param-label';
+        header.textContent = p;
+        logDiv.appendChild(header);
+        logs[p].forEach(l => {
             const dur = Math.round((l.end - l.start) / 1000);
-            lines.push('{');
-            lines.push(`"parameter" : "${p}",`);
-            lines.push(`"start" : "${formatLocal(l.start)}",`);
-            lines.push(`"end" : "${formatLocal(l.end)}",`);
-            lines.push(`"duration" : ${dur},`);
-            lines.push(`"diff" : ${l.diff.toFixed(2)}%,`);
-            lines.push(`"step_id" : "[${l.step_id.join(', ')}]",`);
-            lines.push(`"step_name" : "[${l.step_name.join(', ')}]"`);
-            lines.push('}' + (idx < logs[p].length - 1 ? ',' : ''));
+            const lines = [
+                '{',
+                `"parameter" : "${p}",`,
+                `"start" : "${formatLocal(l.start)}",`,
+                `"end" : "${formatLocal(l.end)}",`,
+                `"duration" : ${dur},`,
+                `"diff" : ${l.diff.toFixed(2)}%,`,
+                `"step_id" : "[${l.step_id.join(', ')}]",`,
+                `"step_name" : "[${l.step_name.join(', ')}]"`,
+                '}'
+            ];
+            const text = lines.join('\n');
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            const pre = document.createElement('pre');
+            pre.textContent = text;
+            const btn = document.createElement('button');
+            btn.className = 'copy-btn';
+            btn.textContent = 'Copy';
+            btn.addEventListener('click', () => navigator.clipboard.writeText(text));
+            entry.appendChild(pre);
+            entry.appendChild(btn);
+            logDiv.appendChild(entry);
         });
     });
-    logDiv.textContent = lines.join('\n');
 }
 
 function updateLogPanelHeight() {
@@ -197,6 +215,7 @@ function trimLogEntries(limit = 20) {
         loggedIds.add(`${l.param}-${l.start}-${l.end}`);
     });
 }
+
 
 function addLogs(param, segments, actual) {
     if (!logs[param]) logs[param] = [];
@@ -321,7 +340,7 @@ window.addEventListener('DOMContentLoaded', () => {
     createCharts();
     updateLogPanelHeight();
     checkProcess();
-    setInterval(checkProcess, 10000);
+    setInterval(checkProcess, 20000);
     setInterval(fetchData, 1000);
     const btn = document.getElementById('toggle-datasets');
     const updateBtn = () => { btn.textContent = visibilityLabels[visibilityMode]; };
