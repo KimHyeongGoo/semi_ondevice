@@ -138,6 +138,9 @@
         <a href="/index5.html" class="{% if active_tab == 'assistant' %}active{% endif %}">AI 어시스턴트</a>
     </div>
     <h2>실시간 이상감지</h2>
+    <div id="toggle-container" style="margin-bottom: 10px;">
+        <button id="toggle-datasets"></button>
+    </div>
     <div id="layout-container">
         <div id="charts-container">
             {% for col in columns %}

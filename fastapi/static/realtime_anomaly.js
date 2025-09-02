@@ -6,6 +6,38 @@ let processEnd = null;
 let logs = {};
 const loggedIds = new Set();
 
+const visibilityKey = 'chartVisibilityMode';
+let visibilityMode = localStorage.getItem(visibilityKey);
+if (!visibilityMode) {
+    visibilityMode = 'both';
+    localStorage.setItem(visibilityKey, visibilityMode);
+}
+const visibilityLabels = {
+    both: '실제값 + 예측값',
+    actual: '실제값만',
+    predicted: '예측값만'
+};
+
+function setDatasetVisibility(chart, mode) {
+    const pred = chart.getDatasetMeta(0);
+    const act = chart.getDatasetMeta(1);
+    if (mode === 'actual') {
+        pred.hidden = true;
+        act.hidden = false;
+    } else if (mode === 'predicted') {
+        pred.hidden = false;
+        act.hidden = true;
+    } else {
+        pred.hidden = false;
+        act.hidden = false;
+    }
+}
+
+function applyVisibilityAll() {
+    Object.values(processCharts).forEach(c => { setDatasetVisibility(c, visibilityMode); c.update(); });
+    Object.values(recentCharts).forEach(c => { setDatasetVisibility(c, visibilityMode); c.update(); });
+}
+
 const highlightPlugin = {
     id: 'highlightRegion',
     beforeDatasetsDraw(chart, args, opts) {
@@ -49,9 +81,30 @@ function createCharts() {
         const id = safeId(col);
         const pctx = document.getElementById(`proc-${id}`).getContext('2d');
         const rctx = document.getElementById(`recent-${id}`).getContext('2d');
-        processCharts[col] = new Chart(pctx, { type: 'line', data: { datasets: [{ label: '예측값', borderColor: 'red', tension: 0.3, data: [] }, { label: '실제값', borderColor: 'blue', tension: 0.3, data: [] }] }, options: { animation: false, plugins: { highlightRegion: { regions: [] } }, scales: { x: xAxis, y: {} } } });
-        recentCharts[col] = new Chart(rctx, { type: 'line', data: { datasets: [{ label: '예측값', borderColor: 'red', tension: 0.3, data: [] }, { label: '실제값', borderColor: 'blue', tension: 0.3, data: [] }] }, options: { animation: false, plugins: { highlightRegion: { regions: [] } }, scales: { x: xAxis, y: {} } } });
+        processCharts[col] = new Chart(pctx, {
+            type: 'line',
+            data: {
+                datasets: [
+                    { label: '예측값', borderColor: 'red', tension: 0.3, data: [] },
+                    { label: '실제값', borderColor: 'blue', tension: 0.3, data: [] }
+                ]
+            },
+            options: { animation: false, plugins: { highlightRegion: { regions: [] } }, scales: { x: xAxis, y: {} } }
+        });
+        recentCharts[col] = new Chart(rctx, {
+            type: 'line',
+            data: {
+                datasets: [
+                    { label: '예측값', borderColor: 'red', tension: 0.3, data: [] },
+                    { label: '실제값', borderColor: 'blue', tension: 0.3, data: [] }
+                ]
+            },
+            options: { animation: false, plugins: { highlightRegion: { regions: [] } }, scales: { x: xAxis, y: {} } }
+        });
+        setDatasetVisibility(processCharts[col], visibilityMode);
+        setDatasetVisibility(recentCharts[col], visibilityMode);
     });
+    applyVisibilityAll();
 }
 
 function calcSegments(actual, predicted) {
@@ -151,10 +204,11 @@ function updateCharts(col, data) {
         const min = Math.min(...allVals);
         let pad = 3;
         if (col.startsWith('Temp_Act')) pad = 100;
-        else if (col.includes('VG11')) pad = 50;
+        else if (col.includes('VG11')) pad = 1;
         pChart.options.scales.y.max = max + pad;
         pChart.options.scales.y.min = min - pad;
     }
+    setDatasetVisibility(pChart, visibilityMode);
     pChart.update();
 
     const lastActual = actual.length ? new Date(actual[actual.length - 1].x).getTime() : 0;
@@ -180,10 +234,11 @@ function updateCharts(col, data) {
         const min = Math.min(...recentVals);
         let pad = 3;
         if (col.startsWith('Temp_Act')) pad = 100;
-        else if (col.includes('VG11')) pad = 50;
+        else if (col.includes('VG11')) pad = 1;
         rChart.options.scales.y.max = max + pad;
         rChart.options.scales.y.min = min - pad;
     }
+    setDatasetVisibility(rChart, visibilityMode);
     rChart.update();
 
     addLogs(col, segments);
@@ -229,6 +284,15 @@ window.addEventListener('DOMContentLoaded', () => {
     checkProcess();
     setInterval(checkProcess, 5000);
     setInterval(fetchData, 1000);
+    const btn = document.getElementById('toggle-datasets');
+    const updateBtn = () => { btn.textContent = visibilityLabels[visibilityMode]; };
+    updateBtn();
+    btn.addEventListener('click', () => {
+        visibilityMode = visibilityMode === 'both' ? 'actual' : visibilityMode === 'actual' ? 'predicted' : 'both';
+        localStorage.setItem(visibilityKey, visibilityMode);
+        updateBtn();
+        applyVisibilityAll();
+    });
 });
 
 window.addEventListener('resize', updateLogPanelHeight);

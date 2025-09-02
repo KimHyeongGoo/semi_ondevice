@@ -100,6 +100,10 @@ def get_event_chart_data(param, start, end, step=10):
     if len(str(from_ts)) >= 26:
         from_ts = str(from_ts)[:23]
         to_ts = str(to_ts)[:23]
+    from_ts = parser.parse(from_ts)
+    to_ts = parser.parse(to_ts)
+    from_ts = from_ts + timedelta(hours=9)
+    to_ts = to_ts + timedelta(hours=9)
 
     try:
         cur.execute(
@@ -112,8 +116,9 @@ def get_event_chart_data(param, start, end, step=10):
             (from_ts, to_ts),
         )
         actuals = [{"x": str(ts), "y": val} for ts, val in cur.fetchall()]
-
         if table_name:
+            # Predicted 테이블 조회는 3시간 빼서 조회
+
             cur.execute(
                 f"""
                 SELECT DATE_TRUNC('second', "Timestamp") AS ts, "{param_modified}"
@@ -124,6 +129,7 @@ def get_event_chart_data(param, start, end, step=10):
                 (step, from_ts, to_ts),
             )
             preds = [{"x": str(ts), "y": val} for ts, val in cur.fetchall()]
+            #print(adj_from_ts, adj_to_ts)
         else:
             preds = []
     except Exception as e:
@@ -202,7 +208,7 @@ def get_trace_pred_chart_data(param, start, end, step=10):
     if len(str(from_ts)) >= 26:
         from_ts = str(from_ts)[:23]
         to_ts = str(to_ts)[:23]
-
+    
     try:
         cur.execute(
             f"""
@@ -241,6 +247,7 @@ def get_trace_pred_chart_data(param, start, end, step=10):
                 (step, filtered_from_ts, filtered_to_ts),
             )
             preds = [{"x": str(ts), "y": val} for ts, val in cur.fetchall()]
+            #print(len(preds))
     except Exception as e:
         actuals, preds = [], []
         print("[get_trace_pred_chart_data ERROR]", e)
