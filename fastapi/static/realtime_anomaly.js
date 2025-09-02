@@ -67,6 +67,25 @@ function safeId(name) {
     return name.replace(/[ .-]/g, '_');
 }
 
+function fallbackCopy(text) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.top = '-1000px';
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+}
+
+function copyText(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).catch(() => fallbackCopy(text));
+    } else {
+        fallbackCopy(text);
+    }
+}
+
 function createCharts() {
     const xAxis = {
         type: 'time',
@@ -156,6 +175,8 @@ function updateLog() {
         const header = document.createElement('div');
         header.className = 'param-label';
         header.textContent = p;
+        header.style.cursor = 'pointer';
+        header.addEventListener('click', () => copyText(p));
         logDiv.appendChild(header);
         logs[p].forEach(l => {
             const dur = Math.round((l.end - l.start) / 1000);
@@ -178,7 +199,7 @@ function updateLog() {
             const btn = document.createElement('button');
             btn.className = 'copy-btn';
             btn.textContent = 'Copy';
-            btn.addEventListener('click', () => navigator.clipboard.writeText(text));
+            btn.addEventListener('click', () => copyText(text));
             entry.appendChild(pre);
             entry.appendChild(btn);
             logDiv.appendChild(entry);
