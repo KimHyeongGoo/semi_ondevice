@@ -146,7 +146,7 @@
 <body>
     <div id="side-tabs">
         <a href="#" class="active">1세부 ALD</a>
-        <a href="#" class="disabled">2세부 PVD</a>
+        <a href="/pvd" class="{% if active_side == 'pvd' %}active{% endif %}">2세부 PVD</a>
     </div>
     <div class="navbar">
         <a href="/" class="{% if active_tab == 'index' %}active{% endif %}">실시간 파라미터 예측</a>

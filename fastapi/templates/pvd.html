@@ -3,9 +3,10 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>2세부 PVD 실시간 모니터링</title>
+    <title>2세부 PVD 실시간 모니터링 (v4)</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+    <script src="{{ url_for('static', path='pvd4.js') }}" defer></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -93,9 +94,9 @@
         }
 
         #charts-grid {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 18px;
         }
 
         .chart-card {
@@ -106,13 +107,14 @@
             border: 1px solid #d9dee4;
             display: flex;
             flex-direction: column;
-            min-height: 260px;
+            max-height: 260px;
         }
 
         .chart-card h3 {
             margin: 0 0 12px 0;
             font-size: 18px;
             color: #343a40;
+            word-break: break-all;
         }
 
         canvas {
@@ -138,10 +140,10 @@
     </div>
 
     <div class="navbar">
-        <a href="/" class="{% if active_tab == 'index' %}active{% endif %}">실시간 이상 감지</a>
+        <a href="/pvd" class="{% if active_tab == 'index' %}active{% endif %}">PVD4</a>
     </div>
 
-    <h2>2세부 PVD 실시간 모니터링</h2>
+    <h2>PVD4 실시간 이상감지</h2>
 
     <div id="error-banner"></div>
 
@@ -152,196 +154,12 @@
 
     <div id="charts-grid">
         {% for col in columns %}
-        <div class="chart-card">
+        <div class="chart-card" data-column="{{ col }}" data-index="{{ loop.index0 }}">
             <h3>{{ col }}</h3>
-            <canvas id="chart-{{ col }}"></canvas>
+            <canvas id="chart-{{ loop.index0 }}"></canvas>
         </div>
         {% endfor %}
     </div>
-
-    <script>
-        const columns = {{ columns | tojson }};
-        const columnMeta = {
-            "ion_gauge_i": { label: "Ion Gauge", color: "#4bc0c0" },
-            "baratron_gauge_i": { label: "Baratron Gauge", color: "#ff6384" },
-            "ar_mfc_i": { label: "Ar MFC", color: "#36a2eb" },
-        };
-
-        const charts = {};
-        const MAX_POINTS = 3600; // 1시간 분량 (1Hz)
-        let lastTable = null;
-        let lastTimestamp = null;
-        let pollingHandle = null;
-
-        const currentTableEl = document.getElementById('current-table');
-        const lastUpdatedEl = document.getElementById('last-updated');
-        const errorBannerEl = document.getElementById('error-banner');
-
-        function createChart(column) {
-            const meta = columnMeta[column] || { label: column, color: '#007bff' };
-            const ctx = document.getElementById(`chart-${column}`).getContext('2d');
-            charts[column] = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    datasets: [{
-                        label: meta.label,
-                        data: [],
-                        borderColor: meta.color,
-                        backgroundColor: meta.color,
-                        tension: 0.2,
-                        pointRadius: 0,
-                        borderWidth: 2,
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    animation: false,
-                    parsing: false,
-                    interaction: {
-                        intersect: false,
-                        mode: 'nearest'
-                    },
-                    scales: {
-                        x: {
-                            type: 'time',
-                            time: {
-                                tooltipFormat: 'yyyy-MM-dd HH:mm:ss',
-                                displayFormats: {
-                                    second: 'HH:mm:ss',
-                                    minute: 'HH:mm',
-                                }
-                            },
-                            ticks: {
-                                source: 'data',
-                                autoSkip: true,
-                                maxRotation: 0,
-                                color: '#495057'
-                            },
-                            grid: {
-                                display: false
-                            }
-                        },
-                        y: {
-                            ticks: {
-                                color: '#495057'
-                            },
-                            grid: {
-                                color: 'rgba(0,0,0,0.08)'
-                            }
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            display: true,
-                            labels: {
-                                color: '#495057'
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
-        function clearCharts() {
-            Object.values(charts).forEach(chart => {
-                chart.data.datasets[0].data = [];
-                chart.update('none');
-            });
-        }
-
-        function appendRows(rows) {
-            if (!rows || rows.length === 0) {
-                return;
-            }
-
-            rows.forEach(row => {
-                if (!row.timer) {
-                    return;
-                }
-                const timeValue = new Date(row.timer);
-                columns.forEach(column => {
-                    const value = row[column];
-                    if (value === null || value === undefined) {
-                        return;
-                    }
-                    const chart = charts[column];
-                    if (!chart) {
-                        return;
-                    }
-                    const dataset = chart.data.datasets[0].data;
-                    dataset.push({ x: timeValue.getTime(), y: value });
-                    if (dataset.length > MAX_POINTS) {
-                        dataset.splice(0, dataset.length - MAX_POINTS);
-                    }
-                });
-            });
-
-            Object.values(charts).forEach(chart => chart.update('none'));
-            lastTimestamp = rows[rows.length - 1].timer;
-            lastUpdatedEl.textContent = new Date().toLocaleString('ko-KR');
-        }
-
-        async function fetchLatest() {
-            const params = new URLSearchParams();
-            if (lastTable) {
-                params.append('last_table', lastTable);
-            }
-            if (lastTimestamp) {
-                params.append('since', lastTimestamp);
-            }
-
-            const url = params.toString() ? `/api/pvd/latest?${params.toString()}` : '/api/pvd/latest';
-
-            try {
-                const response = await fetch(url, { cache: 'no-store' });
-                if (!response.ok) {
-                    throw new Error(`데이터 요청 실패: ${response.status}`);
-                }
-                const data = await response.json();
-                errorBannerEl.style.display = 'none';
-                errorBannerEl.textContent = '';
-
-                if (!data || !data.table) {
-                    currentTableEl.textContent = '-';
-                    return;
-                }
-
-                currentTableEl.textContent = data.table;
-
-                if (data.is_new_table || lastTable !== data.table) {
-                    lastTable = data.table;
-                    lastTimestamp = null;
-                    clearCharts();
-                }
-
-                if (Array.isArray(data.rows) && data.rows.length > 0) {
-                    appendRows(data.rows);
-                }
-            } catch (error) {
-                console.error(error);
-                errorBannerEl.style.display = 'block';
-                errorBannerEl.textContent = '데이터를 불러오지 못했습니다. 잠시 후 다시 시도합니다.';
-            }
-        }
-
-        function startPolling() {
-            if (pollingHandle) {
-                clearInterval(pollingHandle);
-            }
-            fetchLatest();
-            pollingHandle = setInterval(fetchLatest, 1000);
-        }
-
-        window.addEventListener('beforeunload', () => {
-            if (pollingHandle) {
-                clearInterval(pollingHandle);
-            }
-        });
-
-        columns.forEach(createChart);
-        startPolling();
-    </script>
 </body>
 
 </html>
