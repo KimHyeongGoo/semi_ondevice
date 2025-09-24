@@ -215,7 +215,7 @@ function updateLogPanelHeight() {
     }
 }
 
-function trimLogEntries(limit = 20) {
+function trimLogEntries(limit = 10) {
     const all = [];
     Object.entries(logs).forEach(([param, arr]) => {
         arr.forEach(l => all.push({ param, ...l }));
@@ -259,7 +259,7 @@ function addLogs(param, segments, actual) {
             loggedIds.add(`${param}-${s.start}-${s.end}`);
         }
     });
-    trimLogEntries(20);
+    trimLogEntries(10);
     updateLog();
 }
 

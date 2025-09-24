@@ -1,5 +1,5 @@
 import psycopg2
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 import os
 from dateutil import parser
@@ -12,6 +12,7 @@ tasks = [
     ['Temp_Act_U','Temp_Act_CU','Temp_Act_C','Temp_Act_CL','Temp_Act_L'],
 ]
 
+KST = timezone(timedelta(hours=9))
 param_table_map = {}
 for idx, cols in enumerate(tasks):
     for col in cols:
@@ -89,10 +90,14 @@ def get_event_chart_data(param, start, end, step=10):
     )
     cur = conn.cursor()
 
-    from_ts = parser.parse(start)
-    to_ts = parser.parse(end)
+    #from_ts = parser.parse(start)
+    #to_ts = parser.parse(end)
+    
+    to_ts = datetime.now(ZoneInfo("Asia/Seoul"))
+    from_ts = to_ts - timedelta(seconds=300)
+    #print(to_ts)
     date_suffix = from_ts.strftime("%Y%m%d")
-
+    #print(date_suffix)
     raw_table = f"rawdata{date_suffix}"
     param_modified = param.replace(' ', '_').replace('.', '_').replace('-', '_')
     table_name = param_table_map.get(param)
@@ -100,11 +105,18 @@ def get_event_chart_data(param, start, end, step=10):
     if len(str(from_ts)) >= 26:
         from_ts = str(from_ts)[:23]
         to_ts = str(to_ts)[:23]
+    print(to_ts)
+    '''
     from_ts = parser.parse(from_ts)
     to_ts = parser.parse(to_ts)
-    from_ts = from_ts + timedelta(hours=9)
-    to_ts = to_ts + timedelta(hours=9)
 
+    if from_ts.tzinfo is None:
+        from_ts = from_ts.replace(tzinfo=timezone.utc).astimezone(KST)
+        to_ts = to_ts.replace(tzinfo=timezone.utc).astimezone(KST)
+    else:
+        from_ts = from_ts.astimezone(KST)
+        to_ts = to_ts.astimezone(KST)
+    ''' 
     try:
         cur.execute(
             f"""
