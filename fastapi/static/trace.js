@@ -3,6 +3,33 @@ function format(val) {
     return parseFloat(val).toFixed(2);
 }
 
+let lastStepInfoFetch = 0;
+
+function updateCurrentStepDisplay(stepId, stepName) {
+    const idEl = document.getElementById('current-step-id');
+    const nameEl = document.getElementById('current-step-name');
+    if (idEl) {
+        idEl.textContent = stepId !== null && stepId !== undefined ? stepId : '-';
+    }
+    if (nameEl) {
+        nameEl.textContent = stepName ? stepName : '-';
+    }
+}
+
+async function fetchCurrentStepInfo(force = false) {
+    const now = Date.now();
+    if (!force && now - lastStepInfoFetch < 5000) return;
+    lastStepInfoFetch = now;
+    try {
+        const res = await fetch('/api/current_step');
+        if (!res.ok) throw new Error('failed');
+        const data = await res.json();
+        updateCurrentStepDisplay(data.step_id ?? null, data.step_name ?? null);
+    } catch (e) {
+        updateCurrentStepDisplay(null, null);
+    }
+}
+
 function buildTable(proc) {
     const table = document.createElement('table');
     table.className = 'thickness-table';
@@ -101,10 +128,13 @@ async function fetchData() {
     const res = await fetch('/api/trace_info?limit=50');
     allData = (await res.json()).reverse();
     updateLayout();
+    fetchCurrentStepInfo();
 }
 
 window.addEventListener('DOMContentLoaded', () => {
     fetchData();
+    fetchCurrentStepInfo(true);
+    setInterval(fetchCurrentStepInfo, 5000);
     window.addEventListener('resize', updateLayout);
     document.getElementById('prevPage').addEventListener('click', () => {
         if (pageIndex > 0) {

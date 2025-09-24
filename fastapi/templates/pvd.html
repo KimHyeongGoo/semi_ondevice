@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <title>2세부 PVD 실시간 모니터링</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px 20px 20px 160px;
+            background-color: #f4f6f9;
+        }
+
+        #side-tabs {
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            width: 140px;
+            background-color: #343a40;
+            display: flex;
+            flex-direction: column;
+            padding-top: 60px;
+        }
+
+        #side-tabs a {
+            color: #adb5bd;
+            text-decoration: none;
+            padding: 12px 16px;
+            border-bottom: 1px solid #495057;
+        }
+
+        #side-tabs a.active {
+            background-color: #007bff;
+            color: #fff;
+        }
+
+        #side-tabs a.disabled {
+            color: #6c757d;
+            pointer-events: none;
+        }
+
+        .navbar {
+            display: flex;
+            background-color: #343a40;
+            border-radius: 6px;
+            overflow: hidden;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .navbar a {
+            flex: 1;
+            padding: 12px 20px;
+            text-align: center;
+            color: #adb5bd;
+            text-decoration: none;
+            font-weight: bold;
+            transition: background 0.2s, color 0.2s;
+        }
+
+        .navbar a:hover {
+            background-color: #495057;
+            color: #fff;
+        }
+
+        .navbar a.active {
+            background-color: #007bff;
+            color: #fff;
+        }
+
+        h2 {
+            margin-bottom: 10px;
+        }
+
+        #status-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 24px;
+            margin-bottom: 16px;
+            padding: 12px 16px;
+            border-radius: 8px;
+            background-color: #ffffff;
+            border: 1px solid #d9dee4;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+        }
+
+        #status-bar span.label {
+            font-weight: bold;
+            color: #495057;
+        }
+
+        #charts-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .chart-card {
+            background-color: #ffffff;
+            border-radius: 10px;
+            padding: 16px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+            border: 1px solid #d9dee4;
+            display: flex;
+            flex-direction: column;
+            min-height: 260px;
+        }
+
+        .chart-card h3 {
+            margin: 0 0 12px 0;
+            font-size: 18px;
+            color: #343a40;
+        }
+
+        canvas {
+            flex: 1;
+        }
+
+        #error-banner {
+            display: none;
+            margin-bottom: 16px;
+            padding: 10px 14px;
+            border-radius: 6px;
+            background-color: #ffe9e9;
+            color: #c20000;
+            border: 1px solid #ffb3b3;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="side-tabs">
+        <a href="/" class="{% if active_side == 'ald' %}active{% endif %}">1세부 ALD</a>
+        <a href="/pvd" class="{% if active_side == 'pvd' %}active{% endif %}">2세부 PVD</a>
+    </div>
+
+    <div class="navbar">
+        <a href="/" class="{% if active_tab == 'index' %}active{% endif %}">실시간 이상 감지</a>
+    </div>
+
+    <h2>2세부 PVD 실시간 모니터링</h2>
+
+    <div id="error-banner"></div>
+
+    <div id="status-bar">
+        <div><span class="label">현재 테이블</span>: <span id="current-table">-</span></div>
+        <div><span class="label">최근 수신 시각</span>: <span id="last-updated">-</span></div>
+    </div>
+
+    <div id="charts-grid">
+        {% for col in columns %}
+        <div class="chart-card">
+            <h3>{{ col }}</h3>
+            <canvas id="chart-{{ col }}"></canvas>
+        </div>
+        {% endfor %}
+    </div>
+
+    <script>
+        const columns = {{ columns | tojson }};
+        const columnMeta = {
+            "ion_gauge_i": { label: "Ion Gauge", color: "#4bc0c0" },
+            "baratron_gauge_i": { label: "Baratron Gauge", color: "#ff6384" },
+            "ar_mfc_i": { label: "Ar MFC", color: "#36a2eb" },
+        };
+
+        const charts = {};
+        const MAX_POINTS = 3600; // 1시간 분량 (1Hz)
+        let lastTable = null;
+        let lastTimestamp = null;
+        let pollingHandle = null;
+
+        const currentTableEl = document.getElementById('current-table');
+        const lastUpdatedEl = document.getElementById('last-updated');
+        const errorBannerEl = document.getElementById('error-banner');
+
+        function createChart(column) {
+            const meta = columnMeta[column] || { label: column, color: '#007bff' };
+            const ctx = document.getElementById(`chart-${column}`).getContext('2d');
+            charts[column] = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    datasets: [{
+                        label: meta.label,
+                        data: [],
+                        borderColor: meta.color,
+                        backgroundColor: meta.color,
+                        tension: 0.2,
+                        pointRadius: 0,
+                        borderWidth: 2,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: false,
+                    parsing: false,
+                    interaction: {
+                        intersect: false,
+                        mode: 'nearest'
+                    },
+                    scales: {
+                        x: {
+                            type: 'time',
+                            time: {
+                                tooltipFormat: 'yyyy-MM-dd HH:mm:ss',
+                                displayFormats: {
+                                    second: 'HH:mm:ss',
+                                    minute: 'HH:mm',
+                                }
+                            },
+                            ticks: {
+                                source: 'data',
+                                autoSkip: true,
+                                maxRotation: 0,
+                                color: '#495057'
+                            },
+                            grid: {
+                                display: false
+                            }
+                        },
+                        y: {
+                            ticks: {
+                                color: '#495057'
+                            },
+                            grid: {
+                                color: 'rgba(0,0,0,0.08)'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            labels: {
+                                color: '#495057'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function clearCharts() {
+            Object.values(charts).forEach(chart => {
+                chart.data.datasets[0].data = [];
+                chart.update('none');
+            });
+        }
+
+        function appendRows(rows) {
+            if (!rows || rows.length === 0) {
+                return;
+            }
+
+            rows.forEach(row => {
+                if (!row.timer) {
+                    return;
+                }
+                const timeValue = new Date(row.timer);
+                columns.forEach(column => {
+                    const value = row[column];
+                    if (value === null || value === undefined) {
+                        return;
+                    }
+                    const chart = charts[column];
+                    if (!chart) {
+                        return;
+                    }
+                    const dataset = chart.data.datasets[0].data;
+                    dataset.push({ x: timeValue.getTime(), y: value });
+                    if (dataset.length > MAX_POINTS) {
+                        dataset.splice(0, dataset.length - MAX_POINTS);
+                    }
+                });
+            });
+
+            Object.values(charts).forEach(chart => chart.update('none'));
+            lastTimestamp = rows[rows.length - 1].timer;
+            lastUpdatedEl.textContent = new Date().toLocaleString('ko-KR');
+        }
+
+        async function fetchLatest() {
+            const params = new URLSearchParams();
+            if (lastTable) {
+                params.append('last_table', lastTable);
+            }
+            if (lastTimestamp) {
+                params.append('since', lastTimestamp);
+            }
+
+            const url = params.toString() ? `/api/pvd/latest?${params.toString()}` : '/api/pvd/latest';
+
+            try {
+                const response = await fetch(url, { cache: 'no-store' });
+                if (!response.ok) {
+                    throw new Error(`데이터 요청 실패: ${response.status}`);
+                }
+                const data = await response.json();
+                errorBannerEl.style.display = 'none';
+                errorBannerEl.textContent = '';
+
+                if (!data || !data.table) {
+                    currentTableEl.textContent = '-';
+                    return;
+                }
+
+                currentTableEl.textContent = data.table;
+
+                if (data.is_new_table || lastTable !== data.table) {
+                    lastTable = data.table;
+                    lastTimestamp = null;
+                    clearCharts();
+                }
+
+                if (Array.isArray(data.rows) && data.rows.length > 0) {
+                    appendRows(data.rows);
+                }
+            } catch (error) {
+                console.error(error);
+                errorBannerEl.style.display = 'block';
+                errorBannerEl.textContent = '데이터를 불러오지 못했습니다. 잠시 후 다시 시도합니다.';
+            }
+        }
+
+        function startPolling() {
+            if (pollingHandle) {
+                clearInterval(pollingHandle);
+            }
+            fetchLatest();
+            pollingHandle = setInterval(fetchLatest, 1000);
+        }
+
+        window.addEventListener('beforeunload', () => {
+            if (pollingHandle) {
+                clearInterval(pollingHandle);
+            }
+        });
+
+        columns.forEach(createChart);
+        startPolling();
+    </script>
+</body>
+
+</html>

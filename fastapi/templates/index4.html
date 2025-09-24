@@ -72,6 +72,24 @@
             color: #fff;
         }
 
+        .step-info {
+            display: inline-flex;
+            gap: 24px;
+            align-items: center;
+            margin-bottom: 16px;
+            padding: 12px 20px;
+            background-color: #ffffff;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            font-size: 16px;
+            color: #333;
+        }
+
+        .step-info span strong {
+            margin-left: 8px;
+        }
+
         #layout-container {
             display: flex;
             gap: 20px;
@@ -154,6 +172,10 @@
         <a href="/index5.html" class="{% if active_tab == 'assistant' %}active{% endif %}">AI 어시스턴트</a>
     </div>
     <h2>실시간 이상감지</h2>
+    <div class="step-info">
+        <span>STEP ID: <strong id="current-step-id">-</strong></span>
+        <span>STEP NAME: <strong id="current-step-name">-</strong></span>
+    </div>
     <div id="toggle-container" style="margin-bottom: 10px;">
         <button id="toggle-datasets"></button>
     </div>

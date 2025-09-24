@@ -228,6 +228,24 @@
             color: #fff;
         }
 
+        .step-info {
+            display: inline-flex;
+            gap: 24px;
+            align-items: center;
+            margin-bottom: 16px;
+            padding: 12px 20px;
+            background-color: #ffffff;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            font-size: 16px;
+            color: #333;
+        }
+
+        .step-info span strong {
+            margin-left: 8px;
+        }
+
         .toggle-item {
             display: inline-flex;
             align-items: center;
@@ -296,8 +314,8 @@
 
 <body>
     <div id="side-tabs">
-        <a href="#" class="active">1세부 ALD</a>
-        <a href="#" class="disabled">2세부 PVD</a>
+        <a href="/" class="{% if active_side == 'ald' %}active{% endif %}">1세부 ALD</a>
+        <a href="/pvd" class="{% if active_side == 'pvd' %}active{% endif %}">2세부 PVD</a>
     </div>
     <div class="navbar">
         <a href="/" class="{% if active_tab == 'index' %}active{% endif %}">실시간 파라미터 예측</a>
@@ -307,6 +325,10 @@
         <a href="/index5.html" class="{% if active_tab == 'assistant' %}active{% endif %}">AI 어시스턴트</a>
     </div>
     <h2>실시간 데이터 모니터링</h2>
+    <div class="step-info">
+        <span>STEP ID: <strong id="current-step-id">-</strong></span>
+        <span>STEP NAME: <strong id="current-step-name">-</strong></span>
+    </div>
 
     <div style="display: flex; align-items: center; gap: 16px;">
         <label for="duration-select">표시 기간 </label>

@@ -4,6 +4,7 @@ let selectedDuration = 300; // 기본값: 5분
 let selectedStep = 10; //
 let hiddenColumns = [];
 let limits = {};
+let lastStepFallbackFetch = 0;
 const stepNames = {
     2: 'END', 0: 'STANDBY/IDLE', 1: 'START', 17: 'B.UP', 3: 'WAIT',
     74: 'S.P-1', 75: 'S.P-2', 25: 'R.UP1', 22: 'STAB1', 76: 'S.P-3',
@@ -168,6 +169,64 @@ async function fetchAndUpdate() {
             canvas.style.display = cb.checked ? 'block' : 'none';
         }
     });
+
+    const latestStep = extractLatestStep(json);
+    if (latestStep) {
+        updateCurrentStepDisplay(latestStep.step_id, latestStep.step_name);
+    } else {
+        fetchCurrentStepFallback();
+    }
+}
+
+function updateCurrentStepDisplay(stepId, stepName) {
+    const idEl = document.getElementById('current-step-id');
+    const nameEl = document.getElementById('current-step-name');
+    if (idEl) {
+        idEl.textContent = stepId !== null && stepId !== undefined ? stepId : '-';
+    }
+    if (nameEl) {
+        nameEl.textContent = stepName ? stepName : '-';
+    }
+}
+
+function extractLatestStep(data) {
+    let latestEntry = null;
+    let latestTime = 0;
+    for (const col of columns) {
+        const actual = data[col]?.actual || [];
+        for (let i = actual.length - 1; i >= 0; i--) {
+            const entry = actual[i];
+            if (!entry) continue;
+            const hasStepInfo = (entry.step_id !== null && entry.step_id !== undefined) || (entry.step_name && entry.step_name !== '');
+            if (!hasStepInfo) continue;
+            const parsed = parseTimeString(entry.time);
+            const timeValue = parsed ? parsed.getTime() : 0;
+            if (!latestEntry || timeValue > latestTime) {
+                latestEntry = entry;
+                latestTime = timeValue;
+            }
+            break;
+        }
+    }
+    if (!latestEntry) return null;
+    return {
+        step_id: latestEntry.step_id ?? null,
+        step_name: latestEntry.step_name ?? null
+    };
+}
+
+async function fetchCurrentStepFallback() {
+    const now = Date.now();
+    if (now - lastStepFallbackFetch < 5000) return;
+    lastStepFallbackFetch = now;
+    try {
+        const res = await fetch('/api/current_step');
+        if (!res.ok) throw new Error('Failed to fetch current step');
+        const data = await res.json();
+        updateCurrentStepDisplay(data.step_id ?? null, data.step_name ?? null);
+    } catch (e) {
+        updateCurrentStepDisplay(null, null);
+    }
 }
 
 function createSettingsUI() {
@@ -311,6 +370,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     await loadSettings();
     createCharts();
     fetchAndUpdate();
+    fetchCurrentStepFallback();
     setInterval(fetchAndUpdate, 1000);
     fetchLogs();
     setInterval(fetchLogs, 1000);

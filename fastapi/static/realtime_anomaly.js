@@ -6,6 +6,57 @@ let processEnd = null;
 let logs = {};
 const loggedIds = new Set();
 
+let latestStepTimestamp = 0;
+let lastStepUpdate = 0;
+let lastStepFallbackFetch = 0;
+
+function updateCurrentStepDisplay(stepId, stepName) {
+    const idEl = document.getElementById('current-step-id');
+    const nameEl = document.getElementById('current-step-name');
+    if (idEl) {
+        idEl.textContent = stepId !== null && stepId !== undefined ? stepId : '-';
+    }
+    if (nameEl) {
+        nameEl.textContent = stepName ? stepName : '-';
+    }
+    lastStepUpdate = Date.now();
+}
+
+function considerActualStepInfo(actual) {
+    for (let i = actual.length - 1; i >= 0; i--) {
+        const entry = actual[i];
+        if (!entry) continue;
+        const hasInfo = (entry.step_id !== null && entry.step_id !== undefined) || (entry.step_name && entry.step_name !== '');
+        if (!hasInfo) continue;
+        const timeValue = new Date(entry.x).getTime();
+        if (Number.isNaN(timeValue)) continue;
+        if (timeValue > latestStepTimestamp) {
+            latestStepTimestamp = timeValue;
+            updateCurrentStepDisplay(entry.step_id ?? null, entry.step_name ?? null);
+        }
+        break;
+    }
+}
+
+async function fetchCurrentStepFallback(force = false) {
+    const now = Date.now();
+    if (!force && now - lastStepUpdate < 5000) {
+        return;
+    }
+    if (!force && now - lastStepFallbackFetch < 5000) {
+        return;
+    }
+    lastStepFallbackFetch = now;
+    try {
+        const res = await fetch('/api/current_step');
+        if (!res.ok) throw new Error('Failed to fetch current step');
+        const data = await res.json();
+        updateCurrentStepDisplay(data.step_id ?? null, data.step_name ?? null);
+    } catch (e) {
+        updateCurrentStepDisplay(null, null);
+    }
+}
+
 const visibilityKey = 'chartVisibilityMode';
 let visibilityMode = localStorage.getItem(visibilityKey);
 if (!visibilityMode) {
@@ -266,6 +317,7 @@ function addLogs(param, segments, actual) {
 function updateCharts(col, data) {
     const actual = data.actual;
     const predicted = data.predicted;
+    considerActualStepInfo(actual);
     const { segments, regions } = calcSegments(actual, predicted);
     const pChart = processCharts[col];
     pChart.data.datasets[0].data = predicted;
@@ -363,6 +415,8 @@ window.addEventListener('DOMContentLoaded', () => {
     checkProcess();
     setInterval(checkProcess, 20000);
     setInterval(fetchData, 1000);
+    fetchCurrentStepFallback(true);
+    setInterval(() => fetchCurrentStepFallback(false), 5000);
     const btn = document.getElementById('toggle-datasets');
     const updateBtn = () => { btn.textContent = visibilityLabels[visibilityMode]; };
     updateBtn();

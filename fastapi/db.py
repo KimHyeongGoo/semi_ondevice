@@ -43,11 +43,23 @@ def get_latest_data(columns, duration=300, step=10):
 
         # 실제값
         cur.execute(f"""
-            SELECT DATE_TRUNC('second', "Timestamp") AS ts, "{col}" FROM "{raw_table}"
+            SELECT DATE_TRUNC('second', "Timestamp") AS ts,
+                   "{col}",
+                   "ProcessRecipeStepID",
+                   "ProcessRecipeStepName"
+            FROM "{raw_table}"
             WHERE "Timestamp" >= %s
             ORDER BY "Timestamp" ASC
         """, (from_time,))
-        actuals = [{"time": str(r[0]), "value": r[1]} for r in cur.fetchall()]
+        actual_rows = cur.fetchall()
+        actuals = []
+        for ts, val, step_id, step_name in actual_rows:
+            actuals.append({
+                "time": str(ts),
+                "value": val,
+                "step_id": int(step_id) if step_id is not None else None,
+                "step_name": str(step_name) if step_name is not None else None,
+            })
         
         # 예측값 + Step ID 포함
         preds = []
@@ -77,6 +89,49 @@ def get_latest_data(columns, duration=300, step=10):
 
     cur.close()
     conn.close()
+    return result
+
+
+def get_current_step():
+    """Return the latest step id and name from the current raw data table."""
+    conn = psycopg2.connect(
+        dbname="postgres",
+        user="keti",
+        password="keti1234!",
+        host="localhost",
+        port=5432,
+    )
+    cur = conn.cursor()
+
+    now = datetime.now(ZoneInfo("Asia/Seoul"))
+    date_suffix = now.strftime("%Y%m%d")
+    raw_table = f"rawdata{date_suffix}"
+
+    result = {"step_id": None, "step_name": None}
+
+    try:
+        cur.execute(
+            f"""
+            SELECT "ProcessRecipeStepID", "ProcessRecipeStepName"
+            FROM "{raw_table}"
+            WHERE "ProcessRecipeStepID" IS NOT NULL OR "ProcessRecipeStepName" IS NOT NULL
+            ORDER BY "Timestamp" DESC
+            LIMIT 1
+            """
+        )
+        row = cur.fetchone()
+        if row:
+            step_id, step_name = row
+            result = {
+                "step_id": int(step_id) if step_id is not None else None,
+                "step_name": str(step_name) if step_name is not None else None,
+            }
+    except Exception:
+        conn.rollback()
+    finally:
+        cur.close()
+        conn.close()
+
     return result
 
 def get_event_chart_data(param, start, end, step=10):
@@ -163,6 +218,87 @@ def get_event_chart_data(param, start, end, step=10):
     conn.close()
 
     return {"actual": actuals, "predicted": preds}
+
+def _get_latest_pvd_table(cur):
+    cur.execute(
+        """
+        SELECT tablename
+        FROM pg_tables
+        WHERE schemaname = 'public' AND tablename LIKE 'pvd4_new_%'
+        ORDER BY tablename DESC
+        LIMIT 1
+        """
+    )
+    row = cur.fetchone()
+    return row[0] if row else None
+
+
+def get_latest_pvd_stream_data(last_table=None, since=None):
+    """Return streaming data for the latest PVD table.
+
+    Args:
+        last_table: Table name that the client is currently showing.
+        since: ISO formatted timestamp string of the last received row.
+
+    Returns:
+        Dict with current table name, whether the table changed, and rows.
+    """
+
+    conn = psycopg2.connect(
+        dbname="postgres",
+        user="keti",
+        password="keti1234!",
+        host="localhost",
+        port=5432,
+    )
+    cur = conn.cursor()
+
+    latest_table = _get_latest_pvd_table(cur)
+    if not latest_table:
+        cur.close()
+        conn.close()
+        return {"table": None, "is_new_table": False, "rows": []}
+
+    is_new_table = last_table != latest_table
+
+    query = (
+        f'SELECT "timer", "ion_gauge_i", "baratron_gauge_i", "ar_mfc_i" '
+        f'FROM "{latest_table}"'
+    )
+
+    params = []
+    if not is_new_table and since:
+        try:
+            since_dt = parser.parse(since)
+        except (ValueError, TypeError):
+            since_dt = None
+        if since_dt is not None:
+            query += " WHERE \"timer\" > %s"
+            params.append(since_dt)
+
+    query += " ORDER BY \"timer\" ASC"
+
+    if params:
+        cur.execute(query, tuple(params))
+    else:
+        cur.execute(query)
+
+    rows = []
+    for timer, ion, baratron, ar_mfc in cur.fetchall():
+        rows.append(
+            {
+                "timer": timer.isoformat() if timer else None,
+                "ion_gauge_i": ion,
+                "baratron_gauge_i": baratron,
+                "ar_mfc_i": ar_mfc,
+            }
+        )
+
+    cur.close()
+    conn.close()
+
+    return {"table": latest_table, "is_new_table": is_new_table, "rows": rows}
+
 
 def get_trace_info(limit=10):
     """Return recent rows from trace_info ordered by start_time descending."""

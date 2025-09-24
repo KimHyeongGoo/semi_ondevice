@@ -13,6 +13,8 @@ from db import (
     get_event_chart_data,
     get_trace_pred_chart_data,
     get_process_range,
+    get_latest_pvd_stream_data,
+    get_current_step,
 )
 
 app = FastAPI()
@@ -52,7 +54,25 @@ SETTINGS_PATH = "settings.yaml"
 async def get_page(request: Request):
     return templates.TemplateResponse(
         "index.html",
-        {"request": request, "columns": predict_columns, "active_tab": "index"}
+        {
+            "request": request,
+            "columns": predict_columns,
+            "active_tab": "index",
+            "active_side": "ald",
+        },
+    )
+
+
+@app.get("/pvd", response_class=HTMLResponse)
+async def get_pvd_page(request: Request):
+    return templates.TemplateResponse(
+        "pvd.html",
+        {
+            "request": request,
+            "columns": ["ion_gauge_i", "baratron_gauge_i", "ar_mfc_i"],
+            "active_tab": "index",
+            "active_side": "pvd",
+        },
     )
 
 @app.get("/index2.html", response_class=HTMLResponse)
@@ -135,6 +155,18 @@ async def api_process_range(time: str = Query(...)):
 @app.get("/api/trace_info")
 async def api_trace_info(limit: int = 10):
     data = get_trace_info(limit)
+    return JSONResponse(data)
+
+
+@app.get("/api/current_step")
+async def api_current_step():
+    data = get_current_step()
+    return JSONResponse(data)
+
+
+@app.get("/api/pvd/latest")
+async def api_latest_pvd(last_table: str | None = None, since: str | None = None):
+    data = get_latest_pvd_stream_data(last_table=last_table or None, since=since or None)
     return JSONResponse(data)
 
 @app.get("/api/model_columns")
