@@ -94,31 +94,67 @@
         }
 
         #charts-grid {
-            display: grid;
-            grid-template-columns: 1fr;
+            display: flex;
+            flex-direction: column;
             gap: 18px;
         }
 
         .chart-card {
             background-color: #ffffff;
             border-radius: 10px;
-            padding: 16px;
+            padding: 18px 20px;
             box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
             border: 1px solid #d9dee4;
-            display: flex;
-            flex-direction: column;
-            max-height: 260px;
         }
 
-        .chart-card h3 {
-            margin: 0 0 12px 0;
-            font-size: 18px;
+        .chart-col {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .chart-container {
+            flex: 1 1 0;
+            min-width: 0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .chart-label-wrapper {
+            flex: 0 0 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            overflow: visible;
+        }
+
+        .chart-label {
+            font-weight: bold;
             color: #343a40;
-            word-break: break-all;
+            display: inline-block;
+            transform: rotate(-90deg);
+            transform-origin: center;
+            white-space: nowrap;
+            text-align: center;
+            letter-spacing: 2px;
+            line-height: 1.1;
+        }
+
+        .chart-canvas-wrapper {
+            flex: 1;
+            min-width: 0;
+            min-height: 220px;
+            position: relative;
         }
 
         canvas {
-            flex: 1;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100% !important;
+            height: 100% !important;
         }
 
         #error-banner {
@@ -153,11 +189,24 @@
     </div>
 
     <div id="charts-grid">
+        <h3>가스 유량 변화 감지</h3>
         {% for col in columns %}
-        <div class="chart-card" data-column="{{ col }}" data-index="{{ loop.index0 }}">
-            <h3>{{ col }}</h3>
-            <canvas id="chart-{{ loop.index0 }}"></canvas>
+        {% if loop.index0 % 3 == 0 %}
+        <div class="chart-card">
+            <div class="chart-col">
+                {% endif %}
+                <div class="chart-container" data-column="{{ col }}" data-index="{{ loop.index0 }}">
+                    <div class="chart-label-wrapper">
+                        <div class="chart-label">{{ col }}</div>
+                    </div>
+                    <div class="chart-canvas-wrapper">
+                        <canvas id="chart-{{ loop.index0 }}"></canvas>
+                    </div>
+                </div>
+                {% if loop.index0 % 3 == 2 or loop.last %}
+            </div>
         </div>
+        {% endif %}
         {% endfor %}
     </div>
 </body>

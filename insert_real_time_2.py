@@ -1,268 +1,179 @@
-#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-
-import os
-import csv
-import time
-import signal
-import threading
-from datetime import datetime
-from typing import List, Dict
-
-from watchdog.observers import Observer
-from watchdog.events import FileSystemEventHandler, FileCreatedEvent, FileModifiedEvent
-
+from datetime import datetime, timedelta, timezone
+from dateutil import parser
+import numpy as np
+import pandas as pd
 import psycopg2
-from psycopg2 import sql
 
-# ===== 설정 =====
-WATCH_DIR = "../realtimedata_2"
-DBCFG = dict(
-    dbname="postgres",
-    user="keti",
-    password="keti1234!",
-    host="localhost",
-    port=5432,
-)
+# =========================
+# 네가 준 코드 (원형 유지)
+# =========================
+def _get_latest_pvd_table(cur):
+    cur.execute(
+        """
+        SELECT tablename
+        FROM pg_tables
+        WHERE schemaname = 'public' AND tablename LIKE 'pvd4_new_%'
+        ORDER BY tablename DESC
+        LIMIT 1
+        """
+    )
+    row = cur.fetchone()
+    return row[0] if row else None
 
-# ===== 유틸: 식별자/타입 =====
-def sanitize_identifier(name: str) -> str:
-    s = "".join(ch.lower() if ch.isalnum() else "_" for ch in os.path.splitext(name)[0]).strip("_")
-    if not s or s[0].isdigit():
-        s = "t_" + (s or "table")
-    return s
+def get_latest_pvd_stream_data(last_table=None, since=None):
+    conn = psycopg2.connect(
+        dbname="postgres",
+        user="keti",
+        password="keti1234!",
+        host="localhost",
+        port=5432,
+    )
+    cur = conn.cursor()
 
-def sanitize_column(name: str) -> str:
-    if name == "Timer":
-        return "timer"
-    s = "".join(ch.lower() if ch.isalnum() else "_" for ch in name).strip("_")
-    if not s or s[0].isdigit():
-        s = "c_" + (s or "col")
-    return s
+    latest_table = _get_latest_pvd_table(cur)
+    if not latest_table:
+        cur.close(); conn.close()
+        return {"table": None, "is_new_table": False, "rows": []}
 
-def parse_timer(s: str):
-    try:
-        return datetime.strptime(s.strip().strip("[]"), "%Y.%m.%d %H:%M:%S")
-    except Exception:
-        return None
+    is_new_table = last_table != latest_table
 
-# ===== DB 헬퍼 =====
-class PG:
-    def __init__(self, cfg):
-        self.conn = psycopg2.connect(**cfg)
-        self.conn.autocommit = True
-        self.schema_cache: Dict[str, Dict] = {}  # table -> {"cols": [...], "map": raw->san}
+    query = (
+        f'SELECT "timer", "ion_gauge_i", "baratron_gauge_i", "ar_mfc_i" '
+        f'FROM "{latest_table}"'
+    )
 
-    def close(self):
-        try: self.conn.close()
-        except: pass
+    params = []
+    if not is_new_table and since:
+        try:
+            since_dt = parser.parse(since)
+        except (ValueError, TypeError):
+            since_dt = None
+        if since_dt is not None:
+            query += ' WHERE "timer" > %s'
+            params.append(since_dt)
 
-    def ensure_table(self, table_raw: str, headers: List[str]) -> str:
-        table = sanitize_identifier(table_raw)
+    query += ' ORDER BY "timer" ASC'
 
-        raw_to_san = {}
-        cols_order = []
-        for h in headers:
-            if not h: continue
-            c = sanitize_column(h)
-            raw_to_san[h] = c
-            if c not in cols_order:
-                cols_order.append(c)
+    cur.execute(query, tuple(params) if params else None)
 
-        with self.conn.cursor() as cur:
-            cur.execute(
-                """SELECT EXISTS(
-                    SELECT 1 FROM information_schema.tables
-                    WHERE table_schema='public' AND table_name=%s)""",
-                (table,)
-            )
-            exists = cur.fetchone()[0]
-
-            if not exists:
-                defs = []
-                for h in headers:
-                    if not h: continue
-                    c = raw_to_san[h]
-                    if c == "timer":
-                        defs.append(sql.SQL("{} TIMESTAMP PRIMARY KEY").format(sql.Identifier(c)))
-                    else:
-                        defs.append(sql.SQL("{} DOUBLE PRECISION").format(sql.Identifier(c)))
-                cur.execute(
-                    sql.SQL("CREATE TABLE {} ({});").format(
-                        sql.Identifier(table), sql.SQL(", ").join(defs)
-                    )
-                )
-            else:
-                # 누락된 컬럼만 추가
-                cur.execute(
-                    """SELECT column_name FROM information_schema.columns
-                    WHERE table_schema='public' AND table_name=%s""",
-                    (table,)
-                )
-                existing = {r[0] for r in cur.fetchall()}
-                for h in headers:
-                    if not h: continue
-                    c = raw_to_san[h]
-                    if c not in existing:
-                        if c == "timer":
-                            cur.execute(
-                                sql.SQL("ALTER TABLE {} ADD COLUMN {} TIMESTAMP;")
-                                .format(sql.Identifier(table), sql.Identifier(c))
-                            )
-                            # PK로 지정
-                            cur.execute(
-                                sql.SQL("ALTER TABLE {} ADD PRIMARY KEY ({});")
-                                .format(sql.Identifier(table), sql.Identifier(c))
-                            )
-                        else:
-                            cur.execute(
-                                sql.SQL("ALTER TABLE {} ADD COLUMN {} DOUBLE PRECISION;")
-                                .format(sql.Identifier(table), sql.Identifier(c))
-                            )
-
-        self.schema_cache[table] = {"cols": cols_order, "map": raw_to_san}
-        return table
-
-
-    def max_timer(self, table: str):
-        with self.conn.cursor() as cur:
-            cur.execute(sql.SQL("SELECT MAX(timer) FROM {}").format(sql.Identifier(table)))
-            return cur.fetchone()[0]  # datetime | None
-
-    def insert_rows(self, table: str, raw_to_san: Dict[str, str], rows: List[dict]):
-        if not rows: return
-        # 컬럼 순서 고정: Timer 먼저(있다면), 나머지
-        cols = []
-        if "Timer" in raw_to_san: cols.append(raw_to_san["Timer"])
-        for k, v in raw_to_san.items():
-            if k == "Timer": continue
-            cols.append(v)
-
-        placeholders = sql.SQL(", ").join(sql.Placeholder() for _ in cols)
-        q = sql.SQL("INSERT INTO {} ({}) VALUES ({}) ON CONFLICT DO NOTHING").format(
-            sql.Identifier(table),
-            sql.SQL(", ").join(sql.Identifier(c) for c in cols),
-            placeholders,
+    rows = []
+    for timer, ion, baratron, ar_mfc in cur.fetchall():
+        rows.append(
+            {
+                "timer": timer.isoformat() if timer else None,
+                "ion_gauge_i": ion,
+                "baratron_gauge_i": baratron,
+                "ar_mfc_i": ar_mfc,
+            }
         )
 
-        with self.conn.cursor() as cur:
-            for r in rows:
-                vals = []
-                # Timer
-                if "Timer" in raw_to_san:
-                    ts = parse_timer(r.get("Timer", ""))
-                    vals.append(ts)
-                # floats
-                for k, v in raw_to_san.items():
-                    if k == "Timer": continue
-                    x = r.get(k, None)
-                    if x is None or str(x).strip() == "" or str(x).lower() == "nan":
-                        vals.append(None)
-                    else:
-                        try: vals.append(float(x))
-                        except: vals.append(None)
-                cur.execute(q, vals)
+    cur.close(); conn.close()
+    return {"table": latest_table, "is_new_table": is_new_table, "rows": rows}
 
-# ===== 파일 감시 핸들러 =====
-class CsvHandler(FileSystemEventHandler):
-    def __init__(self, db: PG):
-        super().__init__()
-        self.db = db
-        self.lock = threading.Lock()
-        self.headers: Dict[str, List[str]] = {}  # path -> header list
+# =========================
+# 간단 ON/OFF 판정 유틸
+# =========================
+def _median_smooth(x: np.ndarray, w: int = 3) -> np.ndarray:
+    if w <= 1: return x
+    return pd.Series(x, dtype="float64").rolling(w, center=True, min_periods=1).median().to_numpy()
 
-    def _is_csv(self, path: str) -> bool:
-        return path.lower().endswith(".csv")
+def _robust_01(x: np.ndarray) -> np.ndarray:
+    """[5,95]% 분위수로 0..1 스케일, 엣지케이스 안전 처리"""
+    x = np.asarray(x, dtype=float).ravel()
+    if x.size == 0: return np.zeros_like(x)
+    finite = np.isfinite(x)
+    if finite.sum() == 0: return np.zeros_like(x)
+    xx = x[finite]
+    q = np.nanpercentile(xx, [5, 95])
+    if np.ndim(q) == 0 or (q[1] - q[0]) < 1e-12:
+        return np.zeros_like(x)
+    y = (x - q[0]) / (q[1] - q[0])
+    y = np.clip(y, 0, 1)
+    y[~finite] = 0.0
+    return y
 
-    def _load_header(self, path: str) -> List[str]:
-        with open(path, "r", encoding="utf-8") as f:
-            r = csv.reader(f)
-            return next(r)
+def _auto_hysteresis(ref_n: np.ndarray, margin: float = 0.08):
+    """
+    상·하위 20% 값의 중앙값을 잡아 중간점을 임계로 사용 → 히스테리시스(+/- margin)
+    (sklearn 없이 간단하게)
+    """
+    v = np.sort(ref_n[~np.isnan(ref_n)])
+    if v.size < 10:
+        return 0.6, 0.4
+    k = max(1, int(v.size * 0.2))
+    base = float(np.median(v[:k]))
+    high = float(np.median(v[-k:]))
+    thr = (base + high) / 2.0
+    up = min(1.0, thr + margin)
+    down = max(0.0, thr - margin)
+    if up <= down:
+        up, down = min(1.0, thr + 0.05), max(0.0, thr - 0.05)
+    return up, down
 
-    def _read_new_rows_after(self, path: str, last_dt) -> List[dict]:
-        # 모든 행을 읽되 last_dt 이후만 반환 (안전)
-        with open(path, "r", encoding="utf-8") as f:
-            reader = csv.DictReader(f)
-            buf = []
-            for row in reader:
-                ts = parse_timer(row.get("Timer", ""))
-                # Timer가 없거나 파싱 실패 → 건너뜀(원한다면 포함도 가능)
-                if ts is None:
-                    continue
-                if (last_dt is None) or (ts > last_dt):
-                    buf.append(row)
-        return buf
+def _hysteresis_mask(x_n: np.ndarray, up: float, down: float) -> np.ndarray:
+    on = False
+    out = np.zeros_like(x_n, dtype=int)
+    for i, v in enumerate(x_n):
+        if not on and v >= up:
+            on = True
+        elif on and v <= down:
+            on = False
+        out[i] = 1 if on else 0
+    return out
 
-    def _process(self, path: str):
-        if not os.path.exists(path) or not self._is_csv(path):
-            return
+# =========================
+# 최신 샘플 ON 판정 (핵심 API)
+# =========================
+def get_latest_on_state(window_sec: int = 60,
+                        ref_field: str = "ar_mfc_i",
+                        smooth_win: int = 3,
+                        margin: float = 0.08):
+    """
+    최근 window_sec초 데이터만 가져와 자동 임계(히스테리시스)로 ON/OFF 판정.
+    반환 dict에 최신샘플 state/임계/마지막값 포함.
+    """
+    since = (datetime.now(timezone.utc) - timedelta(seconds=window_sec)).isoformat()
+    res = get_latest_pvd_stream_data(since=since)
 
-        with self.lock:
-            # 헤더 확보
-            if path not in self.headers:
-                try:
-                    self.headers[path] = self._load_header(path)
-                except Exception:
-                    return
+    rows = res["rows"]
+    if not rows:
+        return {"table": res["table"], "state": "OFF", "is_on": False, "reason": "no_rows"}
 
-            headers = self.headers[path]
-            table = self.db.ensure_table(os.path.basename(path), headers)
-            schema = self.db.schema_cache[table]
-            raw_to_san = schema["map"]
+    # 1Hz 가정: 최근 window_sec개의 값만 사용(혹시 더 많이 왔으면 꼬리만)
+    vals = [r.get(ref_field) for r in rows if r.get(ref_field) is not None]
+    if len(vals) < 3:
+        return {"table": res["table"], "state": "OFF", "is_on": False, "reason": "too_few_samples"}
 
-            # DB 최신 타임스탬프 확인
-            last_dt = self.db.max_timer(table)
+    ref = np.array(vals[-window_sec:], dtype=float)
+    ref_s = _median_smooth(ref, smooth_win)
+    ref_n = _robust_01(ref_s)
+    up, down = _auto_hysteresis(ref_n, margin=margin)
+    mask = _hysteresis_mask(ref_n, up, down)
+    is_on = bool(mask[-1] == 1)
 
-            # 파일에서 last_dt 이후 행만 읽기
-            new_rows = self._read_new_rows_after(path, last_dt)
+    # 아주 간단한 램프 감지(최근 1초 변동량으로)
+    state = "ON" if is_on else "OFF"
+    if len(ref_n) >= 2:
+        dy = ref_n[-1] - ref_n[-2]
+        if dy >= 0.1: state = "RAMP_UP"
+        elif dy <= -0.1: state = "RAMP_DOWN"
 
-            if not new_rows:
-                return
+    latest = rows[-1]
+    return {
+        "table": res["table"],
+        "is_new_table": res["is_new_table"],
+        "is_on": is_on,
+        "state": state,
+        "up": float(up), "down": float(down),
+        "ref_field": ref_field,
+        "ref_last": float(latest.get(ref_field)) if latest.get(ref_field) is not None else None,
+        "timer": latest.get("timer"),
+    }
 
-            # INSERT (중복은 UNIQUE(timer) + ON CONFLICT로 방어)
-            self.db.insert_rows(table, raw_to_san, new_rows)
-            print(f"[INFO] {os.path.basename(path)}: +{len(new_rows)} rows inserted (after {last_dt})")
-
-    # watchdog 콜백
-    def on_created(self, event):
-        if isinstance(event, FileCreatedEvent) and not event.is_directory and self._is_csv(event.src_path):
-            # 약간의 지연 후 처리(파일 쓰기 중인 경우 대비)
-            time.sleep(0.1)
-            self._process(event.src_path)
-
-    def on_modified(self, event):
-        if isinstance(event, FileModifiedEvent) and not event.is_directory and self._is_csv(event.src_path):
-            time.sleep(0.05)
-            self._process(event.src_path)
-
-# ===== 메인 =====
-def main():
-    if not os.path.isdir(WATCH_DIR):
-        raise RuntimeError(f"WATCH_DIR not found: {WATCH_DIR}")
-
-    db = PG(DBCFG)
-    observer = Observer()
-    handler = CsvHandler(db)
-    observer.schedule(handler, WATCH_DIR, recursive=True)
-    observer.start()
-    print(f"[INFO] Watching {os.path.abspath(WATCH_DIR)}")
-
-    def shutdown(*_):
-        print("\n[INFO] Shutting down...")
-        observer.stop()
-        observer.join(timeout=2)
-        db.close()
-        print("[INFO] Bye.")
-        os._exit(0)
-
-    signal.signal(signal.SIGINT, shutdown)
-    signal.signal(signal.SIGTERM, shutdown)
-
-    try:
-        while True:
-            time.sleep(1)
-    except KeyboardInterrupt:
-        shutdown()
-
+# =========================
+# 예시 실행
+# =========================
 if __name__ == "__main__":
-    main()
+    out = get_latest_on_state(window_sec=60, ref_field="ar_mfc_i")
+    print(out)

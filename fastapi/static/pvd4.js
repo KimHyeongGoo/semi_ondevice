@@ -25,17 +25,16 @@ let lastTable = null;
 let lastTimestamp = null;
 let pollingHandle = null;
 
-const chartCards = Array.from(document.querySelectorAll('.chart-card'));
-const columnOrder = chartCards.map((card) => card.dataset.column);
+const chartContainers = Array.from(document.querySelectorAll('.chart-container'));
+const columnOrder = chartContainers.map((container) => container.dataset.column);
 
 const currentTableEl = document.getElementById('current-table');
 const lastUpdatedEl = document.getElementById('last-updated');
 const errorBannerEl = document.getElementById('error-banner');
 
 const colorPalette = [
-    '#4bc0c0', '#ff6384', '#36a2eb', '#ffcd56', '#9966ff',
-    '#ff9f40', '#2ecc71', '#e74c3c', '#f39c12', '#8e44ad',
-    '#1abc9c', '#2c3e50', '#7f8c8d', '#9b59b6', '#3498db'
+    '#4bc0c0', '#ffcd56', '#36a2eb', '#9966ff', '#2ecc71', '#f39c12', '#8e44ad',
+    '#1abc9c', '#2c3e50', '#7f8c8d', '#9b59b6', '#3498db', '#ff6384', '#e74c3c'
 ];
 
 function pickColor(index, fallback) {
@@ -130,10 +129,10 @@ function resetAxisStates() {
     });
 }
 
-function createChart(card, index) {
-    const column = card.dataset.column;
+function createChart(container, index) {
+    const column = container.dataset.column;
     const meta = columnMeta[column] || {};
-    const canvas = card.querySelector('canvas');
+    const canvas = container.querySelector('canvas');
     if (!canvas) {
         return;
     }
@@ -153,7 +152,7 @@ function createChart(card, index) {
                 backgroundColor: color,
                 tension: 0.2,
                 pointRadius: 0,
-                borderWidth: 2,
+                borderWidth: 4,
             }]
         },
         options: {
@@ -198,10 +197,7 @@ function createChart(card, index) {
             },
             plugins: {
                 legend: {
-                    display: true,
-                    labels: {
-                        color: '#495057'
-                    }
+                    display: false
                 }
             }
         }
@@ -316,7 +312,7 @@ window.addEventListener('beforeunload', () => {
     }
 });
 
-chartCards.forEach((card, index) => createChart(card, index));
-if (chartCards.length > 0) {
+chartContainers.forEach((container, index) => createChart(container, index));
+if (chartContainers.length > 0) {
     startPolling();
 }
