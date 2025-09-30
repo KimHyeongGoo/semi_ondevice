@@ -38,11 +38,94 @@ const columnOrder = chartContainers.map((container) => container.dataset.column)
 const currentTableEl = document.getElementById('current-table');
 const lastUpdatedEl = document.getElementById('last-updated');
 const errorBannerEl = document.getElementById('error-banner');
+const logListEl = document.getElementById('log-list');
+const logErrorEl = document.getElementById('log-error');
 
 const colorPalette = [
     '#4bc0c0', '#ffcd56', '#36a2eb', '#9966ff', '#2ecc71', '#f39c12', '#8e44ad',
     '#1abc9c', '#2c3e50', '#7f8c8d', '#9b59b6', '#3498db', '#ff6384', '#e74c3c'
 ];
+
+const LOG_LIMIT = 50;
+
+function hideLogError() {
+    if (logErrorEl) {
+        logErrorEl.style.display = 'none';
+        logErrorEl.textContent = '';
+    }
+}
+
+function showLogError(message) {
+    if (logErrorEl) {
+        logErrorEl.style.display = 'block';
+        logErrorEl.textContent = message;
+    }
+}
+
+function formatTimestamp(value) {
+    if (!value) {
+        return '-';
+    }
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+        return value;
+    }
+    return date.toLocaleString('ko-KR', { hour12: false });
+}
+
+function renderLogs(logs) {
+    if (!logListEl) {
+        return;
+    }
+
+    logListEl.innerHTML = '';
+
+    if (!logs || logs.length === 0) {
+        const emptyEl = document.createElement('div');
+        emptyEl.className = 'log-empty';
+        emptyEl.textContent = '최근 이상 로그가 없습니다.';
+        logListEl.appendChild(emptyEl);
+        return;
+    }
+
+    logs.forEach((log) => {
+        const entry = document.createElement('div');
+        entry.className = 'log-entry';
+
+        const timeEl = document.createElement('div');
+        timeEl.className = 'log-time';
+        const primaryTime = log.timer || log.created_at;
+        const secondary = log.created_at && log.created_at !== primaryTime
+            ? `기록: ${formatTimestamp(log.created_at)}`
+            : '';
+        const times = [formatTimestamp(primaryTime)];
+        if (secondary) {
+            times.push(secondary);
+        }
+        timeEl.textContent = times.filter(Boolean).join(' | ');
+        entry.appendChild(timeEl);
+
+        if (Array.isArray(log.fields) && log.fields.length > 0) {
+            const fieldsEl = document.createElement('div');
+            fieldsEl.className = 'log-fields';
+            const fieldLabels = log.fields.map((field) => {
+                const label = columnMeta[field]?.label || field;
+                return label === field ? field : `${label} (${field})`;
+            });
+            fieldsEl.textContent = `컬럼: ${fieldLabels.join(', ')}`;
+            entry.appendChild(fieldsEl);
+        }
+
+        const textEl = document.createElement('div');
+        textEl.className = 'log-text';
+        textEl.textContent = log.log_text || '';
+        entry.appendChild(textEl);
+
+        logListEl.appendChild(entry);
+    });
+
+    logListEl.scrollTop = 0;
+}
 
 function pickColor(index, fallback) {
     if (fallback) {
@@ -161,6 +244,14 @@ function createChart(container, index) {
                     tension: 0.2,
                     pointRadius: 0,
                     borderWidth: 4,
+                    segment: {
+                        borderColor: (ctx) => {
+                            const isAbnormal =
+                                (ctx?.p0?.raw && ctx.p0.raw.abnormal) ||
+                                (ctx?.p1?.raw && ctx.p1.raw.abnormal);
+                            return isAbnormal ? '#e74c3c' : color;
+                        },
+                    },
                 },
                 {
                     label: `${displayLabel} 이상`,
@@ -256,7 +347,9 @@ function appendRows(rows) {
             const numericValue = Number(value);
             const lineData = chart.data.datasets[0].data;
             const anomalyData = chart.data.datasets[1].data;
-            lineData.push({ x: timeValue.getTime(), y: numericValue });
+            const isAbnormal = abnormalFields.includes(column);
+
+            lineData.push({ x: timeValue.getTime(), y: numericValue, abnormal: isAbnormal });
             if (lineData.length > MAX_POINTS) {
                 lineData.splice(0, lineData.length - MAX_POINTS);
             }
@@ -265,7 +358,7 @@ function appendRows(rows) {
                 const filtered = anomalyData.filter((point) => point.x >= cutoffTime);
                 anomalyData.splice(0, anomalyData.length, ...filtered);
             }
-            if (abnormalFields.includes(column)) {
+            if (isAbnormal) {
                 anomalyData.push({ x: timeValue.getTime(), y: numericValue });
             }
             ensureAxisState(column, numericValue);
@@ -289,13 +382,25 @@ async function fetchLatest() {
     }
 
     const url = params.toString() ? `/api/pvd/latest?${params.toString()}` : '/api/pvd/latest';
+    const logUrl = `/api/pvd/logs?limit=${LOG_LIMIT}`;
 
-    try {
-        const response = await fetch(url, { cache: 'no-store' });
-        if (!response.ok) {
-            throw new Error(`데이터 요청 실패: ${response.status}`);
-        }
-        const data = await response.json();
+    const [latestResult, logsResult] = await Promise.allSettled([
+        fetch(url, { cache: 'no-store' }).then((res) => {
+            if (!res.ok) {
+                throw new Error(`데이터 요청 실패: ${res.status}`);
+            }
+            return res.json();
+        }),
+        fetch(logUrl, { cache: 'no-store' }).then((res) => {
+            if (!res.ok) {
+                throw new Error(`로그 요청 실패: ${res.status}`);
+            }
+            return res.json();
+        }),
+    ]);
+
+    if (latestResult.status === 'fulfilled') {
+        const data = latestResult.value;
         if (errorBannerEl) {
             errorBannerEl.style.display = 'none';
             errorBannerEl.textContent = '';
@@ -305,28 +410,35 @@ async function fetchLatest() {
             if (currentTableEl) {
                 currentTableEl.textContent = '-';
             }
-            return;
-        }
+        } else {
+            if (currentTableEl) {
+                currentTableEl.textContent = data.table;
+            }
 
-        if (currentTableEl) {
-            currentTableEl.textContent = data.table;
-        }
+            if (data.is_new_table || lastTable !== data.table) {
+                lastTable = data.table;
+                lastTimestamp = null;
+                clearCharts();
+            }
 
-        if (data.is_new_table || lastTable !== data.table) {
-            lastTable = data.table;
-            lastTimestamp = null;
-            clearCharts();
+            if (Array.isArray(data.rows) && data.rows.length > 0) {
+                appendRows(data.rows);
+            }
         }
-
-        if (Array.isArray(data.rows) && data.rows.length > 0) {
-            appendRows(data.rows);
-        }
-    } catch (error) {
-        console.error(error);
+    } else {
+        console.error(latestResult.reason);
         if (errorBannerEl) {
             errorBannerEl.style.display = 'block';
             errorBannerEl.textContent = '데이터를 불러오지 못했습니다. 잠시 후 다시 시도합니다.';
         }
+    }
+
+    if (logsResult.status === 'fulfilled') {
+        hideLogError();
+        renderLogs(logsResult.value);
+    } else {
+        console.error(logsResult.reason);
+        showLogError('로그를 불러오지 못했습니다. 잠시 후 다시 시도합니다.');
     }
 }
 

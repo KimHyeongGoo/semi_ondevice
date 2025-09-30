@@ -9,7 +9,14 @@ import psycopg2
 
 # ===== 사용자 설정 =====
 SETPOINTS_PATH = "baco/setpoints.yaml"  # build 단계에서 만든 라이브러리
-ABNORMAL_TABLE = "pvd4_abnormal"
+ABNORMAL_TABLE = "pvd4_abnormals"
+VIOLENCE_TABLE = "pvd_violence"
+
+FIELD_LABELS = {
+    "ion_gauge_i": "Ion Gauge",
+    "baratron_gauge_i": "Baratron Gauge",
+    "ar_mfc_i": "Ar MFC",
+}
 
 # 톨러런스(퍼센트)
 AR_TOL = 0.01        # Ar ±1%
@@ -148,9 +155,32 @@ def pick_set_by_ar(lib, ar_value):
     return best
 
 def percent_dev(val, ref):
-    if ref == 0 or ref is None: 
+    if ref == 0 or ref is None:
         return float("inf") if val not in (0, None) else 0.0
     return abs((val - ref) / ref)
+
+
+def _format_value(value, digits=5):
+    if value is None:
+        return "N/A"
+    try:
+        if math.isfinite(value):
+            return f"{value:.{digits}f}"
+    except (TypeError, ValueError):
+        return str(value)
+    return str(value)
+
+
+def _format_percent(value):
+    if value is None:
+        return "N/A"
+    try:
+        if math.isfinite(value):
+            return f"{value * 100:.2f}%"
+    except (TypeError, ValueError):
+        return "N/A"
+    return "∞%"
+
 
 # =========================
 # DB: 이상 로그 테이블
@@ -174,6 +204,24 @@ def ensure_abnormal_table():
         dev_baratron DOUBLE PRECISION,
         dev_ar DOUBLE PRECISION,
         kofm TEXT
+    );
+    """
+    conn = psycopg2.connect(**PG_CONN_KW)
+    with conn, conn.cursor() as cur:
+        cur.execute(sql)
+    conn.close()
+
+def ensure_violence_table():
+    sql = f"""
+    CREATE TABLE IF NOT EXISTS {VIOLENCE_TABLE} (
+        id BIGSERIAL PRIMARY KEY,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        timer TIMESTAMPTZ,
+        source_table TEXT,
+        state TEXT,
+        set_id INT,
+        fields TEXT,
+        log_text TEXT NOT NULL
     );
     """
     conn = psycopg2.connect(**PG_CONN_KW)
@@ -205,6 +253,69 @@ def insert_abnormal(row, source_table, state, set_id, mu, devs, kofm):
         cur.execute(sql, vals)
     conn.close()
 
+
+def insert_violence_log(row, source_table, state, set_id, fields, kofm):
+    if not fields:
+        return
+
+    detail_parts = []
+    field_names = []
+    for field in fields:
+        key = field["key"]
+        value = field["value"]
+        mu_value = field["mu"]
+        dev_value = field["dev"]
+        label = FIELD_LABELS.get(key, key)
+        field_names.append(key)
+
+        tol_text = None
+        if key == "ar_mfc_i":
+            tol_text = f"허용±{AR_TOL * 100:.2f}%"
+        elif key == "ion_gauge_i":
+            tol_text = f"허용±{ION_TOL * 100:.2f}%"
+            if ION_MIN_ABS > 0:
+                tol_text += f" 또는 ±{ION_MIN_ABS:.5f}"
+        elif key == "baratron_gauge_i":
+            tol_text = f"허용±{BAR_TOL * 100:.2f}%"
+            if BAR_MIN_ABS > 0:
+                tol_text += f" 또는 ±{BAR_MIN_ABS:.5f}"
+
+        pieces = [
+            f"{label}({key}) 값 {_format_value(value)}",
+        ]
+        if mu_value is not None:
+            pieces.append(f"기준 {_format_value(mu_value)}")
+        pieces.append(f"편차 {_format_percent(dev_value)}")
+        if tol_text:
+            pieces.append(tol_text)
+        detail_parts.append(", ".join(pieces))
+
+    summary = " | ".join(detail_parts)
+    log_text = (
+        f"상태={state}, 세트={set_id}, KofM={kofm} :: "
+        f"{summary}"
+    )
+
+    sql = f"""
+    INSERT INTO {VIOLENCE_TABLE}
+    (timer, source_table, state, set_id, fields, log_text)
+    VALUES (%s, %s, %s, %s, %s, %s);
+    """
+
+    vals = (
+        parser.parse(row["timer"]) if row.get("timer") else None,
+        source_table,
+        state,
+        set_id,
+        ", ".join(field_names),
+        log_text,
+    )
+
+    conn = psycopg2.connect(**PG_CONN_KW)
+    with conn, conn.cursor() as cur:
+        cur.execute(sql, vals)
+    conn.close()
+
 # =========================
 # 메인 루프
 # =========================
@@ -215,6 +326,7 @@ def main():
     )
     logging.info("Starting realtime ON/abnormal monitor.")
     ensure_abnormal_table()
+    ensure_violence_table()
     lib = load_setpoints(SETPOINTS_PATH)
     logging.info("Loaded setpoints: %d sets", len(lib["sets"]))
 
@@ -284,14 +396,47 @@ def main():
 
                 # 로그/DB
                 if stable_alarm:
+                    dev_map = {"ion": dev_ion, "bar": dev_bar, "ar": dev_ar}
                     insert_abnormal(
                         row=row,
                         source_table=table,
                         state=state,
                         set_id=s["id"],
                         mu=mu,
-                        devs={"ion": dev_ion, "bar": dev_bar, "ar": dev_ar},
+                        devs=dev_map,
                         kofm=kofm_str
+                    )
+
+                    violated_fields = []
+                    if vio_ion:
+                        violated_fields.append({
+                            "key": "ion_gauge_i",
+                            "value": ion,
+                            "mu": mu["Ion.Gauge.i"],
+                            "dev": dev_ion,
+                        })
+                    if vio_bar:
+                        violated_fields.append({
+                            "key": "baratron_gauge_i",
+                            "value": bar,
+                            "mu": mu["Baratron.Gauge.i"],
+                            "dev": dev_bar,
+                        })
+                    if vio_ar:
+                        violated_fields.append({
+                            "key": "ar_mfc_i",
+                            "value": ar,
+                            "mu": mu["Ar.MFC.i"],
+                            "dev": dev_ar,
+                        })
+
+                    insert_violence_log(
+                        row=row,
+                        source_table=table,
+                        state=state,
+                        set_id=s["id"],
+                        fields=violated_fields,
+                        kofm=kofm_str,
                     )
                     logging.warning(
                         "[ABNORMAL] %s set=%s Ar dev=%.3f%% Ion dev=%.3f%% Bar dev=%.3f%% KofM=%s",
@@ -303,11 +448,11 @@ def main():
                         violated, s["id"], dev_ar*100, dev_ion*100, dev_bar*100, kofm_str
                     )
 
-            time.sleep(1)
+            time.sleep(0.3)
 
         except Exception as e:
             logging.exception("Loop error: %s", e)
-            time.sleep(1)
+            time.sleep(0.3)
 
 if __name__ == "__main__":
     main()

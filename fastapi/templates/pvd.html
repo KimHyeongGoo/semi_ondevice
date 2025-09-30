@@ -93,7 +93,15 @@
             color: #495057;
         }
 
+        #content-wrapper {
+            display: flex;
+            gap: 24px;
+            align-items: flex-start;
+        }
+
         #charts-grid {
+            flex: 1 1 auto;
+            min-width: 0;
             display: flex;
             flex-direction: column;
             gap: 18px;
@@ -166,6 +174,92 @@
             color: #c20000;
             border: 1px solid #ffb3b3;
         }
+
+        #log-panel {
+            flex: 0 0 320px;
+            max-width: 360px;
+            background-color: #ffffff;
+            border-radius: 10px;
+            padding: 18px 20px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+            border: 1px solid #d9dee4;
+            position: sticky;
+            top: 20px;
+            max-height: calc(100vh - 80px);
+            display: flex;
+            flex-direction: column;
+        }
+
+        #log-panel h3 {
+            margin: 0 0 12px 0;
+            color: #343a40;
+        }
+
+        #log-error {
+            display: none;
+            margin-bottom: 12px;
+            padding: 8px 10px;
+            border-radius: 6px;
+            background-color: #ffe9e9;
+            border: 1px solid #ffb3b3;
+            color: #c20000;
+            font-size: 0.9rem;
+        }
+
+        #log-list {
+            flex: 1 1 auto;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .log-entry {
+            background-color: #f8f9fa;
+            border-left: 4px solid #e74c3c;
+            border-radius: 8px;
+            padding: 10px 12px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+
+        .log-time {
+            font-weight: bold;
+            color: #343a40;
+            margin-bottom: 4px;
+        }
+
+        .log-fields {
+            font-size: 0.85rem;
+            color: #6c757d;
+            margin-bottom: 6px;
+        }
+
+        .log-text {
+            font-size: 0.95rem;
+            color: #495057;
+            line-height: 1.4;
+            white-space: pre-wrap;
+        }
+
+        .log-empty {
+            color: #6c757d;
+            text-align: center;
+            padding: 16px 0;
+            font-size: 0.95rem;
+        }
+
+        @media (max-width: 1200px) {
+            #content-wrapper {
+                flex-direction: column;
+            }
+
+            #log-panel {
+                position: static;
+                width: 100%;
+                max-width: none;
+                max-height: none;
+            }
+        }
     </style>
 </head>
 
@@ -188,26 +282,33 @@
         <div><span class="label">최근 수신 시각</span>: <span id="last-updated">-</span></div>
     </div>
 
-    <div id="charts-grid">
-        <h3>가스 유량 변화 감지</h3>
-        {% for col in columns %}
-        {% if loop.index0 % 3 == 0 %}
-        <div class="chart-card">
-            <div class="chart-col">
-                {% endif %}
-                <div class="chart-container" data-column="{{ col }}" data-index="{{ loop.index0 }}">
-                    <div class="chart-label-wrapper">
-                        <div class="chart-label">{{ col }}</div>
+    <div id="content-wrapper">
+        <div id="charts-grid">
+            <h3>가스 유량 변화 감지</h3>
+            {% for col in columns %}
+            {% if loop.index0 % 3 == 0 %}
+            <div class="chart-card">
+                <div class="chart-col">
+                    {% endif %}
+                    <div class="chart-container" data-column="{{ col }}" data-index="{{ loop.index0 }}">
+                        <div class="chart-label-wrapper">
+                            <div class="chart-label">{{ col }}</div>
+                        </div>
+                        <div class="chart-canvas-wrapper">
+                            <canvas id="chart-{{ loop.index0 }}"></canvas>
+                        </div>
                     </div>
-                    <div class="chart-canvas-wrapper">
-                        <canvas id="chart-{{ loop.index0 }}"></canvas>
-                    </div>
+                    {% if loop.index0 % 3 == 2 or loop.last %}
                 </div>
-                {% if loop.index0 % 3 == 2 or loop.last %}
             </div>
+            {% endif %}
+            {% endfor %}
         </div>
-        {% endif %}
-        {% endfor %}
+        <aside id="log-panel">
+            <h3>이상 로그</h3>
+            <div id="log-error"></div>
+            <div id="log-list"></div>
+        </aside>
     </div>
 </body>
 

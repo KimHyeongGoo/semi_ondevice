@@ -5,6 +5,55 @@ from zoneinfo import ZoneInfo
 import os
 from dateutil import parser
 
+
+# PVD abnormal tolerance configuration (must stay in sync with pvd_detect.py)
+AR_TOL = 0.01
+ION_TOL = 0.10
+BAR_TOL = 0.10
+ION_MIN_ABS = 0.0
+BAR_MIN_ABS = 0.0
+
+
+def _percent_dev(val, ref):
+    if ref in (None,):
+        return float("inf") if val not in (0, None) else 0.0
+    try:
+        return abs((float(val) - float(ref)) / float(ref))
+    except ZeroDivisionError:
+        return float("inf") if val not in (0, None) else 0.0
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def _is_ar_abnormal(value, mu_value):
+    if value is None or mu_value is None:
+        return False
+    return _percent_dev(value, mu_value) > AR_TOL
+
+
+def _is_ion_abnormal(value, mu_value):
+    if value is None or mu_value is None:
+        return False
+    try:
+        value_f = float(value)
+        mu_f = float(mu_value)
+    except (TypeError, ValueError):
+        return False
+    tolerance = max(ION_TOL * abs(mu_f), ION_MIN_ABS)
+    return abs(value_f - mu_f) > tolerance
+
+
+def _is_baratron_abnormal(value, mu_value):
+    if value is None or mu_value is None:
+        return False
+    try:
+        value_f = float(value)
+        mu_f = float(mu_value)
+    except (TypeError, ValueError):
+        return False
+    tolerance = max(BAR_TOL * abs(mu_f), BAR_MIN_ABS)
+    return abs(value_f - mu_f) > tolerance
+
 tasks = [
     ['MFC7_DCS','MFC8_NH3','MFC26_F.PWR'],
     ['MFC1_N2-1','MFC2_N2-2','MFC3_N2-3'],
@@ -287,36 +336,55 @@ def get_latest_pvd_stream_data(last_table=None, since=None):
     fetched_rows = cur.fetchall()
     timer_values = [timer for timer, *_ in fetched_rows if timer is not None]
 
-    abnormal_windows = {}
+    abnormal_by_time = {}
     if timer_values:
         start_time = min(timer_values)
         end_time = max(timer_values)
         try:
             cur.execute(
                 """
-                SELECT field, start_time, end_time
-                FROM pvd4_abnormal
-                WHERE table_name = %s
-                  AND start_time <= %s
-                  AND end_time >= %s
+                SELECT timer, ion_gauge_i, baratron_gauge_i, ar_mfc_i,
+                       mu_ion, mu_baratron, mu_ar
+                FROM pvd4_abnormals
+                WHERE source_table = %s
+                  AND timer BETWEEN %s AND %s
                 """,
-                (latest_table, end_time, start_time),
+                (latest_table, start_time, end_time),
             )
-            for field, start, end in cur.fetchall():
-                abnormal_windows.setdefault(field, []).append((start, end))
+            for row in cur.fetchall():
+                (
+                    abnormal_time,
+                    ion_val,
+                    bar_val,
+                    ar_val,
+                    mu_ion,
+                    mu_bar,
+                    mu_ar,
+                ) = row
+                if abnormal_time is None:
+                    continue
+                key_time = abnormal_time.replace(microsecond=0)
+                fields = []
+                if _is_ion_abnormal(ion_val, mu_ion):
+                    fields.append("ion_gauge_i")
+                if _is_baratron_abnormal(bar_val, mu_bar):
+                    fields.append("baratron_gauge_i")
+                if _is_ar_abnormal(ar_val, mu_ar):
+                    fields.append("ar_mfc_i")
+                if fields:
+                    abnormal_by_time.setdefault(key_time, set()).update(fields)
         except errors.UndefinedTable:
             conn.rollback()
-            abnormal_windows = {}
+            abnormal_by_time = {}
 
     rows = []
     for timer, ion, baratron, ar_mfc in fetched_rows:
         abnormal_fields = []
-        if timer and abnormal_windows:
-            for field, ranges in abnormal_windows.items():
-                for start, end in ranges:
-                    if start <= timer <= end:
-                        abnormal_fields.append(field)
-                        break
+        if timer and abnormal_by_time:
+            key_time = timer.replace(microsecond=0)
+            fields = abnormal_by_time.get(key_time)
+            if fields:
+                abnormal_fields.extend(sorted(fields))
         row = {
             "timer": timer.isoformat() if timer else None,
             "ion_gauge_i": ion,
@@ -325,12 +393,85 @@ def get_latest_pvd_stream_data(last_table=None, since=None):
         }
         if abnormal_fields:
             row["abnormal_fields"] = abnormal_fields
+            row["abnormal"] = True
         rows.append(row)
 
     cur.close()
     conn.close()
 
     return {"table": latest_table, "is_new_table": is_new_table, "rows": rows}
+
+
+def get_recent_pvd_violence_logs(limit=50):
+    conn = psycopg2.connect(
+        dbname="postgres",
+        user="keti",
+        password="keti1234!",
+        host="localhost",
+        port=5432,
+    )
+    cur = conn.cursor()
+
+    try:
+        cur.execute(
+            """
+            SELECT id, created_at, timer, source_table, state, set_id, fields, log_text
+            FROM pvd_violence
+            ORDER BY created_at DESC
+            LIMIT %s
+            """,
+            (max(1, int(limit)),),
+        )
+        rows = cur.fetchall()
+    except errors.UndefinedTable:
+        conn.rollback()
+        rows = []
+    finally:
+        cur.close()
+        conn.close()
+
+    tz = ZoneInfo("Asia/Seoul")
+
+    def _to_iso(dt):
+        if dt is None:
+            return None
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return dt.astimezone(tz).isoformat()
+
+    result = []
+    for row in rows:
+        (
+            log_id,
+            created_at,
+            timer,
+            source_table,
+            state,
+            set_id,
+            fields,
+            log_text,
+        ) = row
+
+        created_iso = _to_iso(created_at)
+        timer_iso = _to_iso(timer)
+        field_list = [
+            f.strip()
+            for f in (fields.split(",") if fields else [])
+            if f.strip()
+        ]
+
+        result.append({
+            "id": log_id,
+            "created_at": created_iso,
+            "timer": timer_iso,
+            "source_table": source_table,
+            "state": state,
+            "set_id": set_id,
+            "fields": field_list,
+            "log_text": log_text,
+        })
+
+    return result
 
 
 def get_trace_info(limit=10):

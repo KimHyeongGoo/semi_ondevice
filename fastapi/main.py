@@ -15,6 +15,7 @@ from db import (
     get_process_range,
     get_latest_pvd_stream_data,
     get_current_step,
+    get_recent_pvd_violence_logs,
 )
 
 app = FastAPI()
@@ -167,6 +168,13 @@ async def api_current_step():
 @app.get("/api/pvd/latest")
 async def api_latest_pvd(last_table: str | None = None, since: str | None = None):
     data = get_latest_pvd_stream_data(last_table=last_table or None, since=since or None)
+    return JSONResponse(data)
+
+
+@app.get("/api/pvd/logs")
+async def api_latest_pvd_logs(limit: int = 50):
+    capped_limit = max(1, min(int(limit), 200))
+    data = get_recent_pvd_violence_logs(capped_limit)
     return JSONResponse(data)
 
 @app.get("/api/model_columns")
