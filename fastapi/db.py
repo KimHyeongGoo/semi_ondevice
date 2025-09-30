@@ -1,4 +1,5 @@
 import psycopg2
+from psycopg2 import errors
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 import os
@@ -283,16 +284,48 @@ def get_latest_pvd_stream_data(last_table=None, since=None):
     else:
         cur.execute(query)
 
+    fetched_rows = cur.fetchall()
+    timer_values = [timer for timer, *_ in fetched_rows if timer is not None]
+
+    abnormal_windows = {}
+    if timer_values:
+        start_time = min(timer_values)
+        end_time = max(timer_values)
+        try:
+            cur.execute(
+                """
+                SELECT field, start_time, end_time
+                FROM pvd4_abnormal
+                WHERE table_name = %s
+                  AND start_time <= %s
+                  AND end_time >= %s
+                """,
+                (latest_table, end_time, start_time),
+            )
+            for field, start, end in cur.fetchall():
+                abnormal_windows.setdefault(field, []).append((start, end))
+        except errors.UndefinedTable:
+            conn.rollback()
+            abnormal_windows = {}
+
     rows = []
-    for timer, ion, baratron, ar_mfc in cur.fetchall():
-        rows.append(
-            {
-                "timer": timer.isoformat() if timer else None,
-                "ion_gauge_i": ion,
-                "baratron_gauge_i": baratron,
-                "ar_mfc_i": ar_mfc,
-            }
-        )
+    for timer, ion, baratron, ar_mfc in fetched_rows:
+        abnormal_fields = []
+        if timer and abnormal_windows:
+            for field, ranges in abnormal_windows.items():
+                for start, end in ranges:
+                    if start <= timer <= end:
+                        abnormal_fields.append(field)
+                        break
+        row = {
+            "timer": timer.isoformat() if timer else None,
+            "ion_gauge_i": ion,
+            "baratron_gauge_i": baratron,
+            "ar_mfc_i": ar_mfc,
+        }
+        if abnormal_fields:
+            row["abnormal_fields"] = abnormal_fields
+        rows.append(row)
 
     cur.close()
     conn.close()

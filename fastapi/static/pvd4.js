@@ -2,7 +2,7 @@ const columnMeta = {
     "Ion.Gauge.i": {
         label: "Ion Gauge",
         color: "#4bc0c0",
-        range: { min: 0, max: 0.02 },
+        range: { min: 0, max: 0.01 },
     },
     "Baratron.Gauge.i": { label: "Baratron Gauge", color: "#ff6384" },
     "Ar.MFC.i": { label: "Ar MFC", color: "#36a2eb" },
@@ -13,6 +13,13 @@ const columnMeta = {
     "Power": { label: "Power", color: "#f39c12" },
     "Current": { label: "Current", color: "#8e44ad" },
     "Volt": { label: "Volt", color: "#1abc9c" },
+    "ion_gauge_i": {
+        label: "Ion Gauge",
+        color: "#4bc0c0",
+        range: { min: -0.005, max: 0.01 },
+    },
+    "baratron_gauge_i": { label: "Baratron Gauge", color: "#ff6384" },
+    "ar_mfc_i": { label: "Ar MFC", color: "#36a2eb" },
 };
 
 const charts = {};
@@ -145,15 +152,30 @@ function createChart(container, index) {
     charts[column] = new Chart(ctx, {
         type: 'line',
         data: {
-            datasets: [{
-                label: displayLabel,
-                data: [],
-                borderColor: color,
-                backgroundColor: color,
-                tension: 0.2,
-                pointRadius: 0,
-                borderWidth: 4,
-            }]
+            datasets: [
+                {
+                    label: displayLabel,
+                    data: [],
+                    borderColor: color,
+                    backgroundColor: color,
+                    tension: 0.2,
+                    pointRadius: 0,
+                    borderWidth: 4,
+                },
+                {
+                    label: `${displayLabel} 이상`,
+                    data: [],
+                    type: 'scatter',
+                    showLine: false,
+                    backgroundColor: '#e74c3c',
+                    borderColor: '#ffffff',
+                    borderWidth: 1,
+                    pointRadius: 4,
+                    pointHoverRadius: 5,
+                    pointBackgroundColor: '#e74c3c',
+                    pointBorderColor: '#ffffff',
+                },
+            ]
         },
         options: {
             responsive: true,
@@ -221,6 +243,7 @@ function appendRows(rows) {
             return;
         }
         const timeValue = new Date(row.timer);
+        const abnormalFields = Array.isArray(row.abnormal_fields) ? row.abnormal_fields : [];
         columnOrder.forEach((column) => {
             const value = row[column];
             if (value === null || value === undefined || Number.isNaN(Number(value))) {
@@ -231,10 +254,19 @@ function appendRows(rows) {
                 return;
             }
             const numericValue = Number(value);
-            const dataset = chart.data.datasets[0].data;
-            dataset.push({ x: timeValue.getTime(), y: numericValue });
-            if (dataset.length > MAX_POINTS) {
-                dataset.splice(0, dataset.length - MAX_POINTS);
+            const lineData = chart.data.datasets[0].data;
+            const anomalyData = chart.data.datasets[1].data;
+            lineData.push({ x: timeValue.getTime(), y: numericValue });
+            if (lineData.length > MAX_POINTS) {
+                lineData.splice(0, lineData.length - MAX_POINTS);
+            }
+            const cutoffTime = lineData.length > 0 ? lineData[0].x : null;
+            if (cutoffTime !== null && anomalyData.length > 0) {
+                const filtered = anomalyData.filter((point) => point.x >= cutoffTime);
+                anomalyData.splice(0, anomalyData.length, ...filtered);
+            }
+            if (abnormalFields.includes(column)) {
+                anomalyData.push({ x: timeValue.getTime(), y: numericValue });
             }
             ensureAxisState(column, numericValue);
         });
