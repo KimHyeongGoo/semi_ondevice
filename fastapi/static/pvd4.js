@@ -16,7 +16,7 @@ const columnMeta = {
     "ion_gauge_i": {
         label: "Ion Gauge",
         color: "#4bc0c0",
-        range: { min: -0.005, max: 0.01 },
+        range: { min: -0.002, max: 0.01 },
     },
     "baratron_gauge_i": { label: "Baratron Gauge", color: "#ff6384" },
     "ar_mfc_i": { label: "Ar MFC", color: "#36a2eb" },
@@ -24,6 +24,7 @@ const columnMeta = {
 
 const charts = {};
 const axisStates = {};
+const timeBounds = { min: null, max: null };
 const LOCK_AFTER_POINTS = 10;
 const MIN_LOCK_SPAN = 1;
 const MAX_POINTS = 3600; // 1시간 분량 (1Hz)
@@ -319,9 +320,51 @@ function createChart(container, index) {
 
 function clearCharts() {
     Object.values(charts).forEach((chart) => {
-        chart.data.datasets[0].data = [];
+        chart.data.datasets.forEach((dataset) => {
+            dataset.data = [];
+        });
+        chart.options.scales.x.min = undefined;
+        chart.options.scales.x.max = undefined;
     });
+    timeBounds.min = null;
+    timeBounds.max = null;
     resetAxisStates();
+}
+
+function syncTimeScales() {
+    let min = null;
+    let max = null;
+
+    Object.values(charts).forEach((chart) => {
+        const data = chart.data.datasets[0]?.data;
+        if (!data || data.length === 0) {
+            return;
+        }
+        const first = data[0].x;
+        const last = data[data.length - 1].x;
+        min = min === null ? first : Math.min(min, first);
+        max = max === null ? last : Math.max(max, last);
+    });
+
+    if (min === null || max === null) {
+        timeBounds.min = null;
+        timeBounds.max = null;
+        Object.values(charts).forEach((chart) => {
+            chart.options.scales.x.min = undefined;
+            chart.options.scales.x.max = undefined;
+            chart.update('none');
+        });
+        return;
+    }
+
+    if (timeBounds.min !== min || timeBounds.max !== max) {
+        timeBounds.min = min;
+        timeBounds.max = max;
+        Object.values(charts).forEach((chart) => {
+            chart.options.scales.x.min = min;
+            chart.options.scales.x.max = max;
+        });
+    }
 }
 
 function appendRows(rows) {
@@ -347,9 +390,16 @@ function appendRows(rows) {
             const numericValue = Number(value);
             const lineData = chart.data.datasets[0].data;
             const anomalyData = chart.data.datasets[1].data;
+            const timestamp = timeValue.getTime();
             const isAbnormal = abnormalFields.includes(column);
 
-            lineData.push({ x: timeValue.getTime(), y: numericValue, abnormal: isAbnormal });
+            const lastPoint = lineData[lineData.length - 1];
+            if (lastPoint && lastPoint.x === timestamp) {
+                lastPoint.y = numericValue;
+                lastPoint.abnormal = isAbnormal;
+            } else {
+                lineData.push({ x: timestamp, y: numericValue, abnormal: isAbnormal });
+            }
             if (lineData.length > MAX_POINTS) {
                 lineData.splice(0, lineData.length - MAX_POINTS);
             }
@@ -359,12 +409,18 @@ function appendRows(rows) {
                 anomalyData.splice(0, anomalyData.length, ...filtered);
             }
             if (isAbnormal) {
-                anomalyData.push({ x: timeValue.getTime(), y: numericValue });
+                const lastAnomaly = anomalyData[anomalyData.length - 1];
+                if (lastAnomaly && lastAnomaly.x === timestamp) {
+                    lastAnomaly.y = numericValue;
+                } else {
+                    anomalyData.push({ x: timestamp, y: numericValue });
+                }
             }
             ensureAxisState(column, numericValue);
         });
     });
 
+    syncTimeScales();
     Object.values(charts).forEach((chart) => chart.update('none'));
     lastTimestamp = rows[rows.length - 1].timer;
     if (lastUpdatedEl) {

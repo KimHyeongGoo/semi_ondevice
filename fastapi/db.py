@@ -402,7 +402,7 @@ def get_latest_pvd_stream_data(last_table=None, since=None):
     return {"table": latest_table, "is_new_table": is_new_table, "rows": rows}
 
 
-def get_recent_pvd_violence_logs(limit=50):
+def get_recent_pvd_violence_logs(limit=10):
     conn = psycopg2.connect(
         dbname="postgres",
         user="keti",

@@ -96,7 +96,7 @@
         #content-wrapper {
             display: flex;
             gap: 24px;
-            align-items: flex-start;
+            align-items: stretch;
         }
 
         #charts-grid {
@@ -105,6 +105,8 @@
             display: flex;
             flex-direction: column;
             gap: 18px;
+            height: calc(100vh - 80px);
+            max-height: calc(100vh - 80px);
         }
 
         .chart-card {
@@ -113,12 +115,15 @@
             padding: 18px 20px;
             box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
             border: 1px solid #d9dee4;
+            flex: 1 1 auto;
+            display: flex;
+            flex-direction: column;
         }
 
         .chart-col {
             display: flex;
             flex-direction: column;
-            gap: 24px;
+            flex: 1 1 auto;
         }
 
         .chart-container {
@@ -127,7 +132,6 @@
             display: flex;
             align-items: flex-start;
             justify-content: flex-start;
-            gap: 16px;
         }
 
         .chart-label-wrapper {
@@ -151,7 +155,7 @@
         }
 
         .chart-canvas-wrapper {
-            flex: 1;
+            flex: 1 1 auto;
             min-width: 0;
             min-height: 220px;
             position: relative;
@@ -185,6 +189,7 @@
             border: 1px solid #d9dee4;
             position: sticky;
             top: 20px;
+            height: calc(100vh - 80px);
             max-height: calc(100vh - 80px);
             display: flex;
             flex-direction: column;
@@ -258,6 +263,12 @@
                 width: 100%;
                 max-width: none;
                 max-height: none;
+                height: auto;
+            }
+
+            #charts-grid {
+                height: auto;
+                max-height: none;
             }
         }
     </style>
@@ -284,10 +295,10 @@
 
     <div id="content-wrapper">
         <div id="charts-grid">
-            <h3>가스 유량 변화 감지</h3>
             {% for col in columns %}
             {% if loop.index0 % 3 == 0 %}
             <div class="chart-card">
+                <h3>가스 유량 변화 감지</h3>
                 <div class="chart-col">
                     {% endif %}
                     <div class="chart-container" data-column="{{ col }}" data-index="{{ loop.index0 }}">
