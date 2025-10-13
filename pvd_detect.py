@@ -31,9 +31,8 @@ UP_THR = 0.6               # 정규화 기준 상향 임계
 DOWN_THR = 0.4             # 정규화 기준 하향 임계
 SMOOTH_WIN = 3             # 간단 median smoothing에 대응(여기선 생략하여 최소화)
 
-# 경보 안정화
-K_OF_M_M = 3               # 최근 3초 중
-K_OF_M_K = 2               # 2초 이상 위반이면 경보
+# 이상 구간 판정 기준
+MIN_VIOLATION_SECONDS = 2.0  # ON 상태에서 2초 이상 연속 위반 시 이상
 
 # ===== DB 연결 정보 =====
 PG_CONN_KW = dict(
@@ -229,7 +228,7 @@ def ensure_violence_table():
         cur.execute(sql)
     conn.close()
 
-def insert_abnormal(row, source_table, state, set_id, mu, devs, kofm):
+def insert_abnormal(row, source_table, state, set_id, mu, devs, violation_window):
     sql = f"""
     INSERT INTO {ABNORMAL_TABLE}
     (source_table, timer, state, set_id,
@@ -246,7 +245,7 @@ def insert_abnormal(row, source_table, state, set_id, mu, devs, kofm):
         row["ion_gauge_i"], row["baratron_gauge_i"], row["ar_mfc_i"],
         mu["Ion.Gauge.i"], mu["Baratron.Gauge.i"], mu["Ar.MFC.i"],
         devs["ion"], devs["bar"], devs["ar"],
-        kofm
+        violation_window
     )
     conn = psycopg2.connect(**PG_CONN_KW)
     with conn, conn.cursor() as cur:
@@ -254,7 +253,7 @@ def insert_abnormal(row, source_table, state, set_id, mu, devs, kofm):
     conn.close()
 
 
-def insert_violence_log(row, source_table, state, set_id, fields, kofm):
+def insert_violence_log(row, source_table, state, set_id, fields, violation_window):
     if not fields:
         return
 
@@ -292,7 +291,7 @@ def insert_violence_log(row, source_table, state, set_id, fields, kofm):
 
     summary = " | ".join(detail_parts)
     log_text = (
-        f"상태={state}, 세트={set_id}, KofM={kofm} :: "
+        f"상태={state}, 세트={set_id}, 위반지속={violation_window} :: "
         f"{summary}"
     )
 
@@ -334,7 +333,8 @@ def main():
     last_table = None
     since_iso = None
     ref_buf = deque(maxlen=BASELINE_WINDOW)  # ON 판정용 Ar 버퍼
-    kofm_buf = deque(maxlen=K_OF_M_M)        # 위반 안정화 버퍼
+    violation_start = None                  # 연속 위반 시작 시각
+    violation_duration = 0.0                # 현재 연속 위반 지속 시간(초)
 
     while True:
         try:
@@ -347,7 +347,8 @@ def main():
             if res["is_new_table"]:
                 logging.info("Switched to new source table: %s", table)
                 ref_buf.clear()
-                kofm_buf.clear()
+                violation_start = None
+                violation_duration = 0.0
                 since_iso = None  # 새 테이블이면 처음부터 읽음
 
             rows = res["rows"]
@@ -366,8 +367,15 @@ def main():
 
                 state = "ON" if is_on else "OFF"
 
+                timer_iso = row.get("timer")
+                try:
+                    timer_dt = parser.parse(timer_iso) if timer_iso else None
+                except (ValueError, TypeError):
+                    timer_dt = None
+
                 if not is_on:
-                    kofm_buf.clear()
+                    violation_start = None
+                    violation_duration = 0.0
                     continue
 
                 # 세트 선택 (Ar 값이 가장 가까운 세트)
@@ -386,13 +394,27 @@ def main():
 
                 violated = bool(vio_ar or vio_ion or vio_bar)
 
-                # K-of-M 안정화
-                kofm_buf.append(1 if violated else 0)
-                if len(kofm_buf) > K_OF_M_M:
-                    kofm_buf.popleft()
-                s_count = sum(kofm_buf)
-                kofm_str = f"{s_count}/{len(kofm_buf)}"
-                stable_alarm = (len(kofm_buf) == K_OF_M_M) and (s_count >= K_OF_M_K)
+                if violated:
+                    if timer_dt is None:
+                        # 타임스탬프가 없으면 이전 지속 시간을 유지
+                        pass
+                    elif violation_start is None or timer_dt < violation_start:
+                        violation_start = timer_dt
+                        violation_duration = 0.0
+                    else:
+                        violation_duration = max(
+                            0.0,
+                            (timer_dt - violation_start).total_seconds(),
+                        )
+                else:
+                    violation_start = None
+                    violation_duration = 0.0
+
+                # ON 상태에서 연속 위반 시간이 임계(2초) 이상이면 이상 판정
+                stable_alarm = violated and (
+                    violation_duration >= MIN_VIOLATION_SECONDS
+                )
+                violation_duration_str = f"{violation_duration:.2f}s"
 
                 # 로그/DB
                 if stable_alarm:
@@ -404,7 +426,7 @@ def main():
                         set_id=s["id"],
                         mu=mu,
                         devs=dev_map,
-                        kofm=kofm_str
+                        violation_window=violation_duration_str
                     )
 
                     violated_fields = []
@@ -436,16 +458,16 @@ def main():
                         state=state,
                         set_id=s["id"],
                         fields=violated_fields,
-                        kofm=kofm_str,
+                        violation_window=violation_duration_str,
                     )
                     logging.warning(
-                        "[ABNORMAL] %s set=%s Ar dev=%.3f%% Ion dev=%.3f%% Bar dev=%.3f%% KofM=%s",
-                        row["timer"], s["id"], dev_ar*100, dev_ion*100, dev_bar*100, kofm_str
+                        "[ABNORMAL] %s set=%s Ar dev=%.3f%% Ion dev=%.3f%% Bar dev=%.3f%% 위반지속=%s",
+                        row["timer"], s["id"], dev_ar*100, dev_ion*100, dev_bar*100, violation_duration_str
                     )
                 else:
                     logging.info(
-                        "ON ok? violated=%s | set=%s | dev%% (Ar=%.3f, Ion=%.3f, Bar=%.3f) | KofM=%s",
-                        violated, s["id"], dev_ar*100, dev_ion*100, dev_bar*100, kofm_str
+                        "ON ok? violated=%s | set=%s | dev%% (Ar=%.3f, Ion=%.3f, Bar=%.3f) | 위반지속=%s",
+                        violated, s["id"], dev_ar*100, dev_ion*100, dev_bar*100, violation_duration_str
                     )
 
             time.sleep(0.3)

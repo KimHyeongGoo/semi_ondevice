@@ -73,19 +73,44 @@
         }
 
         h2 {
-            margin-bottom: 10px;
+            margin-bottom: 16px;
+            color: #343a40;
+        }
+
+        #layout-container {
+            display: flex;
+            flex-direction: row;
+            gap: 24px;
+            align-items: stretch;
+        }
+
+        #charts-container {
+            flex: 2;
+            background-color: #ffffff;
+            border: 1px solid #d9dee4;
+            border-radius: 8px;
+            padding: 16px 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            min-width: 0;
+        }
+
+        #status-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
         }
 
         #status-bar {
             display: flex;
             flex-wrap: wrap;
-            gap: 24px;
-            margin-bottom: 16px;
+            gap: 16px;
             padding: 12px 16px;
             border-radius: 8px;
-            background-color: #ffffff;
+            background-color: #f8f9fa;
             border: 1px solid #d9dee4;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
         }
 
         #status-bar span.label {
@@ -93,85 +118,8 @@
             color: #495057;
         }
 
-        #content-wrapper {
-            display: flex;
-            gap: 24px;
-            align-items: stretch;
-        }
-
-        #charts-grid {
-            flex: 1 1 auto;
-            min-width: 0;
-            display: flex;
-            flex-direction: column;
-            gap: 18px;
-            height: calc(100vh - 80px);
-            max-height: calc(100vh - 80px);
-        }
-
-        .chart-card {
-            background-color: #ffffff;
-            border-radius: 10px;
-            padding: 18px 20px;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-            border: 1px solid #d9dee4;
-            flex: 1 1 auto;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .chart-col {
-            display: flex;
-            flex-direction: column;
-            flex: 1 1 auto;
-        }
-
-        .chart-container {
-            flex: 1 1 0;
-            min-width: 0;
-            display: flex;
-            align-items: flex-start;
-            justify-content: flex-start;
-        }
-
-        .chart-label-wrapper {
-            flex: 0 0 auto;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 100%;
-            overflow: visible;
-            padding-top: 6px;
-        }
-
-        .chart-label {
-            font-weight: bold;
-            color: #343a40;
-            display: inline-block;
-            transform: rotate(-90deg);
-            white-space: nowrap;
-            text-align: center;
-            letter-spacing: 1px;
-        }
-
-        .chart-canvas-wrapper {
-            flex: 1 1 auto;
-            min-width: 0;
-            min-height: 220px;
-            position: relative;
-        }
-
-        canvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100% !important;
-            height: 100% !important;
-        }
-
         #error-banner {
             display: none;
-            margin-bottom: 16px;
             padding: 10px 14px;
             border-radius: 6px;
             background-color: #ffe9e9;
@@ -179,20 +127,61 @@
             border: 1px solid #ffb3b3;
         }
 
-        #log-panel {
-            flex: 0 0 320px;
-            max-width: 360px;
-            background-color: #ffffff;
-            border-radius: 10px;
-            padding: 18px 20px;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-            border: 1px solid #d9dee4;
-            position: sticky;
-            top: 20px;
-            height: calc(100vh - 80px);
-            max-height: calc(100vh - 80px);
+        .chart-grid {
             display: flex;
             flex-direction: column;
+            gap: 16px;
+        }
+
+        .chart-box {
+            background-color: #ffffff;
+            border-radius: 10px;
+            padding: 16px 20px 20px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+            border: 1px solid #d9dee4;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .chart-header {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .chart-title {
+            font-weight: bold;
+            color: #343a40;
+        }
+
+        .chart-key {
+            color: #6c757d;
+            font-size: 0.85rem;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 200px;
+        }
+
+        canvas {
+            position: absolute;
+            inset: 0;
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        #log-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid #d9dee4;
+            padding: 18px 20px;
+            border-radius: 10px;
+            background-color: #ffffff;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+            min-width: 0;
         }
 
         #log-panel h3 {
@@ -254,7 +243,7 @@
         }
 
         @media (max-width: 1200px) {
-            #content-wrapper {
+            #layout-container {
                 flex-direction: column;
             }
 
@@ -264,11 +253,6 @@
                 max-width: none;
                 max-height: none;
                 height: auto;
-            }
-
-            #charts-grid {
-                height: auto;
-                max-height: none;
             }
         }
     </style>
@@ -286,35 +270,35 @@
 
     <h2>PVD4 실시간 이상감지</h2>
 
-    <div id="error-banner"></div>
-
-    <div id="status-bar">
-        <div><span class="label">현재 테이블</span>: <span id="current-table">-</span></div>
-        <div><span class="label">최근 수신 시각</span>: <span id="last-updated">-</span></div>
-    </div>
-
-    <div id="content-wrapper">
-        <div id="charts-grid">
-            {% for col in columns %}
-            {% if loop.index0 % 3 == 0 %}
-            <div class="chart-card">
-                <h3>가스 유량 변화 감지</h3>
-                <div class="chart-col">
-                    {% endif %}
-                    <div class="chart-container" data-column="{{ col }}" data-index="{{ loop.index0 }}">
-                        <div class="chart-label-wrapper">
-                            <div class="chart-label">{{ col }}</div>
-                        </div>
-                        <div class="chart-canvas-wrapper">
-                            <canvas id="chart-{{ loop.index0 }}"></canvas>
-                        </div>
-                    </div>
-                    {% if loop.index0 % 3 == 2 or loop.last %}
+    <div id="layout-container">
+        <section id="charts-container">
+            <div id="status-panel">
+                <div id="status-bar">
+                    <div><span class="label">현재 테이블</span>: <span id="current-table">-</span></div>
+                    <div><span class="label">최근 수신 시각</span>: <span id="last-updated">-</span></div>
                 </div>
+                <div id="error-banner"></div>
             </div>
-            {% endif %}
-            {% endfor %}
-        </div>
+
+            <div class="chart-grid">
+                {% set label_map = {
+                'ion_gauge_i': 'Ion Gauge',
+                'baratron_gauge_i': 'Baratron Gauge',
+                'ar_mfc_i': 'Ar MFC'
+                } %}
+                {% for col in columns %}
+                <div class="chart-box">
+                    <div class="chart-header">
+                        <div class="chart-title">{{ label_map.get(col, col) }}</div>
+                    </div>
+                    <div class="chart-container" data-column="{{ col }}" data-index="{{ loop.index0 }}">
+                        <canvas id="chart-{{ loop.index0 }}"></canvas>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+
         <aside id="log-panel">
             <h3>이상 로그</h3>
             <div id="log-error"></div>

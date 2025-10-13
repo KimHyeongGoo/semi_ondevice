@@ -2,7 +2,7 @@ const processCharts = {};
 const recentCharts = {};
 let processStart = null;
 let processEnd = null;
-// logs structure: { param: [ {start, end, diff} ] }
+// logs structure: { param: [ {start, end, diff, actual_value, predicted_value, peak_time, step_id, step_name} ] }
 let logs = {};
 const loggedIds = new Set();
 
@@ -179,36 +179,64 @@ function createCharts() {
 
 function calcSegments(actual, predicted) {
     const predMap = new Map(predicted.map(d => [d.x, d.y]));
-    let segStart = null, last = null, maxDiff = 0;
-    const segments = [], regions = [];
+    let segStart = null;
+    let last = null;
+    let maxDiff = 0;
+    let maxActual = null;
+    let maxPred = null;
+    let maxTime = null;
+    const segments = [];
+    const regions = [];
     actual.forEach(a => {
         const pv = predMap.get(a.x);
         const t = new Date(a.x).getTime();
+        if (!Number.isFinite(t)) {
+            return;
+        }
         if (pv === undefined) {
             if (segStart !== null && last - segStart >= 4000) {
                 regions.push({ start: segStart, end: last });
-                segments.push({ start: segStart, end: last, max: maxDiff });
+                segments.push({ start: segStart, end: last, max: maxDiff, actual_value: maxActual, predicted_value: maxPred, peak_time: maxTime });
             }
-            segStart = null; maxDiff = 0; last = t;
+            segStart = null;
+            maxDiff = 0;
+            maxActual = null;
+            maxPred = null;
+            maxTime = null;
+            last = t;
             return;
         }
         const absDiff = Math.abs(a.y - pv);
         const diff = Math.abs(a.y - pv) / (Math.abs(a.y) || 1) * 100;
         if (diff > 10 && absDiff > 0.25) {
-            if (segStart === null) { segStart = t; maxDiff = diff; }
-            else { maxDiff = Math.max(maxDiff, diff); }
+            if (segStart === null) {
+                segStart = t;
+                maxDiff = diff;
+                maxActual = a.y;
+                maxPred = pv;
+                maxTime = t;
+            } else if (diff > maxDiff) {
+                maxDiff = diff;
+                maxActual = a.y;
+                maxPred = pv;
+                maxTime = t;
+            }
         } else if (segStart !== null) {
             if (last - segStart >= 4000) {
                 regions.push({ start: segStart, end: last });
-                segments.push({ start: segStart, end: last, max: maxDiff });
+                segments.push({ start: segStart, end: last, max: maxDiff, actual_value: maxActual, predicted_value: maxPred, peak_time: maxTime });
             }
-            segStart = null; maxDiff = 0;
+            segStart = null;
+            maxDiff = 0;
+            maxActual = null;
+            maxPred = null;
+            maxTime = null;
         }
         last = t;
     });
     if (segStart !== null && last - segStart >= 4000) {
         regions.push({ start: segStart, end: last });
-        segments.push({ start: segStart, end: last, max: maxDiff });
+        segments.push({ start: segStart, end: last, max: maxDiff, actual_value: maxActual, predicted_value: maxPred, peak_time: maxTime });
     }
     return { segments, regions };
 }
@@ -231,6 +259,7 @@ function updateLog() {
         logDiv.appendChild(header);
         logs[p].forEach(l => {
             const dur = Math.round((l.end - l.start) / 1000);
+            const peakTime = l.peak_time ? formatLocal(l.peak_time) : formatLocal(l.end);
             const lines = [
                 '{',
                 `"parameter" : "${p}",`,
@@ -238,6 +267,9 @@ function updateLog() {
                 `"end" : "${formatLocal(l.end)}",`,
                 `"duration" : ${dur},`,
                 `"diff" : ${l.diff.toFixed(2)}%,`,
+                `"peak_time" : "${peakTime}",`,
+                `"actual_value" : ${l.actual_value != null ? l.actual_value.toFixed(3) : 'null'},`,
+                `"predicted_value" : ${l.predicted_value != null ? l.predicted_value.toFixed(3) : 'null'},`,
                 `"step_id" : "[${l.step_id.join(', ')}]",`,
                 `"step_name" : "[${l.step_name.join(', ')}]"`,
                 '}'
@@ -282,7 +314,10 @@ function trimLogEntries(limit = 10) {
             end: l.end,
             diff: l.diff,
             step_id: l.step_id,
-            step_name: l.step_name
+            step_name: l.step_name,
+            actual_value: l.actual_value,
+            predicted_value: l.predicted_value,
+            peak_time: l.peak_time
         });
         loggedIds.add(`${l.param}-${l.start}-${l.end}`);
     });
@@ -291,8 +326,10 @@ function trimLogEntries(limit = 10) {
 
 function addLogs(param, segments, actual) {
     if (!logs[param]) logs[param] = [];
+    const newEntries = [];
     segments.forEach(s => {
-        const isDup = logs[param].some(l => Math.abs(l.start - s.start) < 2000 && Math.abs(l.end - s.end) < 2000);
+        const key = `${param}-${s.start}-${s.end}`;
+        const isDup = logs[param].some(l => Math.abs(l.start - s.start) < 2000 && Math.abs(l.end - s.end) < 2000) || loggedIds.has(key);
         if (!isDup) {
             const steps = actual.filter(a => {
                 const t = new Date(a.x).getTime();
@@ -300,18 +337,46 @@ function addLogs(param, segments, actual) {
             });
             const stepIds = [...new Set(steps.map(a => a.step_id))];
             const stepNames = [...new Set(steps.map(a => a.step_name).filter(Boolean))];
-            logs[param].unshift({
+            const entry = {
                 start: s.start,
                 end: s.end,
                 diff: s.max,
                 step_id: stepIds,
-                step_name: stepNames
-            });
-            loggedIds.add(`${param}-${s.start}-${s.end}`);
+                step_name: stepNames,
+                actual_value: s.actual_value ?? null,
+                predicted_value: s.predicted_value ?? null,
+                peak_time: s.peak_time ?? null
+            };
+            logs[param].unshift(entry);
+            loggedIds.add(key);
+            newEntries.push({ param, entry });
         }
     });
     trimLogEntries(10);
     updateLog();
+    newEntries.forEach(({ param: p, entry }) => {
+        const payload = {
+            parameter: p,
+            start: new Date(entry.start).toISOString(),
+            end: new Date(entry.end).toISOString(),
+            peak_time: entry.peak_time ? new Date(entry.peak_time).toISOString() : null,
+            diff: entry.diff,
+            duration_seconds: (entry.end - entry.start) / 1000,
+            step_id: entry.step_id,
+            step_name: entry.step_name,
+            actual_value: entry.actual_value,
+            predicted_value: entry.predicted_value
+        };
+        sendLogToServer(payload);
+    });
+}
+
+function sendLogToServer(payload) {
+    fetch('/api/logs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    }).catch(err => console.error('Failed to persist realtime log', err));
 }
 
 function updateCharts(col, data) {

@@ -16,9 +16,9 @@ const columnMeta = {
     "ion_gauge_i": {
         label: "Ion Gauge",
         color: "#4bc0c0",
-        range: { min: -0.002, max: 0.01 },
+        range: { min: -0.001, max: 0.01 },
     },
-    "baratron_gauge_i": { label: "Baratron Gauge", color: "#ff6384" },
+    "baratron_gauge_i": { label: "Baratron Gauge", color: "#ffcd56" },
     "ar_mfc_i": { label: "Ar MFC", color: "#36a2eb" },
 };
 
@@ -39,6 +39,8 @@ const columnOrder = chartContainers.map((container) => container.dataset.column)
 const currentTableEl = document.getElementById('current-table');
 const lastUpdatedEl = document.getElementById('last-updated');
 const errorBannerEl = document.getElementById('error-banner');
+const chartsSectionEl = document.getElementById('charts-container');
+const logPanelEl = document.getElementById('log-panel');
 const logListEl = document.getElementById('log-list');
 const logErrorEl = document.getElementById('log-error');
 
@@ -48,6 +50,131 @@ const colorPalette = [
 ];
 
 const LOG_LIMIT = 50;
+const logAnomalies = new Map();
+let panelHeightFrame = null;
+
+function syncPanelHeights() {
+    if (!chartsSectionEl || !logPanelEl) {
+        return;
+    }
+
+    const previousChartHeight = chartsSectionEl.style.height;
+    const previousLogHeight = logPanelEl.style.height;
+
+    chartsSectionEl.style.height = 'auto';
+    logPanelEl.style.height = 'auto';
+
+    const measuredHeight = Math.ceil(chartsSectionEl.getBoundingClientRect().height);
+
+    if (Number.isFinite(measuredHeight) && measuredHeight > 0) {
+        chartsSectionEl.style.height = `${measuredHeight}px`;
+        logPanelEl.style.height = `${measuredHeight}px`;
+    } else {
+        chartsSectionEl.style.height = previousChartHeight;
+        logPanelEl.style.height = previousLogHeight;
+    }
+}
+
+function schedulePanelHeightSync() {
+    if (panelHeightFrame !== null) {
+        return;
+    }
+    panelHeightFrame = requestAnimationFrame(() => {
+        panelHeightFrame = null;
+        syncPanelHeights();
+    });
+}
+
+function normalizeFieldName(field) {
+    if (typeof field !== 'string') {
+        return null;
+    }
+    const trimmed = field.trim();
+    if (!trimmed) {
+        return null;
+    }
+    if (columnMeta[trimmed]) {
+        // 이미 정의된 메타 키이면 그대로 사용
+        return trimmed;
+    }
+    return trimmed
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '_')
+        .replace(/^_+|_+$/g, '');
+}
+
+function updateLogAnomalyMap(logs, activeTable) {
+    logAnomalies.clear();
+    if (!Array.isArray(logs)) {
+        return;
+    }
+
+    logs.forEach((log) => {
+        if (!log || !log.timer) {
+            return;
+        }
+
+        if (activeTable && log.source_table && log.source_table !== activeTable) {
+            return;
+        }
+
+        const date = new Date(log.timer);
+        const timestamp = date.getTime();
+        if (Number.isNaN(timestamp)) {
+            return;
+        }
+
+        const bucket = Math.floor(timestamp / 1000) * 1000;
+        const fields = Array.isArray(log.fields) ? log.fields : [];
+        fields.forEach((field) => {
+            const normalized = normalizeFieldName(field);
+            if (!normalized) {
+                return;
+            }
+            if (!logAnomalies.has(bucket)) {
+                logAnomalies.set(bucket, new Set());
+            }
+            logAnomalies.get(bucket).add(normalized);
+        });
+    });
+}
+
+function getLogAnomaliesFor(timestamp) {
+    if (!Number.isFinite(timestamp)) {
+        return undefined;
+    }
+    const bucket = Math.floor(timestamp / 1000) * 1000;
+    return logAnomalies.get(bucket);
+}
+
+function applyLogAnomaliesToCharts() {
+    Object.entries(charts).forEach(([column, chart]) => {
+        if (!chart || !chart.data || !chart.data.datasets) {
+            return;
+        }
+        const lineData = chart.data.datasets[0]?.data;
+        const anomalyData = chart.data.datasets[1]?.data;
+        if (!Array.isArray(lineData) || !Array.isArray(anomalyData)) {
+            return;
+        }
+
+        anomalyData.length = 0;
+        lineData.forEach((point) => {
+            if (!point || !Number.isFinite(point.x)) {
+                return;
+            }
+            const logFields = getLogAnomaliesFor(point.x);
+            if (logFields && logFields.has(column)) {
+                point.abnormal = true;
+            }
+            if (point.abnormal) {
+                anomalyData.push({ x: point.x, y: point.y });
+            }
+        });
+
+        chart.update('none');
+    });
+}
 
 function hideLogError() {
     if (logErrorEl) {
@@ -86,6 +213,7 @@ function renderLogs(logs) {
         emptyEl.className = 'log-empty';
         emptyEl.textContent = '최근 이상 로그가 없습니다.';
         logListEl.appendChild(emptyEl);
+        schedulePanelHeightSync();
         return;
     }
 
@@ -126,6 +254,7 @@ function renderLogs(logs) {
     });
 
     logListEl.scrollTop = 0;
+    schedulePanelHeightSync();
 }
 
 function pickColor(index, fallback) {
@@ -329,6 +458,7 @@ function clearCharts() {
     timeBounds.min = null;
     timeBounds.max = null;
     resetAxisStates();
+    logAnomalies.clear();
 }
 
 function syncTimeScales() {
@@ -378,6 +508,11 @@ function appendRows(rows) {
         }
         const timeValue = new Date(row.timer);
         const abnormalFields = Array.isArray(row.abnormal_fields) ? row.abnormal_fields : [];
+        const normalizedFields = new Set(
+            abnormalFields
+                .map((field) => normalizeFieldName(field))
+                .filter((field) => typeof field === 'string' && field.length > 0),
+        );
         columnOrder.forEach((column) => {
             const value = row[column];
             if (value === null || value === undefined || Number.isNaN(Number(value))) {
@@ -391,7 +526,11 @@ function appendRows(rows) {
             const lineData = chart.data.datasets[0].data;
             const anomalyData = chart.data.datasets[1].data;
             const timestamp = timeValue.getTime();
-            const isAbnormal = abnormalFields.includes(column);
+            let isAbnormal = normalizedFields.has(column);
+            if (!isAbnormal) {
+                const logFields = getLogAnomaliesFor(timestamp);
+                isAbnormal = Boolean(logFields && logFields.has(column));
+            }
 
             const lastPoint = lineData[lineData.length - 1];
             if (lastPoint && lastPoint.x === timestamp) {
@@ -426,6 +565,7 @@ function appendRows(rows) {
     if (lastUpdatedEl) {
         lastUpdatedEl.textContent = new Date().toLocaleString('ko-KR');
     }
+    schedulePanelHeightSync();
 }
 
 async function fetchLatest() {
@@ -491,11 +631,15 @@ async function fetchLatest() {
 
     if (logsResult.status === 'fulfilled') {
         hideLogError();
+        updateLogAnomalyMap(logsResult.value, lastTable);
         renderLogs(logsResult.value);
+        applyLogAnomaliesToCharts();
     } else {
         console.error(logsResult.reason);
         showLogError('로그를 불러오지 못했습니다. 잠시 후 다시 시도합니다.');
     }
+
+    schedulePanelHeightSync();
 }
 
 function startPolling() {
@@ -512,7 +656,11 @@ window.addEventListener('beforeunload', () => {
     }
 });
 
+window.addEventListener('resize', schedulePanelHeightSync);
+
 chartContainers.forEach((container, index) => createChart(container, index));
 if (chartContainers.length > 0) {
     startPolling();
 }
+
+schedulePanelHeightSync();

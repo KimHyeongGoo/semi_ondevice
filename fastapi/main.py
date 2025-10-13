@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request, Query
+from fastapi import Body, FastAPI, HTTPException, Query, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -7,6 +7,7 @@ from dateutil import parser
 import yaml
 import os
 import psycopg2
+import json
 from db import (
     get_latest_data,
     get_trace_info,
@@ -21,6 +22,19 @@ from db import (
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
+
+
+def ensure_realtime_log_table(cur):
+    cur.execute(
+        """
+        CREATE TABLE IF NOT EXISTS realtime_violation_log (
+            "Timestamp" TIMESTAMP  PRIMARY KEY,
+            parameter TEXT NOT NULL,
+            message TEXT NOT NULL,
+            UNIQUE ("Timestamp", parameter)
+        );
+        """
+    )
 
 # main.py
 PREDICT_STEPS = [10, 20, 30]
@@ -50,6 +64,12 @@ predict_columns = [
 
 LIMIT_PATH = "limits.yaml"
 SETTINGS_PATH = "settings.yaml"
+
+def _parse_range_timestamp(value: str):
+    try:
+        return datetime.fromisoformat(value.replace(' ', 'T'))
+    except ValueError:
+        return None
 
 @app.get("/", response_class=HTMLResponse)
 async def get_page(request: Request):
@@ -203,14 +223,7 @@ async def get_logs():
     )
     cur = conn.cursor()
 
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS realtime_violation_log (
-            "Timestamp" TIMESTAMP  PRIMARY KEY,
-            parameter TEXT NOT NULL,
-            message TEXT NOT NULL,
-            UNIQUE ("Timestamp", parameter)
-        );
-    """)
+    ensure_realtime_log_table(cur)
     conn.commit()
     
     cur.execute("""
@@ -230,6 +243,125 @@ async def get_logs():
         }
         for ts, param, msg in logs
     ])
+
+@app.get("/api/history/logs")
+async def get_history_logs(
+    start: str = Query(...),
+    end: str = Query(...),
+    parameter: str | None = Query(default=None),
+):
+    start_dt = _parse_range_timestamp(start)
+    end_dt = _parse_range_timestamp(end)
+    if start_dt is None or end_dt is None:
+        raise HTTPException(status_code=400, detail="Invalid timestamp format")
+    if start_dt > end_dt:
+        raise HTTPException(status_code=400, detail="Start time must be before end time")
+
+    conn = psycopg2.connect(
+        dbname="postgres",
+        user="keti",
+        password="keti1234!",
+        host="localhost",
+        port=5432,
+    )
+    cur = conn.cursor()
+
+    try:
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS realtime_violation_log (
+                "Timestamp" TIMESTAMP  PRIMARY KEY,
+                parameter TEXT NOT NULL,
+                message TEXT NOT NULL,
+                UNIQUE ("Timestamp", parameter)
+            );
+        """)
+        conn.commit()
+
+        query = """
+            SELECT "Timestamp", parameter, message
+            FROM realtime_violation_log
+            WHERE "Timestamp" BETWEEN %s::timestamp AND %s::timestamp
+        """
+        params = [start_dt, end_dt]
+        if parameter:
+            query += " AND parameter = %s"
+            params.append(parameter)
+        query += " ORDER BY \"Timestamp\" ASC"
+
+        cur.execute(query, params)
+        rows = cur.fetchall()
+    finally:
+        cur.close()
+        conn.close()
+
+    return JSONResponse([
+        {
+            "timestamp": ts.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3],
+            "parameter": param,
+            "message": msg,
+        }
+        for ts, param, msg in rows
+    ])
+
+@app.post("/api/logs")
+async def create_log(entry: dict = Body(...)):
+    parameter = entry.get("parameter")
+    if not parameter:
+        raise HTTPException(status_code=400, detail="parameter is required")
+
+    def _parse_time(value):
+        if not value:
+            return None
+        try:
+            return parser.parse(value)
+        except (ValueError, TypeError):
+            return None
+
+    start_dt = _parse_time(entry.get("start"))
+    end_dt = _parse_time(entry.get("end"))
+    peak_dt = _parse_time(entry.get("peak_time"))
+
+    message_payload = {
+        "parameter": parameter,
+        "start": start_dt.isoformat() if start_dt else None,
+        "end": end_dt.isoformat() if end_dt else None,
+        "duration_seconds": entry.get("duration_seconds"),
+        "diff_percent": entry.get("diff"),
+        "step_id": entry.get("step_id") or [],
+        "step_name": entry.get("step_name") or [],
+        "peak_time": peak_dt.isoformat() if peak_dt else None,
+        "actual_value": entry.get("actual_value"),
+        "predicted_value": entry.get("predicted_value"),
+    }
+
+    message_text = json.dumps(message_payload, ensure_ascii=False)
+    log_timestamp = datetime.utcnow()
+
+    conn = psycopg2.connect(
+        dbname="postgres",
+        user="keti",
+        password="keti1234!",
+        host="localhost",
+        port=5432
+    )
+    cur = conn.cursor()
+
+    try:
+        ensure_realtime_log_table(cur)
+        cur.execute(
+            """
+            INSERT INTO realtime_violation_log ("Timestamp", parameter, message)
+            VALUES (%s, %s, %s)
+            ON CONFLICT ("Timestamp", parameter) DO NOTHING
+            """,
+            (log_timestamp, parameter, message_text),
+        )
+        conn.commit()
+    finally:
+        cur.close()
+        conn.close()
+
+    return JSONResponse({"status": "stored"})
     
 @app.get("/api/event_chart")
 async def event_chart(param: str, start: str = Query(...), end: str = Query(...), step: int = 10):
