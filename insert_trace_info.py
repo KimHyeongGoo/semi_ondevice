@@ -31,6 +31,16 @@ temp_add_columns = [
     'Temp_Set_',
     'Temp_HT_Power_'
 ]
+
+monitor_state = {
+    "initialized": False,
+    "last_checked_table": None,
+    "last_checked_ts": None,
+    "last_ts": None,
+    "last_table": None,
+    "current_proc": None,
+}
+
 window_size = 192  
 predict_step = 10
 predict_columns = [      
@@ -492,6 +502,187 @@ def insert_trace_info_with_thickness(start_time, end_time, start_table, end_tabl
 
 
 
+def ensure_trace_info_table(cur):
+    thickness_cols_sql = ',\n    '.join([f'thickness_{i+1} REAL' for i in range(45)])
+    cur.execute(f"""
+        CREATE TABLE IF NOT EXISTS trace_info (
+            start_time TIMESTAMP PRIMARY KEY,
+            end_time TIMESTAMP,
+            start_table TEXT,
+            end_table TEXT,
+            {thickness_cols_sql}
+        );
+    """)
+
+
+def get_rawdata_tables(cur):
+    cur.execute("""
+        SELECT table_name
+        FROM information_schema.tables
+        WHERE table_schema = 'public'
+        AND table_name ~ '^rawdata\\d{8}$';
+    """)
+    tables = [t[0] for t in cur.fetchall()]
+    return sorted(tables, key=lambda x: int(x.replace("rawdata", "")))
+
+
+def initialize_monitor_state(cur):
+    global monitor_state
+
+    tables = get_rawdata_tables(cur)
+    if not tables:
+        print("⚠️ rawdata 테이블이 존재하지 않습니다.")
+        return False
+
+    last_table = tables[-1]
+    cur.execute(f'SELECT MAX("Timestamp") FROM "{last_table}";')
+    result = cur.fetchone()
+    last_ts = result[0] if result else None
+
+    if not last_ts:
+        print(f"⚠️ {last_table} 테이블에 데이터가 없습니다.")
+        return False
+
+    monitor_state.update({
+        "initialized": True,
+        "last_checked_table": last_table,
+        "last_checked_ts": last_ts,
+        "last_ts": last_ts,
+        "last_table": last_table,
+        "current_proc": None,
+    })
+
+    print(f"⏱️ 실시간 모니터링 기준 시각 설정: {last_ts} ({last_table})")
+    return True
+
+
+def finalize_current_process(end_time, end_table):
+    global monitor_state
+
+    current_proc = monitor_state.get("current_proc")
+    if not current_proc:
+        return
+
+    duration = end_time - current_proc["start_time"]
+    if duration < timedelta(hours=1):
+        print(f"⏸️ 공정 길이 1시간 미만 → 저장 안함: {current_proc['start_time']} ~ {end_time}")
+        monitor_state["current_proc"] = None
+        return
+
+    try:
+        thicknesses = predict_thickness(current_proc["start_time"], end_time, current_proc["start_table"], end_table)
+    except Exception as e:
+        print(f"❌ 두께 예측 실패: {e}")
+        thicknesses = []
+
+    if len(thicknesses) > 0:
+        try:
+            insert_trace_info_with_thickness(current_proc["start_time"], end_time, current_proc["start_table"], end_table, thicknesses)
+            print(f"✅ 공정 저장: {current_proc['start_time']} ~ {end_time}")
+        except Exception as e:
+            print(f"❌ trace_info 저장 실패: {e}")
+
+        try:
+            pred_df = predict_trace_parameter(current_proc["start_time"], end_time, current_proc["start_table"], end_table)
+            insert_trace_pred(pred_df)
+            print("✅ 예측 데이터 저장 완료")
+        except Exception as e:
+            print(f"❌ 예측 데이터 저장 실패: {e}")
+    else:
+        print(f"⚠️ 두께 예측 결과 없음 → 저장 생략: {current_proc['start_time']} ~ {end_time}")
+
+    monitor_state["current_proc"] = None
+
+
+def monitor_current_process():
+    global monitor_state
+
+    conn = psycopg2.connect(
+        dbname="postgres",
+        user="keti",
+        password="keti1234!",
+        host="localhost",
+        port=5432
+    )
+    cur = conn.cursor()
+
+    ensure_trace_info_table(cur)
+    conn.commit()
+
+    if not monitor_state["initialized"]:
+        if not initialize_monitor_state(cur):
+            cur.close()
+            conn.close()
+            return
+        print("🔄 초기화 완료. 다음 호출부터 실시간 데이터를 처리합니다.")
+        cur.close()
+        conn.close()
+        return
+
+    tables = get_rawdata_tables(cur)
+    if not tables:
+        print("⚠️ rawdata 테이블이 존재하지 않습니다.")
+        cur.close()
+        conn.close()
+        return
+
+    last_table = monitor_state["last_checked_table"]
+    start_idx = 0
+    if last_table and last_table in tables:
+        start_idx = tables.index(last_table)
+    else:
+        start_idx = len(tables) - 1
+        monitor_state["last_checked_ts"] = None
+        monitor_state["last_checked_table"] = tables[start_idx]
+
+    for table in tables[start_idx:]:
+        if table == monitor_state["last_checked_table"] and monitor_state["last_checked_ts"]:
+            query = f"""
+                SELECT "Timestamp", "ProcessRecipeStepName"
+                FROM "{table}"
+                WHERE "Timestamp" > %s
+                ORDER BY "Timestamp" ASC;
+            """
+            cur.execute(query, (monitor_state["last_checked_ts"],))
+        else:
+            query = f"""
+                SELECT "Timestamp", "ProcessRecipeStepName"
+                FROM "{table}"
+                ORDER BY "Timestamp" ASC;
+            """
+            cur.execute(query)
+
+        rows = cur.fetchall()
+        for ts, step in rows:
+            step = step.strip().upper() if step else ""
+
+            if monitor_state["current_proc"]:
+                if step == "END":
+                    finalize_current_process(ts, table)
+                elif step in ("", "NAN", "NULL", "NONE"):
+                    if monitor_state["last_ts"]:
+                        finalize_current_process(monitor_state["last_ts"], monitor_state["last_table"])
+                elif monitor_state["last_ts"] and ts > monitor_state["last_ts"]:
+                    gap = ts - monitor_state["last_ts"]
+                    if gap >= timedelta(hours=1):
+                        finalize_current_process(monitor_state["last_ts"], monitor_state["last_table"])
+
+            if monitor_state["current_proc"] is None and step in ("STANDBY", "START"):
+                monitor_state["current_proc"] = {
+                    "start_time": ts,
+                    "start_table": table,
+                }
+                print(f"▶️ 공정 시작 감지: {ts} ({table})")
+
+            monitor_state["last_ts"] = ts
+            monitor_state["last_table"] = table
+            monitor_state["last_checked_ts"] = ts
+            monitor_state["last_checked_table"] = table
+
+    cur.close()
+    conn.close()
+    
+    
 def extract_process_ranges_incrementally():
     conn = psycopg2.connect(
         dbname="postgres",
@@ -650,8 +841,9 @@ if __name__ == '__main__':
     print_existing_trace_info()  
     try:
         while True:
-            extract_process_ranges_incrementally()
-            print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}]  10분 후 재실행 대기 중...\n")
-            time.sleep(600)
+            #extract_process_ranges_incrementally()
+            monitor_current_process()
+            print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}]  1분 후 재실행 대기 중...\n")
+            time.sleep(60)
     except KeyboardInterrupt:
         print("\n🛑 수동 종료됨.")

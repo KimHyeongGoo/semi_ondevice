@@ -185,7 +185,7 @@
         }
 
         button {
-            background-color: #007bff;
+            background-color: #005eff;
             color: white;
             border: none;
             padding: 8px 16px;
@@ -231,21 +231,43 @@
         }
 
         .step-info {
-            display: inline-flex;
+            display: flex;
             gap: 24px;
             align-items: center;
+            justify-content: space-between;
             margin-bottom: 16px;
-            padding: 12px 20px;
-            background-color: #ffffff;
+            padding: 16px 24px;
+            background-color: #F2F2F2;
             border: 1px solid #ccc;
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
             font-size: 16px;
             color: #333;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .step-meta {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            flex-wrap: wrap;
         }
 
         .step-info span strong {
             margin-left: 8px;
+        }
+
+        .step-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-left: auto;
+        }
+
+        .step-controls label {
+            font-weight: 600;
         }
 
         .toggle-item {
@@ -328,26 +350,24 @@
     </div>
     <h2>실시간 데이터 모니터링</h2>
     <div class="step-info">
-        <span>STEP ID: <strong id="current-step-id">-</strong></span>
-        <span>STEP NAME: <strong id="current-step-name">-</strong></span>
-    </div>
-
-    <div style="display: flex; align-items: center; gap: 16px;">
-        <label for="duration-select">표시 기간 </label>
-        <select id="duration-select">
-            <option value="60">1분</option>
-            <option value="300" selected>5분</option>
-            <option value="600">10분</option>
-            <option value="3600">1시간</option>
-        </select>
-        <label for="step-select">예측 시점</label>
-        <select id="step-select">
-            <option value="10" selected>10초 후</option>
-            <option value="20">20초 후</option>
-            <option value="30">30초 후</option>
-        </select>
-
-        <button id="open-settings">Step별 상/하한 설정</button>
+        <div class="step-meta">
+            <span>STEP ID: <strong id="current-step-id">-</strong></span>
+            <span>STEP NAME: <strong id="current-step-name">-</strong></span>
+            <label for="duration-select">표시 기간</label>
+            <select id="duration-select">
+                <option value="60">1분</option>
+                <option value="300" selected>5분</option>
+                <option value="600">10분</option>
+                <option value="3600">1시간</option>
+            </select>
+            <label for="step-select">예측 시점</label>
+            <select id="step-select">
+                <option value="10" selected>10초 후</option>
+                <option value="20">20초 후</option>
+                <option value="30">30초 후</option>
+            </select>
+            <button id="open-settings">Step별 상/하한 설정</button>
+        </div>
     </div>
     <br>
 

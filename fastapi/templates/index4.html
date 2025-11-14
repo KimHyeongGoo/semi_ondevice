@@ -80,12 +80,11 @@
             align-items: center;
             margin-bottom: 16px;
             padding: 12px 20px;
-            background-color: #ffffff;
-            border: 1px solid #ccc;
+            background-color: #AFABAB;
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
             font-size: 16px;
-            color: #333;
+            color: #000000;
         }
 
         .step-info span strong {
@@ -108,6 +107,7 @@
             display: flex;
             gap: 12px;
             align-items: center;
+            position: relative;
         }
 
         .param-label {
@@ -117,11 +117,18 @@
 
         .chart-box {
             flex: 1;
-            background: #fff;
-            border: 1px solid #ccc;
-            border-radius: 6px;
+            background: #FFFFFF;
+            border: 2px solid #a6a6a6;
+            border-radius: 10px;
             padding: 8px;
             height: 130px;
+            cursor: pointer;
+            transition: background 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .chart-box.highlight {
+            background: rgba(251, 229, 214, 0.6);
+            box-shadow: 0 0 0 2px #FF0000;
         }
 
         canvas {
@@ -131,32 +138,81 @@
 
         #log-panel {
             flex: 1;
-            border: 1px solid #ccc;
-            padding: 12px;
-            border-radius: 8px;
-            background: #fff;
+            border: 2px solid #E7E6E6;
+            padding: 16px;
+            border-radius: 12px;
+            background: #E7E6E6;
             overflow-y: auto;
-            white-space: pre-wrap;
         }
 
         #log-panel label {
             font-weight: bold;
+            display: block;
+            margin-bottom: 12px;
         }
 
-        #log-content .log-entry {
+        #log-content {
             position: relative;
-            padding-right: 50px;
-            margin-bottom: 8px;
+            padding-left: 16px;
         }
 
-        #log-content .log-entry pre {
-            margin: 0;
+        .timeline-entry {
+            position: relative;
+            display: flex;
+            gap: 12px;
+            padding: 12px 16px;
+            margin-left: 10px;
+            margin-bottom: 12px;
+            background: #f2f2f2;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: background 0.2s ease, transform 0.2s ease;
         }
 
-        #log-content .copy-btn {
-            position: absolute;
-            top: 0;
-            right: 0;
+        .timeline-entry.highlight {
+            background: rgba(251, 229, 214, 0.6);
+            box-shadow: 0 0 0 2px #FF0000;
+            transform: translateX(4px);
+        }
+
+        .timeline-icon {
+            font-size: 20px;
+            color: #FF0000;
+            line-height: 1;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .timeline-body {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .timeline-time {
+            font-size: 14px;
+            font-weight: bold;
+            color: #000000;
+            min-width: 70px;
+        }
+
+        .timeline-text {
+            font-size: 15px;
+            color: #000000;
+        }
+
+        button {
+            background-color: #005eff82;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            margin: 4px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
         }
     </style>
 </head>
@@ -177,23 +233,23 @@
     <div class="step-info">
         <span>STEP ID: <strong id="current-step-id">-</strong></span>
         <span>STEP NAME: <strong id="current-step-name">-</strong></span>
-    </div>
-    <div id="toggle-container" style="margin-bottom: 10px;">
-        <button id="toggle-datasets"></button>
+        <span><button id="toggle-datasets"></button></span>
     </div>
     <div id="layout-container">
         <div id="charts-container">
             {% for col in columns %}
             {% set safe = col.replace(' ', '_').replace('.', '_').replace('-', '_') %}
-            <div class="chart-row">
+            <div class="chart-row" data-param="{{ col }}">
                 <div class="param-label">{{ col }}</div>
-                <div class="chart-box"><canvas id="proc-{{ safe }}" width="400" height="120"></canvas></div>
-                <div class="chart-box"><canvas id="recent-{{ safe }}" width="400" height="120"></canvas></div>
+                <div class="chart-box" data-type="process"><canvas id="proc-{{ safe }}" width="400"
+                        height="120"></canvas></div>
+                <div class="chart-box" data-type="recent"><canvas id="recent-{{ safe }}" width="400"
+                        height="120"></canvas></div>
             </div>
             {% endfor %}
         </div>
         <div id="log-panel">
-            <label><br>이상발생 로그<br>(파라미터명 클릭시 복사됨)<br>([copy] 버튼 클릭시 해당 로그 복사됨)</label>
+            <label>공정 파라미터 이상 감지 로그</label>
             <div id="log-content"></div>
         </div>
     </div>

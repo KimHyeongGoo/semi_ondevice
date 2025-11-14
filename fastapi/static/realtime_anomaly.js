@@ -1,10 +1,13 @@
 const processCharts = {};
 const recentCharts = {};
+const chartBoxesMap = {};
+const logEntryElements = new Map();
 let processStart = null;
 let processEnd = null;
 // logs structure: { param: [ {start, end, diff, actual_value, predicted_value, peak_time, step_id, step_name} ] }
 let logs = {};
 const loggedIds = new Set();
+let currentHighlight = null;
 
 let latestStepTimestamp = 0;
 let lastStepUpdate = 0;
@@ -105,36 +108,12 @@ const highlightPlugin = {
 };
 Chart.register(highlightPlugin);
 
-function formatLocal(ts) {
-    const d = new Date(ts);
-    return d.toLocaleString('sv').replace('T', ' ');
-}
-
 function formatTime(ts) {
     return String(ts).slice(11, 19);
 }
 
 function safeId(name) {
     return name.replace(/[ .-]/g, '_');
-}
-
-function fallbackCopy(text) {
-    const ta = document.createElement('textarea');
-    ta.value = text;
-    ta.style.position = 'fixed';
-    ta.style.top = '-1000px';
-    document.body.appendChild(ta);
-    ta.select();
-    document.execCommand('copy');
-    document.body.removeChild(ta);
-}
-
-function copyText(text) {
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(text).catch(() => fallbackCopy(text));
-    } else {
-        fallbackCopy(text);
-    }
 }
 
 function createCharts() {
@@ -151,6 +130,14 @@ function createCharts() {
         const id = safeId(col);
         const pctx = document.getElementById(`proc-${id}`).getContext('2d');
         const rctx = document.getElementById(`recent-${id}`).getContext('2d');
+        const rowEl = document.querySelector(`.chart-row[data-param="${col}"]`);
+        if (rowEl) {
+            const boxes = Array.from(rowEl.querySelectorAll('.chart-box'));
+            chartBoxesMap[col] = boxes;
+            boxes.forEach(box => {
+                box.addEventListener('click', () => handleChartClick(col));
+            });
+        }
         processCharts[col] = new Chart(pctx, {
             type: 'line',
             data: {
@@ -175,6 +162,7 @@ function createCharts() {
         setDatasetVisibility(recentCharts[col], visibilityMode);
     });
     applyVisibilityAll();
+    applyHighlightState();
 }
 
 function calcSegments(actual, predicted) {
@@ -241,53 +229,122 @@ function calcSegments(actual, predicted) {
     return { segments, regions };
 }
 
+function getEntryKey(param, entry) {
+    return `${param}-${entry.start}-${entry.end}`;
+}
+
+function formatTimelineTime(ts) {
+    const d = new Date(ts);
+    if (Number.isNaN(d.getTime())) {
+        return '-';
+    }
+    return d.toLocaleTimeString('ko-KR', { hour12: false });
+}
+
+function buildLogText(param, entry) {
+    const diff = entry.diff != null ? Math.abs(entry.diff).toFixed(0) : '0';
+    let direction = 0;
+    if (entry.actual_value != null && entry.predicted_value != null) {
+        direction = entry.actual_value - entry.predicted_value;
+    }
+    let descriptor;
+    if (direction > 0.0001) {
+        descriptor = `유량 +${diff}% 상승 감지`;
+    } else if (direction < -0.0001) {
+        descriptor = `유량 -${diff}% 하락 감지`;
+    } else {
+        descriptor = `유량 편차 ${diff}% 감지`;
+    }
+    return `${param} ${descriptor}`;
+}
+
+function applyHighlightState() {
+    Object.values(chartBoxesMap).forEach(arr => {
+        if (!arr) return;
+        arr.forEach(box => box.classList.remove('highlight'));
+    });
+    logEntryElements.forEach(el => el.classList.remove('highlight'));
+    if (!currentHighlight) return;
+    const { param, key } = currentHighlight;
+    if (chartBoxesMap[param]) {
+        chartBoxesMap[param].forEach(box => box.classList.add('highlight'));
+    }
+    if (key && logEntryElements.has(key)) {
+        logEntryElements.get(key).classList.add('highlight');
+    }
+}
+
+function setHighlight(param, key, options = {}) {
+    if (currentHighlight && currentHighlight.param === param && currentHighlight.key === key) {
+        currentHighlight = null;
+    } else {
+        currentHighlight = { param, key };
+    }
+    applyHighlightState();
+    if (options.scroll && currentHighlight && currentHighlight.key) {
+        const el = logEntryElements.get(currentHighlight.key);
+        if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }
+}
+
+function handleLogClick(param, key) {
+    setHighlight(param, key);
+}
+
+function handleChartClick(param) {
+    const entries = logs[param];
+    if (!entries || !entries.length) {
+        setHighlight(param, null);
+        return;
+    }
+    const latest = entries[0];
+    const key = getEntryKey(param, latest);
+    setHighlight(param, key, { scroll: true });
+}
+
 function updateLog() {
     const logDiv = document.getElementById('log-content');
+    if (!logDiv) return;
+    logEntryElements.clear();
     logDiv.innerHTML = '';
-    const params = Object.keys(logs).sort((a, b) => {
-        const la = logs[a][0]?.start || 0;
-        const lb = logs[b][0]?.start || 0;
-        return lb - la; // most recent param first
-    });
-
-    params.forEach(p => {
-        const header = document.createElement('div');
-        header.className = 'param-label';
-        header.textContent = p;
-        header.style.cursor = 'pointer';
-        header.addEventListener('click', () => copyText(p));
-        logDiv.appendChild(header);
-        logs[p].forEach(l => {
-            const dur = Math.round((l.end - l.start) / 1000);
-            const peakTime = l.peak_time ? formatLocal(l.peak_time) : formatLocal(l.end);
-            const lines = [
-                '{',
-                `"parameter" : "${p}",`,
-                `"start" : "${formatLocal(l.start)}",`,
-                `"end" : "${formatLocal(l.end)}",`,
-                `"duration" : ${dur},`,
-                `"diff" : ${l.diff.toFixed(2)}%,`,
-                `"peak_time" : "${peakTime}",`,
-                `"actual_value" : ${l.actual_value != null ? l.actual_value.toFixed(3) : 'null'},`,
-                `"predicted_value" : ${l.predicted_value != null ? l.predicted_value.toFixed(3) : 'null'},`,
-                `"step_id" : "[${l.step_id.join(', ')}]",`,
-                `"step_name" : "[${l.step_name.join(', ')}]"`,
-                '}'
-            ];
-            const text = lines.join('\n');
-            const entry = document.createElement('div');
-            entry.className = 'log-entry';
-            const pre = document.createElement('pre');
-            pre.textContent = text;
-            const btn = document.createElement('button');
-            btn.className = 'copy-btn';
-            btn.textContent = 'Copy';
-            btn.addEventListener('click', () => copyText(text));
-            entry.appendChild(pre);
-            entry.appendChild(btn);
-            logDiv.appendChild(entry);
+    const allEntries = [];
+    Object.entries(logs).forEach(([param, arr]) => {
+        arr.forEach(entry => {
+            allEntries.push({ param, ...entry });
         });
     });
+    allEntries.sort((a, b) => b.end - a.end);
+    allEntries.forEach(entry => {
+        const key = getEntryKey(entry.param, entry);
+        const wrapper = document.createElement('div');
+        wrapper.className = 'timeline-entry';
+        wrapper.dataset.param = entry.param;
+        wrapper.dataset.key = key;
+        const timeEl = document.createElement('div');
+        timeEl.className = 'timeline-time';
+        timeEl.textContent = formatTimelineTime(entry.end);
+        const textEl = document.createElement('div');
+        textEl.className = 'timeline-text';
+        textEl.textContent = buildLogText(entry.param, entry);
+        const iconEl = document.createElement('div');
+        iconEl.className = 'timeline-icon';
+        iconEl.textContent = '⚠';
+        const bodyEl = document.createElement('div');
+        bodyEl.className = 'timeline-body';
+        bodyEl.appendChild(timeEl);
+        bodyEl.appendChild(textEl);
+        wrapper.appendChild(iconEl);
+        wrapper.appendChild(bodyEl);
+        wrapper.addEventListener('click', () => handleLogClick(entry.param, key));
+        logDiv.appendChild(wrapper);
+        logEntryElements.set(key, wrapper);
+    });
+    if (currentHighlight && currentHighlight.key && !logEntryElements.has(currentHighlight.key)) {
+        currentHighlight = null;
+    }
+    applyHighlightState();
 }
 
 function updateLogPanelHeight() {
@@ -298,7 +355,7 @@ function updateLogPanelHeight() {
     }
 }
 
-function trimLogEntries(limit = 10) {
+function trimLogEntries(limit = 20) {
     const all = [];
     Object.entries(logs).forEach(([param, arr]) => {
         arr.forEach(l => all.push({ param, ...l }));
@@ -321,6 +378,7 @@ function trimLogEntries(limit = 10) {
         });
         loggedIds.add(`${l.param}-${l.start}-${l.end}`);
     });
+    Object.values(logs).forEach(arr => arr.sort((a, b) => b.start - a.start));
 }
 
 
@@ -348,11 +406,12 @@ function addLogs(param, segments, actual) {
                 peak_time: s.peak_time ?? null
             };
             logs[param].unshift(entry);
+            logs[param].sort((a, b) => b.start - a.start);
             loggedIds.add(key);
             newEntries.push({ param, entry });
         }
     });
-    trimLogEntries(10);
+    trimLogEntries(20);
     updateLog();
     newEntries.forEach(({ param: p, entry }) => {
         const payload = {
@@ -478,7 +537,7 @@ window.addEventListener('DOMContentLoaded', () => {
     createCharts();
     updateLogPanelHeight();
     checkProcess();
-    setInterval(checkProcess, 20000);
+    //setInterval(checkProcess, 20000);
     setInterval(fetchData, 1000);
     fetchCurrentStepFallback(true);
     setInterval(() => fetchCurrentStepFallback(false), 5000);
