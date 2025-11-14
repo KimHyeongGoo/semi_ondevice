@@ -4,6 +4,7 @@ function format(val) {
 }
 
 let lastStepInfoFetch = 0;
+const HEATMAP_LABELS = ['U', 'CU', 'C', 'CL', 'L'];
 
 function updateCurrentStepDisplay(stepId, stepName) {
     const idEl = document.getElementById('current-step-id');
@@ -35,8 +36,26 @@ function buildTable(proc) {
     table.className = 'thickness-table';
 
     const header = document.createElement('tr');
-    header.innerHTML = '<th></th><th>U</th><th>CU</th><th>C</th><th>CL</th><th>L</th>';
+    let headerHtml = '<th></th>';
+    HEATMAP_LABELS.forEach(label => {
+        headerHtml += `<th>${label}</th>`;
+    });
+    header.innerHTML = headerHtml;
     table.appendChild(header);
+
+    const heatmapRow = document.createElement('tr');
+    const images = proc.heatmap_images || {};
+    let heatmapHtml = '<td class="heatmap-index-cell">등고선</td>';
+    HEATMAP_LABELS.forEach(label => {
+        const src = images[label];
+        if (src) {
+            heatmapHtml += `<td><img src="${src}" alt="${label} wafer thickness contour" class="heatmap-cell-image" loading="lazy"></td>`;
+        } else {
+            heatmapHtml += '<td><div class="heatmap-placeholder">데이터 없음</div></td>';
+        }
+    });
+    heatmapRow.innerHTML = heatmapHtml;
+    table.appendChild(heatmapRow);
 
     const vals = proc.thicknesses;
     for (let i = 0; i < 9; i++) {
@@ -85,7 +104,7 @@ function calcLayout() {
     const container = document.getElementById('process-container');
     const boxWidth = 340 + 16; // width + gap
     const cols = Math.max(1, Math.floor(container.clientWidth / boxWidth));
-    pageSize = cols * 2;
+    pageSize = Math.max(1, Math.min(cols * 2, 4));
 }
 
 function renderPage() {

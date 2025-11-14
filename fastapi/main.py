@@ -8,6 +8,14 @@ import yaml
 import os
 import psycopg2
 import json
+from pathlib import Path
+import numpy as np
+import matplotlib
+
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+import matplotlib.tri as tri
+
 from db import (
     get_latest_data,
     get_trace_info,
@@ -22,6 +30,85 @@ from db import (
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
+
+HEATMAP_DIR = Path("static/heatmaps")
+HEATMAP_DIR.mkdir(parents=True, exist_ok=True)
+
+WAFER_LABELS = ["U", "CU", "C", "CL", "L"]
+POINTER_COORDS = np.array(
+    [
+        (0.0, 0.0),   # 1 center
+        (0.0, 0.5),   # 2 inner top
+        (-0.5, 0.0),  # 3 inner left
+        (0.0, -0.5),  # 4 inner bottom
+        (0.5, 0.0),   # 5 inner right
+        (0.0, 1.0),   # 6 outer top
+        (-1.0, 0.0),  # 7 outer left
+        (0.0, -1.0),  # 8 outer bottom
+        (1.0, 0.0),   # 9 outer right
+    ]
+)
+
+
+def _format_identifier(proc):
+    row_num = proc.get("row_num")
+    start_time = proc.get("start_time", "")
+    safe_time = start_time.replace(":", "-").replace(" ", "_")
+    return f"proc_{row_num}_{safe_time}"
+
+
+def _generate_heatmap(values, output_path):
+    triang = tri.Triangulation(POINTER_COORDS[:, 0], POINTER_COORDS[:, 1])
+    refiner = tri.UniformTriRefiner(triang)
+    tri_refined, values_refined = refiner.refine_field(values, subdiv=4)
+
+    fig, ax = plt.subplots(figsize=(3.2, 3.2))
+    contour = ax.tricontourf(
+        tri_refined,
+        values_refined,
+        levels=20,
+        cmap="viridis",
+    )
+    circle = plt.Circle((0, 0), 1.05, color="black", fill=False, linewidth=1)
+    ax.add_artist(circle)
+    ax.set_aspect("equal")
+    ax.set_xticks([])
+    ax.set_yticks([])
+    ax.set_xlim(-1.1, 1.1)
+    ax.set_ylim(-1.1, 1.1)
+    fig.colorbar(contour, ax=ax, fraction=0.046, pad=0.04)
+    fig.tight_layout()
+    fig.savefig(output_path, dpi=150)
+    plt.close(fig)
+
+
+def ensure_heatmaps(process_rows):
+    for proc in process_rows:
+        thicknesses = proc.get("thicknesses", [])
+        if len(thicknesses) != 45:
+            proc["heatmap_images"] = {label: None for label in WAFER_LABELS}
+            continue
+
+        base_name = _format_identifier(proc)
+        heatmaps = {}
+        for wafer_idx, label in enumerate(WAFER_LABELS):
+            wafer_values = [
+                thicknesses[pointer * 5 + wafer_idx]
+                for pointer in range(9)
+            ]
+            if any(v is None for v in wafer_values):
+                heatmaps[label] = None
+                continue
+
+            arr = np.array(wafer_values, dtype=float)
+            file_name = f"{base_name}_{label}.png"
+            file_path = HEATMAP_DIR / file_name
+            if not file_path.exists() or file_path.stat().st_size == 0:
+                _generate_heatmap(arr, file_path)
+            heatmaps[label] = f"/static/heatmaps/{file_name}"
+
+        proc["heatmap_images"] = heatmaps
+
 
 
 def ensure_realtime_log_table(cur):
@@ -176,6 +263,7 @@ async def api_process_range(time: str = Query(...)):
 @app.get("/api/trace_info")
 async def api_trace_info(limit: int = 10):
     data = get_trace_info(limit)
+    ensure_heatmaps(data)
     return JSONResponse(data)
 
 
@@ -286,7 +374,7 @@ async def get_history_logs(
         if parameter:
             query += " AND parameter = %s"
             params.append(parameter)
-        query += " ORDER BY \"Timestamp\" ASC"
+        query += " ORDER BY \"Timestamp\" DESC"
 
         cur.execute(query, params)
         rows = cur.fetchall()

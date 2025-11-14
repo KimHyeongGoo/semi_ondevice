@@ -153,40 +153,14 @@ function createChartCard(parameter) {
             <div class="chart-title">${parameter}</div>
         </div>
         <canvas id="chart-${safe}"></canvas>
-        <div class="chart-message" id="message-${safe}"></div>
-        <div class="segment-list" id="segments-${safe}"></div>
+        <div class="chart-message" id="message-${safe}"></div
     `;
     container.appendChild(card);
     return {
         card,
         canvas: card.querySelector('canvas'),
-        messageEl: card.querySelector('.chart-message'),
-        segmentsEl: card.querySelector('.segment-list')
+        messageEl: card.querySelector('.chart-message')
     };
-}
-
-function renderSegments(container, segments) {
-    if (!container) return;
-    container.innerHTML = '';
-    if (!segments.length) {
-        const empty = document.createElement('div');
-        empty.className = 'empty';
-        empty.textContent = '감지된 이상 구간이 없습니다.';
-        container.appendChild(empty);
-        return;
-    }
-    segments.forEach(seg => {
-        const item = document.createElement('div');
-        item.className = 'segment-item';
-        const duration = ((seg.end - seg.start) / 1000).toFixed(0);
-        item.innerHTML = `
-            <div>시작: ${formatLocal(seg.start)}</div>
-            <div>종료: ${formatLocal(seg.end)}</div>
-            <div>최대 편차: ${seg.max.toFixed(2)}%</div>
-            <div>지속 시간: ${duration}초</div>
-        `;
-        container.appendChild(item);
-    });
 }
 
 function renderChart(parameter, actual, predicted, regions, logs) {
@@ -284,7 +258,7 @@ function renderLogList(logs) {
         container.appendChild(empty);
         return;
     }
-    logs.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+    logs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
     logs.forEach(log => {
         const entry = document.createElement('div');
         entry.className = 'log-entry';
@@ -350,7 +324,7 @@ async function loadHistory() {
     if (requestId !== currentRequestId) return;
 
     for (const param of params) {
-        const { card, messageEl, segmentsEl } = createChartCard(param);
+        const { messageEl } = createChartCard(param);
         const chartLogs = logsByParameter.get(param) || [];
         try {
             const res = await fetch(`/api/trace_pred_chart?param=${encodeURIComponent(param)}&start=${encodeURIComponent(startValue)}&end=${encodeURIComponent(endValue)}`);
@@ -364,20 +338,17 @@ async function loadHistory() {
                 if (messageEl) {
                     messageEl.textContent = '표시할 데이터가 없습니다.';
                 }
-                renderSegments(segmentsEl, []);
                 continue;
             }
             if (messageEl) messageEl.textContent = '';
 
-            const { segments, regions } = calcSegments(actual, predicted);
-            renderSegments(segmentsEl, segments);
+            const { regions } = calcSegments(actual, predicted);
             renderChart(param, actual, predicted, regions, chartLogs);
         } catch (err) {
             console.error(err);
             if (messageEl) {
                 messageEl.textContent = '데이터를 불러오는데 실패했습니다.';
             }
-            renderSegments(segmentsEl, []);
         }
     }
 

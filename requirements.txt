@@ -8,3 +8,5 @@ ray
 tensorflow
 pyyaml
 xgboost
+numpy
+matplotlib
