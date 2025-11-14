@@ -8,7 +8,7 @@
         body {
             font-family: Arial, sans-serif;
             margin: 20px 20px 20px 160px;
-            background-color: #f4f6f9;
+            background-color: #F7FBFF;
         }
 
         #side-tabs {
@@ -42,7 +42,7 @@
 
         .navbar {
             display: flex;
-            background-color: #343a40;
+            background-color: #002060;
             border-radius: 6px;
             overflow: hidden;
             margin-bottom: 20px;
@@ -53,20 +53,22 @@
             flex: 1;
             padding: 12px 20px;
             text-align: center;
-            color: #adb5bd;
+            color: #FFFFFF;
             text-decoration: none;
-            font-weight: bold;
-            transition: background 0.2s, color 0.2s;
+            font-weight: 500;
+            transition: background 0.2s, color 0.2s, font-weight 0.2s;
         }
 
         .navbar a:hover {
-            background-color: #495057;
-            color: #fff;
+            background-color: #DAE3F3;
+            color: #000000;
+            font-weight: bold;
         }
 
         .navbar a.active {
-            background-color: #007bff;
-            color: #fff;
+            background-color: #DAE3F3;
+            color: #000000;
+            font-weight: bold;
         }
 
         .iframe-container {
@@ -88,11 +90,11 @@
         <a href="/pvd" class="{% if active_side == 'pvd' %}active{% endif %}">2세부 PVD</a>
     </div>
     <div class="navbar">
+        <a href="/index5.html" class="{% if active_tab == 'assistant' %}active{% endif %}">AI 어시스턴트</a>
         <a href="/" class="{% if active_tab == 'index' %}active{% endif %}">실시간 파라미터 예측</a>
         <a href="/index4.html" class="{% if active_tab == 'index4' %}active{% endif %}">실시간 이상감지</a>
-        <a href="/index2.html" class="{% if active_tab == 'index2' %}active{% endif %}">공정 결과 추론</a>
         <a href="/index3.html" class="{% if active_tab == 'index3' %}active{% endif %}">과거 공정 이력 검색</a>
-        <a href="/index5.html" class="{% if active_tab == 'assistant' %}active{% endif %}">AI 어시스턴트</a>
+        <a href="/index2.html" class="{% if active_tab == 'index2' %}active{% endif %}">공정 결과 추론</a>
     </div>
     <div class="iframe-container">
         <iframe src="http://bigsoft.iptime.org:10100/"></iframe>
