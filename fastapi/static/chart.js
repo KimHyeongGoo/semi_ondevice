@@ -5,6 +5,17 @@ let selectedStep = 10; //
 let hiddenColumns = [];
 let limits = {};
 let lastStepFallbackFetch = 0;
+let modalChart = null;
+let modalOpenCol = null;
+let modalBaseRange = null;
+let modalCurrentRange = null;
+
+const categoryMap = {
+    MFC: ["MFC7_DCS", "MFC8_NH3", "MFC1_N2-1", "MFC2_N2-2", "MFC3_N2-3", "MFC4_N2-4"],
+    Pressure: ["VG11 Press value", "VG12 Press value", "VG13 Press value"],
+    Temperature: ["Temp_Act_U", "Temp_Act_CU", "Temp_Act_C", "Temp_Act_CL", "Temp_Act_L"],
+    Actuator: ["MFC26_F.FWR", "MFC27_L.POS", "MFC28_R.POS"]
+};
 const stepNames = {
     2: 'END', 0: 'STANDBY/IDLE', 1: 'START', 17: 'B.UP', 3: 'WAIT',
     74: 'S.P-1', 75: 'S.P-2', 25: 'R.UP1', 22: 'STAB1', 76: 'S.P-3',
@@ -64,7 +75,6 @@ async function saveSettings() {
     }
 }
 
-
 function createCharts() {
     columns.forEach((col, idx) => {
         const ctx = document.getElementById(`chart-${col}`).getContext("2d");
@@ -88,19 +98,19 @@ function createCharts() {
                         padding: { top: 8, bottom: 4 },
                         font: { size: 14, weight: 'bold' }
                     },
-                    legend: { display: true, position: 'top' }
+                    legend: { display: true, position: 'top' },
+                    zoom: undefined
                 },
                 animation: false,
                 parsing: false,
                 responsive: true,
                 maintainAspectRatio: false,  // HTML height를 따르도록
                 scales: {
-                    // x: { type: "time", time: { tooltipFormat: 'HH:mm:ss', displayFormats: { second: 'HH:mm:ss' } }, title: { display: true, text: "Time" } },
                     x: {
                         type: 'time',
-                        display: isLast,                // 축 전체 표시 여부
-                        ticks: { display: isLast },     // 눈금 레이블 표시 여부
-                        title: { display: isLast, text: 'Time' },
+                        display: true,
+                        ticks: { display: true },
+                        title: { display: true, text: 'Time' },
                         grid: { display: false }
                     },
                     y: { title: { display: true, text: "Value" } }
@@ -162,6 +172,20 @@ async function fetchAndUpdate() {
         chart.options.scales.x.min = xMin;
         chart.options.scales.x.max = xMax;
         chart.update();
+
+        // 모달이 열려 있으면 동기화
+        if (modalOpenCol === col && modalChart) {
+            const keepRange = modalCurrentRange || getRangeFromScales(modalChart);
+            modalChart.data = cloneChartData(chart);
+            modalChart.options = cloneChartOptions(chart);
+            modalBaseRange = getRangeFromDatasets(modalChart.data.datasets);
+            if (keepRange) {
+                modalCurrentRange = clampRange(keepRange, modalBaseRange);
+                applyRangeToChart(modalChart, modalCurrentRange);
+            }
+            modalChart.update();
+            modalChart.resize();
+        }
 
         const cb = document.querySelector(`.toggle-chart[data-col="${col}"]`);
         const canvas = document.getElementById(`chart-${col}`);
@@ -230,23 +254,54 @@ async function fetchCurrentStepFallback() {
 }
 
 function createSettingsUI() {
-    const tabContainer = document.getElementById("tab-container");
+    const catWrap = document.getElementById("category-buttons");
+    const paramWrap = document.getElementById("param-buttons");
     const form = document.getElementById("settings-form");
-    tabContainer.innerHTML = '';
+    catWrap.innerHTML = '';
+    paramWrap.innerHTML = '';
     form.innerHTML = '';
 
-    columns.forEach((col, idx) => {
-        const tab = document.createElement("div");
-        tab.className = "tab" + (idx === 0 ? " active" : "");
-        tab.textContent = col;
-        tab.onclick = () => {
-            document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
-            tab.classList.add("active");
-            renderStepTable(col);
-        };
-        tabContainer.appendChild(tab);
-    });
-    renderStepTable(columns[0]);
+    const categories = Object.keys(categoryMap).filter(cat => categoryMap[cat].some(c => columns.includes(c)));
+    if (categories.length === 0) return;
+    let activeCat = categories[0];
+    let activeParam = categoryMap[activeCat].find(c => columns.includes(c)) || columns[0];
+
+    function renderCategories() {
+        catWrap.innerHTML = '';
+        categories.forEach(cat => {
+            const btn = document.createElement("button");
+            btn.className = "category-btn" + (cat === activeCat ? " active" : "");
+            btn.textContent = cat;
+            btn.onclick = () => {
+                activeCat = cat;
+                activeParam = categoryMap[cat].find(c => columns.includes(c)) || activeParam;
+                renderCategories();
+                renderParams();
+                renderStepTable(activeParam);
+            };
+            catWrap.appendChild(btn);
+        });
+    }
+
+    function renderParams() {
+        paramWrap.innerHTML = '';
+        categoryMap[activeCat].forEach(col => {
+            if (!columns.includes(col)) return;
+            const btn = document.createElement("button");
+            btn.className = "param-btn" + (col === activeParam ? " active" : "");
+            btn.textContent = col;
+            btn.onclick = () => {
+                activeParam = col;
+                renderParams();
+                renderStepTable(col);
+            };
+            paramWrap.appendChild(btn);
+        });
+    }
+
+    renderCategories();
+    renderParams();
+    renderStepTable(activeParam);
 }
 
 function renderStepTable(col) {
@@ -337,6 +392,151 @@ async function saveLimits() {
     }
 }
 
+function openChartModal(col) {
+    const modal = document.getElementById('chart-modal');
+    const modalCanvas = document.getElementById('modal-canvas');
+    const modalTitle = document.getElementById('modal-title');
+    if (!modal || !modalCanvas || !charts[col]) return;
+
+    if (modalChart) {
+        modalChart.destroy();
+        modalChart = null;
+    }
+
+    const src = charts[col];
+    // 먼저 표시 상태로 전환해 캔버스 크기가 0이 되지 않도록 함
+    modal.style.display = 'flex';
+    modalOpenCol = col;
+    const ctx = modalCanvas.getContext('2d');
+    const dataCopy = cloneChartData(src);
+    const optionCopy = cloneChartOptions(src);
+    modalChart = new Chart(ctx, {
+        type: src.config.type,
+        data: dataCopy,
+        options: optionCopy
+    });
+    modalBaseRange = getRangeFromDatasets(modalChart.data.datasets);
+    modalCurrentRange = modalBaseRange ? { ...modalBaseRange } : null;
+    if (modalCurrentRange) {
+        applyRangeToChart(modalChart, modalCurrentRange);
+    }
+    modalChart.resize();
+    modalTitle.textContent = col;
+}
+
+function closeChartModal() {
+    const modal = document.getElementById('chart-modal');
+    if (modalChart) {
+        modalChart.destroy();
+        modalChart = null;
+    }
+    modalOpenCol = null;
+    modalBaseRange = null;
+    modalCurrentRange = null;
+    if (modal) modal.style.display = 'none';
+}
+
+function cloneChartData(srcChart) {
+    const clonedDatasets = srcChart.data.datasets.map(ds => ({
+        ...ds,
+        data: ds.data.map(pt => {
+            if (pt && typeof pt === 'object') {
+                return {
+                    x: pt.x ? new Date(pt.x) : pt.x,
+                    y: pt.y
+                };
+            }
+            return pt;
+        })
+    }));
+    return { datasets: clonedDatasets };
+}
+
+function cloneChartOptions(srcChart) {
+    const opt = JSON.parse(JSON.stringify(srcChart.options || {}));
+    if (opt?.scales?.x) {
+        if (opt.scales.x.min) opt.scales.x.min = new Date(opt.scales.x.min);
+        if (opt.scales.x.max) opt.scales.x.max = new Date(opt.scales.x.max);
+    }
+    opt.responsive = true;
+    opt.maintainAspectRatio = false;
+    opt.animation = false;
+    return opt;
+}
+
+function getRangeFromDatasets(datasets) {
+    const xs = [];
+    const ys = [];
+    datasets.forEach(ds => {
+        (ds.data || []).forEach(pt => {
+            if (!pt) return;
+            if (pt.x !== undefined) xs.push(pt.x instanceof Date ? pt.x.getTime() : new Date(pt.x).getTime());
+            if (pt.y !== undefined) ys.push(pt.y);
+        });
+    });
+    if (!xs.length || !ys.length) return null;
+    return {
+        xMin: new Date(Math.min(...xs)),
+        xMax: new Date(Math.max(...xs)),
+        yMin: Math.min(...ys),
+        yMax: Math.max(...ys)
+    };
+}
+
+function getRangeFromScales(chart) {
+    const xs = chart?.scales?.x;
+    const ys = chart?.scales?.y;
+    if (!xs || !ys) return null;
+    return {
+        xMin: xs.min instanceof Date ? xs.min : new Date(xs.min),
+        xMax: xs.max instanceof Date ? xs.max : new Date(xs.max),
+        yMin: ys.min,
+        yMax: ys.max
+    };
+}
+
+function clampRange(range, base) {
+    if (!range) return range;
+    if (!base) return range;
+    const xMin = Math.max(base.xMin.getTime(), range.xMin.getTime());
+    const xMax = Math.min(base.xMax.getTime(), range.xMax.getTime());
+    const yMin = Math.max(base.yMin, range.yMin);
+    const yMax = Math.min(base.yMax, range.yMax);
+    return {
+        xMin: new Date(xMin),
+        xMax: new Date(xMax),
+        yMin,
+        yMax
+    };
+}
+
+function applyRangeToChart(chart, range) {
+    if (!chart || !range) return;
+    chart.options.scales.x.min = range.xMin;
+    chart.options.scales.x.max = range.xMax;
+    chart.options.scales.y.min = range.yMin;
+    chart.options.scales.y.max = range.yMax;
+}
+
+function saveModalRangeFromChart(chart) {
+    modalCurrentRange = clampRange(getRangeFromScales(chart || modalChart), modalBaseRange);
+}
+
+function resetModalRange() {
+    if (!modalChart || !modalBaseRange) return;
+    modalCurrentRange = { ...modalBaseRange };
+    applyRangeToChart(modalChart, modalCurrentRange);
+    modalChart.update();
+}
+
+function zoomModal(factor = 0.8) {
+    // 기능 비활성: 버튼은 동작하지 않음
+}
+
+function panModal(direction = 'left', ratio = 0.2) {
+    // 기능 비활성: 버튼은 동작하지 않음
+}
+
 async function fetchLogs() {
     try {
         const res = await fetch('/api/logs');
@@ -347,18 +547,27 @@ async function fetchLogs() {
             logContent.innerText = "(최근 이벤트 없음)";
         } else {
             logContent.innerHTML = logs.map(log => {
-                const encoded = encodeURIComponent(JSON.stringify({
-                    time: log.timestamp,
-                    parameter: log.parameter
-                }));
-                return `${log.message}<br><a href="/logview.html?info=${encoded}" target="_blank">[리포트 확인]</a>`;
-            }).join("<br><br>");
+                const ts = formatKoreanTime(log.timestamp);
+                return `
+                    <div class="log-entry">
+                        <div class="log-time">⚠ ${ts}</div>
+                        <div class="log-msg">${log.message}</div>
+                    </div>
+                `;
+            }).join("");
         }
     } catch (e) {
         console.error("로그 로딩 실패:", e);
         const logContent = document.getElementById('log-content');
         logContent.innerText = "(로그 불러오기 오류)";
     }
+}
+
+function formatKoreanTime(ts) {
+    const d = new Date(ts);
+    if (isNaN(d)) return ts;
+    const pad = (n) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}년 ${pad(d.getMonth() + 1)}월 ${pad(d.getDate())}일 ${pad(d.getHours())}시 ${pad(d.getMinutes())}분 ${pad(d.getSeconds())}초`;
 }
 
 
@@ -407,4 +616,27 @@ window.addEventListener("DOMContentLoaded", async () => {
     });
 
     document.getElementById("save-settings").addEventListener("click", saveLimits);
+
+    document.querySelectorAll(".expand-btn").forEach(btn => {
+        btn.addEventListener("click", () => openChartModal(btn.dataset.col));
+    });
+
+    const modal = document.getElementById('chart-modal');
+    const closeBtn = document.getElementById('close-modal');
+    if (closeBtn) closeBtn.addEventListener('click', closeChartModal);
+    if (modal) {
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeChartModal();
+        });
+    }
+    const zoomInBtn = document.getElementById('chart-zoom-in');
+    const zoomOutBtn = document.getElementById('chart-zoom-out');
+    const panLeftBtn = document.getElementById('chart-pan-left');
+    const panRightBtn = document.getElementById('chart-pan-right');
+    const resetBtn = document.getElementById('chart-reset');
+    if (zoomInBtn) zoomInBtn.addEventListener('click', () => zoomModal(1.2));
+    if (zoomOutBtn) zoomOutBtn.addEventListener('click', () => zoomModal(0.8));
+    if (panLeftBtn) panLeftBtn.addEventListener('click', () => panModal('left'));
+    if (panRightBtn) panRightBtn.addEventListener('click', () => panModal('right'));
+    if (resetBtn) resetBtn.addEventListener('click', resetModalRange);
 });

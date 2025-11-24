@@ -96,22 +96,75 @@ function buildTable(proc) {
     return table;
 }
 
+function buildSingleTableHtml(proc, labelIndex, label) {
+    const vals = proc.thicknesses || [];
+    const colVals = [];
+    for (let i = 0; i < 9; i++) {
+        colVals.push(vals[i * 5 + labelIndex]);
+    }
+    const avg = colVals.reduce((a, b) => a + b, 0) / colVals.length;
+    const max = Math.max(...colVals);
+    const min = Math.min(...colVals);
+    const range = max - min;
+    const uf = avg ? (range / avg * 50) : 0;
+
+    let html = '<table class="thickness-table"><thead><tr><th></th><th>' + label + '</th></tr></thead><tbody>';
+    for (let i = 0; i < 9; i++) {
+        html += `<tr><td>${i + 1}</td><td>${format(colVals[i])}</td></tr>`;
+    }
+    const summary = [
+        ['average', avg],
+        ['max', max],
+        ['min', min],
+        ['range', range],
+        ['u/f', uf]
+    ];
+    summary.forEach(([name, val]) => {
+        html += `<tr><td>${name}</td><td>${format(val)}</td></tr>`;
+    });
+    html += '</tbody></table>';
+    return html;
+}
+
+function openHeatmapModal(imgSrc, tableHtml) {
+    const modal = document.getElementById('heatmap-modal');
+    const imgWrap = document.getElementById('heatmap-modal-image');
+    const tableWrap = document.getElementById('heatmap-modal-table');
+    if (!modal || !imgWrap || !tableWrap) return;
+    imgWrap.innerHTML = `<img src="${imgSrc}" alt="Wafer Map 확대">`;
+    tableWrap.innerHTML = tableHtml;
+    modal.style.display = 'flex';
+}
+
+function attachHeatmapClicks(scope, proc) {
+    const images = scope.querySelectorAll('.heatmap-cell-image');
+    images.forEach((img, idx) => {
+        if (!HEATMAP_LABELS[idx]) return;
+        img.addEventListener('click', () => {
+            const tableHtml = buildSingleTableHtml(proc, idx, HEATMAP_LABELS[idx]);
+            openHeatmapModal(img.src, tableHtml);
+        });
+    });
+}
+
 let allData = [];
 let pageIndex = 0;
-let pageSize = 0;
+let pageSize = 5;
+let filteredData = [];
 
 function calcLayout() {
     const container = document.getElementById('process-container');
-    const boxWidth = 340 + 16; // width + gap
+    const boxWidth = 320 + 16; // width + gap
     const cols = Math.max(1, Math.floor(container.clientWidth / boxWidth));
-    pageSize = Math.max(1, Math.min(cols * 2, 4));
+    pageSize = Math.max(1, Math.min(5, cols)); // 한 줄 최대 5개
 }
 
 function renderPage() {
     const container = document.getElementById('process-container');
     container.innerHTML = '';
+    if (pageSize <= 0) pageSize = 5;
     const start = pageIndex * pageSize;
-    const slice = allData.slice(start, start + pageSize);
+    const slice = filteredData.slice(start, start + pageSize);
     slice.forEach(proc => {
         const box = document.createElement('div');
         box.className = 'process-box';
@@ -124,30 +177,68 @@ function renderPage() {
             <div class="proc-row"><span class="label">END :</span><span class="value">${proc.end_time}</span></div>
         `;
         box.appendChild(header);
-        box.appendChild(buildTable(proc));
+        const table = buildTable(proc);
+        box.appendChild(table);
+        attachHeatmapClicks(box, proc);
         container.appendChild(box);
     });
     document.getElementById('prevPage').disabled = pageIndex === 0;
-    const totalPages = Math.ceil(allData.length / pageSize);
+    const totalPages = Math.max(1, Math.ceil(filteredData.length / pageSize));
     document.getElementById('nextPage').disabled = pageIndex >= totalPages - 1;
 }
 
 function updateLayout() {
-    const prevSize = pageSize;
     calcLayout();
-    const totalPages = Math.ceil(allData.length / pageSize);
+    if (pageSize <= 0) pageSize = 5;
+    const totalPages = Math.max(1, Math.ceil(filteredData.length / pageSize));
     if (pageIndex > totalPages - 1) pageIndex = Math.max(0, totalPages - 1);
-    if (prevSize !== pageSize) {
-        pageIndex = totalPages - 1;
-    }
     renderPage();
 }
 
 async function fetchData() {
     const res = await fetch('/api/trace_info?limit=50');
-    allData = (await res.json()).reverse();
-    updateLayout();
+    const data = await res.json();
+    data.sort((a, b) => new Date(a.start_time) - new Date(b.start_time)); // 오래된 -> 최신
+    allData = data;
+    filteredData = [...allData];
+    calcLayout();
+    pageIndex = Math.max(0, Math.ceil(filteredData.length / pageSize) - 1); // 최신 페이지로 이동
+    renderPage();
     fetchCurrentStepInfo();
+}
+
+function applyFilters() {
+    const startNum = parseInt(document.getElementById('proc-start')?.value);
+    const endNum = parseInt(document.getElementById('proc-end')?.value);
+    const startDate = document.getElementById('date-start')?.value;
+    const endDate = document.getElementById('date-end')?.value;
+
+    filteredData = allData.filter(item => {
+        let ok = true;
+        if (!isNaN(startNum)) ok = ok && item.row_num >= startNum;
+        if (!isNaN(endNum)) ok = ok && item.row_num <= endNum;
+        if (startDate) ok = ok && new Date(item.start_time) >= new Date(startDate);
+        if (endDate) ok = ok && new Date(item.end_time) <= new Date(endDate);
+        return ok;
+    });
+    calcLayout();
+    pageIndex = Math.max(0, Math.ceil(filteredData.length / pageSize) - 1);
+    renderPage();
+}
+
+function resetFilters() {
+    const ps = document.getElementById('proc-start');
+    const pe = document.getElementById('proc-end');
+    const ds = document.getElementById('date-start');
+    const de = document.getElementById('date-end');
+    if (ps) ps.value = '';
+    if (pe) pe.value = '';
+    if (ds) ds.value = '';
+    if (de) de.value = '';
+    filteredData = [...allData];
+    calcLayout();
+    pageIndex = Math.max(0, Math.ceil(filteredData.length / pageSize) - 1);
+    renderPage();
 }
 
 window.addEventListener('DOMContentLoaded', () => {
@@ -155,6 +246,8 @@ window.addEventListener('DOMContentLoaded', () => {
     fetchCurrentStepInfo(true);
     setInterval(fetchCurrentStepInfo, 5000);
     window.addEventListener('resize', updateLayout);
+    document.getElementById('filter-apply')?.addEventListener('click', applyFilters);
+    document.getElementById('filter-reset')?.addEventListener('click', resetFilters);
     document.getElementById('prevPage').addEventListener('click', () => {
         if (pageIndex > 0) {
             pageIndex--;
@@ -162,10 +255,21 @@ window.addEventListener('DOMContentLoaded', () => {
         }
     });
     document.getElementById('nextPage').addEventListener('click', () => {
-        const totalPages = Math.ceil(allData.length / pageSize);
+        if (pageSize <= 0) pageSize = 5;
+        const totalPages = Math.max(1, Math.ceil(filteredData.length / pageSize));
         if (pageIndex < totalPages - 1) {
             pageIndex++;
             renderPage();
         }
     });
+    const heatmapModal = document.getElementById('heatmap-modal');
+    const heatmapClose = document.getElementById('heatmap-close');
+    if (heatmapClose) heatmapClose.addEventListener('click', () => {
+        if (heatmapModal) heatmapModal.style.display = 'none';
+    });
+    if (heatmapModal) {
+        heatmapModal.addEventListener('click', (e) => {
+            if (e.target === heatmapModal) heatmapModal.style.display = 'none';
+        });
+    }
 });
