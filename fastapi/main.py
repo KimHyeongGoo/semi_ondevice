@@ -14,7 +14,6 @@ import matplotlib
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-import matplotlib.tri as tri
 
 from db import (
     get_latest_data,
@@ -58,14 +57,47 @@ def _format_identifier(proc):
 
 
 def _generate_heatmap(values, output_path):
-    triang = tri.Triangulation(POINTER_COORDS[:, 0], POINTER_COORDS[:, 1])
-    refiner = tri.UniformTriRefiner(triang)
-    tri_refined, values_refined = refiner.refine_field(values, subdiv=4)
+    probe_coords = POINTER_COORDS
+    probe_values = np.asarray(values, dtype=float)
+
+    grid_x, grid_y = np.meshgrid(
+        np.linspace(-1.05, 1.05, 200), np.linspace(-1.05, 1.05, 200)
+    )
+
+    # Inverse distance weighting (IDW) interpolation so the entire wafer
+    # interior is filled based on the 9 probe positions laid out as in the
+    # provided diagram.
+    flat_x = grid_x.ravel()
+    flat_y = grid_y.ravel()
+    diff_x = flat_x[:, None] - probe_coords[None, :, 0]
+    diff_y = flat_y[:, None] - probe_coords[None, :, 1]
+    distances = np.sqrt(diff_x**2 + diff_y**2)
+
+    # Avoid division by zero and ensure exact probe locations keep their value.
+    zero_dist = distances == 0
+    distances[zero_dist] = 1e-12
+
+    weights = 1.0 / (distances**2)
+    weighted_sum = np.sum(weights * probe_values[None, :], axis=1)
+    weight_total = np.sum(weights, axis=1)
+    interpolated = weighted_sum / weight_total
+
+    # If the grid point coincides with a probe location, overwrite with the
+    # exact measurement to prevent tiny numerical artifacts.
+    if np.any(zero_dist):
+        zero_rows = zero_dist.any(axis=1)
+        exact_indices = np.argmax(zero_dist[zero_rows], axis=1)
+        interpolated[zero_rows] = probe_values[exact_indices]
+
+    grid_z = interpolated.reshape(grid_x.shape)
+    circle_mask = grid_x**2 + grid_y**2 > 1.0**2
+    grid_z_masked = np.ma.array(grid_z, mask=circle_mask)
 
     fig, ax = plt.subplots(figsize=(3.2, 3.2))
-    contour = ax.tricontourf(
-        tri_refined,
-        values_refined,
+    contour = ax.contourf(
+        grid_x,
+        grid_y,
+        grid_z_masked,
         levels=20,
         cmap="viridis",
     )
