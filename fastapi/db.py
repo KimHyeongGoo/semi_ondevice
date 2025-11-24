@@ -162,9 +162,9 @@ def get_current_step():
     try:
         cur.execute(
             f"""
-            SELECT "ProcessRecipeStepID", "ProcessRecipeStepName"
+            SELECT "PPExecStepID", "PPExecStepName"
             FROM "{raw_table}"
-            WHERE "ProcessRecipeStepID" IS NOT NULL OR "ProcessRecipeStepName" IS NOT NULL
+            WHERE "PPExecStepID" IS NOT NULL OR "PPExecStepName" IS NOT NULL
             ORDER BY "Timestamp" DESC
             LIMIT 1
             """

@@ -202,7 +202,7 @@ async function fetchData() {
     allData = data;
     filteredData = [...allData];
     calcLayout();
-    pageIndex = Math.max(0, Math.ceil(filteredData.length / pageSize) - 1); // 최신 페이지로 이동
+    pageIndex = Math.max(0, Math.ceil(filteredData.length / pageSize) - 1);
     renderPage();
     fetchCurrentStepInfo();
 }
@@ -237,7 +237,7 @@ function resetFilters() {
     if (de) de.value = '';
     filteredData = [...allData];
     calcLayout();
-    pageIndex = Math.max(0, Math.ceil(filteredData.length / pageSize) - 1);
+    pageIndex = 0;
     renderPage();
 }
 
