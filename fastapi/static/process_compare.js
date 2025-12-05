@@ -2,15 +2,53 @@ let predictColumns = [];
 let charts = new Map();
 let logsByParameter = new Map();
 let currentRequestId = 0;
+let selectedParams = new Set();
+let activeCategories = new Set();
+const chartCards = new Map();
+const selectedLogKeys = new Set();
+const logElements = new Map();
+const highlightRegionsByParam = new Map();
+let stepFilterValue = 'all';
+let sortOrder = 'desc';
 
-const highlightPlugin = {
-    id: 'highlightRegion',
-    beforeDatasetsDraw(chart, args, opts) {
-        const regions = opts?.regions || [];
-        if (!regions.length) return;
+const CATEGORY_GROUPS = {
+    MFC: [
+        'MFC7_DCS',
+        'MFC8_NH3',
+        'MFC1_N2-1',
+        'MFC2_N2-2',
+        'MFC3_N2-3',
+        'MFC4_N2-4',
+    ],
+    Pressure: [
+        'VG11 Press value',
+        'VG12 Press value',
+        'VG13 Press value',
+    ],
+    Temperature: [
+        'Temp_Act_U',
+        'Temp_Act_CU',
+        'Temp_Act_C',
+        'Temp_Act_CL',
+        'Temp_Act_L',
+    ],
+    Actuator: [
+        'MFC26_F.PWR',
+        'MFC27_L.POS',
+        'MFC28_R.POS',
+    ],
+};
+
+const selectionHighlightPlugin = {
+    id: 'selectionHighlight',
+    afterDatasetsDraw(chart, args, opts) {
+        const param = chart._codexParam;
+        if (!param) return;
+        const regions = opts?.getRegions ? opts.getRegions(param) : [];
+        if (!regions || !regions.length) return;
         const { ctx, chartArea: { top, bottom }, scales: { x } } = chart;
         ctx.save();
-        ctx.fillStyle = 'rgba(255, 193, 7, 0.2)';
+        ctx.fillStyle = 'rgba(0, 128, 0, 0.28)';
         regions.forEach(region => {
             const xStart = x.getPixelForValue(region.start);
             const xEnd = x.getPixelForValue(region.end);
@@ -19,7 +57,7 @@ const highlightPlugin = {
         ctx.restore();
     }
 };
-Chart.register(highlightPlugin);
+Chart.register(selectionHighlightPlugin);
 
 function safeId(text) {
     return text.replace(/[^a-zA-Z0-9]/g, '_');
@@ -32,6 +70,54 @@ function formatLocal(ts) {
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
 }
 
+function formatFullKorean(ts) {
+    const d = new Date(ts);
+    if (Number.isNaN(d.getTime())) return String(ts);
+    const pad = (n) => String(n).padStart(2, '0');
+    const y = d.getFullYear();
+    const m = pad(d.getMonth() + 1);
+    const day = pad(d.getDate());
+    const h = pad(d.getHours());
+    const min = pad(d.getMinutes());
+    const s = pad(d.getSeconds());
+    return `${y}년 ${m}월 ${day}일 ${h}시 ${min}분 ${s}초`;
+}
+
+function parseLogMessage(message) {
+    if (!message) return null;
+    try {
+        return JSON.parse(message);
+    } catch (e) {
+        return null;
+    }
+}
+
+function buildLogDescription(log) {
+    const parsed = parseLogMessage(log.message);
+    const param = parsed?.parameter || log.parameter || '';
+    const diffVal = parsed?.diff_percent ?? parsed?.diff;
+    const actualVal = parsed?.actual_value;
+    const predictedVal = parsed?.predicted_value;
+    const diff = Number.isFinite(Number(diffVal)) ? Math.abs(Number(diffVal)).toFixed(0) : '0';
+
+    let direction = 0;
+    if (Number.isFinite(Number(actualVal)) && Number.isFinite(Number(predictedVal))) {
+        direction = Number(actualVal) - Number(predictedVal);
+    } else if (Number.isFinite(Number(diffVal))) {
+        direction = Number(diffVal);
+    }
+
+    let descriptor;
+    if (direction > 0.0001) {
+        descriptor = `유량 +${diff}% 상승 감지`;
+    } else if (direction < -0.0001) {
+        descriptor = `유량 -${diff}% 하락 감지`;
+    } else {
+        descriptor = `유량 편차 ${diff}% 감지`;
+    }
+    return `[${param}] ${descriptor}`;
+}
+
 function setStatus(message, type = 'info') {
     const statusEl = document.getElementById('status-message');
     if (!statusEl) return;
@@ -39,29 +125,107 @@ function setStatus(message, type = 'info') {
     statusEl.style.color = type === 'error' ? '#c53030' : '#495057';
 }
 
-function getSelectedParameters() {
-    const list = document.querySelectorAll('#parameter-list input[type="checkbox"]');
-    const selected = [];
-    list.forEach(cb => {
-        if (cb.checked) selected.push(cb.value);
-    });
-    return selected;
+function getStepName(log) {
+    const parsed = parseLogMessage(log.message);
+    return parsed?.step_name || parsed?.step || log.step_name || '';
 }
 
-function populateParameterList(columns) {
-    const container = document.getElementById('parameter-list');
+function populateStepOptions(names) {
+    const select = document.getElementById('stepFilter');
+    if (!select) return;
+    // 고정 옵션 (데이터 연동 없음)
+    select.innerHTML = '<option value="all">pre-NH3</option>';
+    select.value = 'all';
+    stepFilterValue = 'all';
+}
+
+function sortLogs(logs) {
+    return [...logs].sort((a, b) => {
+        const aTs = new Date(a.timestamp).getTime();
+        const bTs = new Date(b.timestamp).getTime();
+        if (Number.isNaN(aTs) || Number.isNaN(bTs)) return 0;
+        return sortOrder === 'asc' ? aTs - bTs : bTs - aTs;
+    });
+}
+
+function getSelectedParameters() {
+    return Array.from(selectedParams);
+}
+
+function renderCategoryButtons() {
+    const container = document.getElementById('category-buttons');
     if (!container) return;
     container.innerHTML = '';
-    columns.forEach(col => {
-        const option = document.createElement('label');
-        option.className = 'param-option';
-        const id = `param-${safeId(col)}`;
-        option.innerHTML = `
-            <input type="checkbox" id="${id}" value="${col}" checked>
-            <span>${col}</span>
-        `;
-        container.appendChild(option);
+    Object.keys(CATEGORY_GROUPS).forEach(cat => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'category-btn';
+        btn.textContent = cat;
+        if (activeCategories.has(cat)) btn.classList.add('active');
+        btn.addEventListener('click', () => {
+            if (activeCategories.has(cat)) {
+                activeCategories.delete(cat);
+            } else {
+                activeCategories.add(cat);
+            }
+            renderCategoryButtons();
+            renderParamSections();
+        });
+        container.appendChild(btn);
     });
+}
+
+function renderParamSections() {
+    const container = document.getElementById('param-sections');
+    if (!container) return;
+    container.innerHTML = '';
+    const orderedCats = Object.keys(CATEGORY_GROUPS).filter(cat => activeCategories.has(cat));
+    orderedCats.forEach(cat => {
+        const row = document.createElement('div');
+        row.className = 'param-row';
+
+        const title = document.createElement('div');
+        title.className = 'param-title';
+        title.textContent = cat;
+        row.appendChild(title);
+
+        const btnWrap = document.createElement('div');
+        btnWrap.className = 'param-buttons';
+
+        const available = CATEGORY_GROUPS[cat].filter(p => predictColumns.includes(p));
+        available.forEach(param => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'param-btn';
+            btn.textContent = param;
+            if (selectedParams.has(param)) btn.classList.add('active');
+            btn.addEventListener('click', () => {
+                if (selectedParams.has(param)) {
+                    selectedParams.delete(param);
+                    btn.classList.remove('active');
+                } else {
+                    selectedParams.add(param);
+                    btn.classList.add('active');
+                }
+            });
+            btnWrap.appendChild(btn);
+        });
+
+        row.appendChild(btnWrap);
+        container.appendChild(row);
+    });
+}
+
+function initializeParameterUI(columns) {
+    predictColumns = columns;
+    // start with only MFC7_DCS selected if available
+    selectedParams = new Set();
+    if (predictColumns.includes('MFC7_DCS')) {
+        selectedParams.add('MFC7_DCS');
+    }
+    activeCategories = new Set(Object.keys(CATEGORY_GROUPS));
+    renderCategoryButtons();
+    renderParamSections();
 }
 
 function setDefaultRange() {
@@ -93,54 +257,149 @@ function parseTimestamp(value) {
     return date;
 }
 
-function calcSegments(actual, predicted) {
-    const predMap = new Map(predicted.map(d => [d.x, d.y]));
-    const segments = [];
-    const regions = [];
-    let segStart = null;
-    let lastTime = null;
-    let maxDiff = 0;
-
-    actual.forEach(point => {
-        const pv = predMap.get(point.x);
-        const time = new Date(point.x).getTime();
-        if (Number.isNaN(time)) return;
-        if (pv === undefined || pv === null) {
-            if (segStart !== null && lastTime !== null && lastTime - segStart >= 10000) {
-                regions.push({ start: segStart, end: lastTime });
-                segments.push({ start: segStart, end: lastTime, max: maxDiff });
-            }
-            segStart = null;
-            maxDiff = 0;
-            lastTime = time;
-            return;
-        }
-        const base = Math.abs(point.y) || 10;
-        const diffPct = Math.abs(point.y - pv) / base * 100;
-        if (diffPct > 10) {
-            if (segStart === null) {
-                segStart = time;
-                maxDiff = diffPct;
-            } else {
-                maxDiff = Math.max(maxDiff, diffPct);
-            }
-        } else if (segStart !== null) {
-            if (lastTime !== null && lastTime - segStart >= 10000) {
-                regions.push({ start: segStart, end: lastTime });
-                segments.push({ start: segStart, end: lastTime, max: maxDiff });
-            }
-            segStart = null;
-            maxDiff = 0;
-        }
-        lastTime = time;
-    });
-
-    if (segStart !== null && lastTime !== null && lastTime - segStart >= 10000) {
-        regions.push({ start: segStart, end: lastTime });
-        segments.push({ start: segStart, end: lastTime, max: maxDiff });
+function parseLogRange(log) {
+    if (!log) return null;
+    let start = null;
+    let end = null;
+    try {
+        const parsed = JSON.parse(log.message || '{}');
+        start = parsed.start || null;
+        end = parsed.end || null;
+    } catch (e) {
+        // ignore parse errors; fall back to timestamp only
     }
+    const ts = log.timestamp ? String(log.timestamp).replace(' ', 'T') : null;
+    if (!start && ts) start = ts;
+    if (!end && ts) end = ts;
+    const startDate = start ? new Date(start) : null;
+    const endDate = end ? new Date(end) : null;
+    if (!startDate || Number.isNaN(startDate.getTime())) return null;
+    const endValid = endDate && !Number.isNaN(endDate.getTime()) ? endDate : startDate;
+    return { start: startDate, end: endValid };
+}
 
-    return { segments, regions };
+function getLogKey(log) {
+    return `${log.parameter}-${log.timestamp}`;
+}
+
+function buildHighlightRegions(logs) {
+    const regions = [];
+    logs.forEach(log => {
+        const range = parseLogRange(log);
+        if (!range) return;
+        const startMs = range.start.getTime();
+        const endMs = range.end.getTime();
+        if (!Number.isFinite(startMs) || !Number.isFinite(endMs)) return;
+        const safeEnd = endMs >= startMs ? endMs : startMs;
+        regions.push({ start: startMs, end: safeEnd });
+    });
+    return regions;
+}
+
+function updateHighlightRegionsForParam(param) {
+    const logs = logsByParameter.get(param) || [];
+    const filtered = logs.filter(log => selectedLogKeys.has(getLogKey(log)));
+    const regions = buildHighlightRegions(filtered);
+    highlightRegionsByParam.set(param, regions);
+}
+
+function refreshChartHighlight(param) {
+    const chart = charts.get(param);
+    if (!chart) return;
+    updateHighlightRegionsForParam(param);
+    chart.update();
+}
+
+function refreshAllChartHighlights() {
+    charts.forEach((_chart, param) => {
+        updateHighlightRegionsForParam(param);
+    });
+    charts.forEach(chart => chart.update());
+}
+
+function refreshCardHighlight(param) {
+    const card = chartCards.get(param);
+    if (!card) return;
+    const hasSelected = (logsByParameter.get(param) || []).some(log => selectedLogKeys.has(getLogKey(log)));
+    if (hasSelected) {
+        card.classList.add('chart-selected');
+    } else {
+        card.classList.remove('chart-selected');
+    }
+}
+
+function scrollChartIntoView(param) {
+    const card = chartCards.get(param);
+    if (!card) return;
+    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function getTopLogElement(param) {
+    let target = null;
+    logElements.forEach(el => {
+        if (el.dataset.param !== param) return;
+        if (!target || el.offsetTop < target.offsetTop) target = el;
+    });
+    return target;
+}
+
+function scrollLogIntoView(param) {
+    const target = getTopLogElement(param);
+    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function setLogElementState(key, active) {
+    const el = logElements.get(key);
+    if (!el) return;
+    if (active) {
+        el.classList.add('log-selected');
+    } else {
+        el.classList.remove('log-selected');
+    }
+}
+
+function toggleLogSelection(log) {
+    const key = getLogKey(log);
+    const wasSelected = selectedLogKeys.has(key);
+    if (wasSelected) {
+        selectedLogKeys.delete(key);
+        setLogElementState(key, false);
+    } else {
+        selectedLogKeys.add(key);
+        setLogElementState(key, true);
+    }
+    refreshChartHighlight(log.parameter);
+    refreshCardHighlight(log.parameter);
+    if (!wasSelected) {
+        scrollChartIntoView(log.parameter);
+    }
+}
+
+function setParamLogSelection(param, enabled) {
+    const logs = logsByParameter.get(param) || [];
+    logs.forEach(log => {
+        const key = getLogKey(log);
+        if (enabled) {
+            selectedLogKeys.add(key);
+        } else {
+            selectedLogKeys.delete(key);
+        }
+        setLogElementState(key, enabled);
+    });
+    refreshChartHighlight(param);
+    refreshCardHighlight(param);
+}
+
+function handleChartClick(param) {
+    const logs = logsByParameter.get(param) || [];
+    if (!logs.length) return;
+    const allSelected = logs.every(log => selectedLogKeys.has(getLogKey(log)));
+    const enable = !allSelected;
+    setParamLogSelection(param, enable);
+    refreshCardHighlight(param);
+    if (enable) {
+        scrollLogIntoView(param);
+    }
 }
 
 function createChartCard(parameter) {
@@ -155,7 +414,9 @@ function createChartCard(parameter) {
         <canvas id="chart-${safe}"></canvas>
         <div class="chart-message" id="message-${safe}"></div
     `;
+    card.addEventListener('click', () => handleChartClick(parameter));
     container.appendChild(card);
+    chartCards.set(parameter, card);
     return {
         card,
         canvas: card.querySelector('canvas'),
@@ -163,7 +424,7 @@ function createChartCard(parameter) {
     };
 }
 
-function renderChart(parameter, actual, predicted, regions, logs) {
+function renderChart(parameter, actual, predicted, logs) {
     const safe = safeId(parameter);
     const canvas = document.getElementById(`chart-${safe}`);
     if (!canvas) return;
@@ -177,15 +438,6 @@ function renderChart(parameter, actual, predicted, regions, logs) {
     const yMin = Math.min(...yValues);
     const yMax = Math.max(...yValues);
 
-    const logLines = [];
-    logs.forEach(log => {
-        const iso = log.timestamp ? String(log.timestamp).replace(' ', 'T') : null;
-        if (!iso) return;
-        logLines.push({ x: iso, y: yMin });
-        logLines.push({ x: iso, y: yMax });
-        logLines.push({ x: null, y: null });
-    });
-
     const chart = new Chart(canvas.getContext('2d'), {
         type: 'line',
         data: {
@@ -194,6 +446,7 @@ function renderChart(parameter, actual, predicted, regions, logs) {
                     label: '예측값',
                     data: predicted.map(d => ({ x: d.x, y: d.y })),
                     borderColor: '#ef5350',
+                    borderWidth: 1.2,
                     tension: 0.3,
                     pointRadius: 0,
                 },
@@ -201,18 +454,9 @@ function renderChart(parameter, actual, predicted, regions, logs) {
                     label: '실제값',
                     data: actual.map(d => ({ x: d.x, y: d.y })),
                     borderColor: '#1e88e5',
+                    borderWidth: 1.2,
                     tension: 0.3,
                     pointRadius: 0,
-                },
-                {
-                    label: '이상 로그',
-                    data: logLines,
-                    borderColor: '#ff9800',
-                    borderWidth: 1,
-                    borderDash: [6, 6],
-                    pointRadius: 0,
-                    spanGaps: false,
-                    showLine: true,
                 }
             ]
         },
@@ -223,7 +467,9 @@ function renderChart(parameter, actual, predicted, regions, logs) {
                 legend: {
                     labels: { usePointStyle: true }
                 },
-                highlightRegion: { regions }
+                selectionHighlight: {
+                    getRegions: (paramName) => highlightRegionsByParam.get(paramName) || []
+                }
             },
             scales: {
                 x: {
@@ -239,50 +485,95 @@ function renderChart(parameter, actual, predicted, regions, logs) {
         }
     });
 
+    chart._codexParam = parameter;
+    updateHighlightRegionsForParam(parameter);
     charts.set(parameter, chart);
 }
 
 function destroyCharts() {
     charts.forEach(chart => chart.destroy());
     charts.clear();
+    chartCards.clear();
 }
 
 function renderLogList(logs) {
     const container = document.getElementById('log-list');
     if (!container) return;
+    logElements.clear();
+    selectedLogKeys.clear();
+    highlightRegionsByParam.clear();
     container.innerHTML = '';
-    if (!logs.length) {
+    const ordered = sortLogs(logs);
+    if (!ordered.length) {
         const empty = document.createElement('div');
         empty.textContent = '선택한 기간에 해당하는 이상 로그가 없습니다.';
         empty.style.color = '#666';
         container.appendChild(empty);
         return;
     }
-    logs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-    logs.forEach(log => {
+    ordered.forEach(log => {
+        const key = getLogKey(log);
         const entry = document.createElement('div');
-        entry.className = 'log-entry';
-        entry.innerHTML = `
-            <div class="log-time">${formatLocal(log.timestamp)}</div>
-            <div class="log-parameter">${log.parameter}</div>
-            <div class="log-message">${log.message}</div>
-        `;
+        entry.className = 'timeline-entry';
+        entry.dataset.key = key;
+        entry.dataset.param = log.parameter;
+
+        const iconEl = document.createElement('div');
+        iconEl.className = 'timeline-icon';
+        iconEl.textContent = '⚠';
+
+        const bodyEl = document.createElement('div');
+        bodyEl.className = 'timeline-body';
+
+        const timeEl = document.createElement('div');
+        timeEl.className = 'timeline-time';
+        timeEl.textContent = formatFullKorean(log.timestamp);
+
+        const textEl = document.createElement('div');
+        textEl.className = 'timeline-text';
+        textEl.textContent = buildLogDescription(log);
+
+        bodyEl.appendChild(timeEl);
+        bodyEl.appendChild(textEl);
+
+        entry.appendChild(iconEl);
+        entry.appendChild(bodyEl);
+        entry.addEventListener('click', () => toggleLogSelection(log));
         container.appendChild(entry);
+        logElements.set(key, entry);
     });
+    refreshAllChartHighlights();
+    charts.forEach((_chart, param) => refreshCardHighlight(param));
 }
 
-async function fetchLogs(start, end) {
+function updateLogPanelHeight() {
+    const chartsArea = document.getElementById('charts-area');
+    const logArea = document.getElementById('log-area');
+    if (!chartsArea || !logArea) return;
+    const target = chartsArea.offsetHeight;
+    if (target > 0) {
+        logArea.style.height = `${target}px`;
+        logArea.style.maxHeight = `${target}px`;
+    }
+}
+
+async function fetchLogs(start, end, params = []) {
     logsByParameter = new Map();
     try {
         const res = await fetch(`/api/history/logs?start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`);
         if (!res.ok) throw new Error('로그 조회 실패');
         const data = await res.json();
-        data.forEach(item => {
+        const filteredByParam = params.length ? data.filter(item => params.includes(item.parameter)) : data;
+        const stepNames = Array.from(new Set(filteredByParam.map(getStepName).filter(Boolean)));
+        populateStepOptions(stepNames);
+        const filtered = filteredByParam.filter(item => stepFilterValue === 'all' ? true : getStepName(item) === stepFilterValue);
+        const ordered = sortLogs(filtered);
+        ordered.forEach(item => {
             const key = item.parameter;
             if (!logsByParameter.has(key)) logsByParameter.set(key, []);
             logsByParameter.get(key).push(item);
         });
-        renderLogList(data);
+        renderLogList(ordered);
     } catch (err) {
         renderLogList([]);
         console.error(err);
@@ -320,7 +611,7 @@ async function loadHistory() {
     const chartsContainer = document.getElementById('charts-container');
     chartsContainer.innerHTML = '';
 
-    await fetchLogs(startValue, endValue);
+    await fetchLogs(startValue, endValue, params);
     if (requestId !== currentRequestId) return;
 
     for (const param of params) {
@@ -342,8 +633,7 @@ async function loadHistory() {
             }
             if (messageEl) messageEl.textContent = '';
 
-            const { regions } = calcSegments(actual, predicted);
-            renderChart(param, actual, predicted, regions, chartLogs);
+            renderChart(param, actual, predicted, chartLogs);
         } catch (err) {
             console.error(err);
             if (messageEl) {
@@ -353,6 +643,7 @@ async function loadHistory() {
     }
 
     setStatus('조회가 완료되었습니다.');
+    updateLogPanelHeight();
 }
 
 async function initPage() {
@@ -361,20 +652,37 @@ async function initPage() {
         const res = await fetch('/api/model_columns');
         if (!res.ok) throw new Error('모델 컬럼 조회 실패');
         predictColumns = await res.json();
-        populateParameterList(predictColumns);
+        initializeParameterUI(predictColumns);
     } catch (err) {
         console.error(err);
         setStatus('예측 컬럼 정보를 불러오지 못했습니다.', 'error');
     }
 
     document.getElementById('selectAll')?.addEventListener('click', () => {
-        document.querySelectorAll('#parameter-list input[type="checkbox"]').forEach(cb => cb.checked = true);
+        Object.keys(CATEGORY_GROUPS).forEach(cat => {
+            CATEGORY_GROUPS[cat].forEach(p => {
+                if (predictColumns.includes(p)) selectedParams.add(p);
+            });
+        });
+        renderParamSections();
     });
     document.getElementById('clearAll')?.addEventListener('click', () => {
-        document.querySelectorAll('#parameter-list input[type="checkbox"]').forEach(cb => cb.checked = false);
-    }); document.getElementById('searchBtn')?.addEventListener('click', () => {
+        selectedParams.clear();
+        renderParamSections();
+    });
+    document.getElementById('searchBtn')?.addEventListener('click', () => {
         loadHistory();
     });
+    document.getElementById('stepFilter')?.addEventListener('change', (e) => {
+        stepFilterValue = e.target.value || 'all';
+        loadHistory();
+    });
+    document.getElementById('sortOrder')?.addEventListener('change', (e) => {
+        sortOrder = e.target.value === 'asc' ? 'asc' : 'desc';
+        loadHistory();
+    });
+
+    window.addEventListener('resize', updateLogPanelHeight);
 
     // 초기 로드
     loadHistory();

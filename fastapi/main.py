@@ -2,7 +2,8 @@ from fastapi import Body, FastAPI, HTTPException, Query, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from datetime import datetime
+from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
 from dateutil import parser
 import yaml
 import os
@@ -32,6 +33,8 @@ templates = Jinja2Templates(directory="templates")
 
 HEATMAP_DIR = Path("static/heatmaps")
 HEATMAP_DIR.mkdir(parents=True, exist_ok=True)
+# generator writes to ../realtimedata from semi_ondevice; read the same file
+GEN_HEALTH_FILE = Path(__file__).resolve().parents[1] / "generator_health.json"
 
 WAFER_LABELS = ["U", "CU", "C", "CL", "L"]
 POINTER_COORDS = np.array(
@@ -155,6 +158,30 @@ def ensure_realtime_log_table(cur):
         """
     )
 
+
+def ensure_realtime_abnormal_log_table(cur):
+    cur.execute(
+        """
+        CREATE TABLE IF NOT EXISTS realtime_abnormal_log (
+            id SERIAL PRIMARY KEY,
+            start_time TIMESTAMP NOT NULL,
+            end_time TIMESTAMP NOT NULL,
+            parameter TEXT NOT NULL,
+            duration_seconds DOUBLE PRECISION,
+            avg_diff_percent DOUBLE PRECISION,
+            max_diff_percent DOUBLE PRECISION,
+            peak_time TIMESTAMP,
+            actual_value DOUBLE PRECISION,
+            predicted_value DOUBLE PRECISION,
+            violation_type INT,
+            message TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT NOW(),
+            updated_at TIMESTAMP DEFAULT NOW(),
+            UNIQUE (parameter, start_time)
+        );
+        """
+    )
+
 # main.py
 PREDICT_STEPS = [10, 20, 30]
 
@@ -183,6 +210,26 @@ predict_columns = [
 
 LIMIT_PATH = "limits.yaml"
 SETTINGS_PATH = "settings.yaml"
+
+
+def _read_generator_status():
+    if not GEN_HEALTH_FILE.exists():
+        return {"status": "DOWN", "last_tick": None}
+    try:
+        data = json.loads(GEN_HEALTH_FILE.read_text(encoding="utf-8"))
+        last_tick_raw = data.get("last_tick")
+        if not last_tick_raw:
+            return {"status": "DOWN", "last_tick": None}
+        try:
+            last_dt = datetime.fromisoformat(last_tick_raw)
+        except Exception:
+            return {"status": "DOWN", "last_tick": None}
+        now = datetime.now()
+        delta = now - last_dt
+        status = "RUN" if delta <= timedelta(seconds=5) else "DOWN"
+        return {"status": status, "last_tick": last_dt.isoformat()}
+    except Exception:
+        return {"status": "DOWN", "last_tick": None}
 
 def _parse_range_timestamp(value: str):
     try:
@@ -317,6 +364,11 @@ async def api_latest_pvd_logs(limit: int = 50):
     data = get_recent_pvd_violence_logs(capped_limit)
     return JSONResponse(data)
 
+
+@app.get("/api/generator_status")
+async def api_generator_status():
+    return JSONResponse(_read_generator_status())
+
 @app.get("/api/model_columns")
 async def api_model_columns():
     cols = []
@@ -342,27 +394,33 @@ async def get_logs():
         port=5432
     )
     cur = conn.cursor()
-
-    ensure_realtime_log_table(cur)
+    ensure_realtime_abnormal_log_table(cur)
     conn.commit()
-    
-    cur.execute("""
-        SELECT "Timestamp", parameter, message FROM realtime_violation_log
-        ORDER BY "Timestamp" DESC
-        LIMIT 10
-    """)
-    logs = cur.fetchall()
+
+    cur.execute(
+        """
+        SELECT start_time, end_time, parameter, message, violation_type
+        FROM realtime_abnormal_log
+        ORDER BY end_time DESC
+        LIMIT 50
+        """
+    )
+    rows = cur.fetchall()
     cur.close()
     conn.close()
 
-    return JSONResponse([
-        {
-            "timestamp": ts.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3],  # millisecond 포함
+    result = []
+    for start_ts, end_ts, param, msg, vtype in rows:
+        result.append({
+            "timestamp": end_ts.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3],
             "parameter": param,
-            "message": msg
-        }
-        for ts, param, msg in logs
-    ])
+            "message": msg,
+            "start_time": start_ts.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3],
+            "end_time": end_ts.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3],
+            "violation_type": vtype,
+        })
+
+    return JSONResponse(result)
 
 @app.get("/api/history/logs")
 async def get_history_logs(
@@ -387,26 +445,19 @@ async def get_history_logs(
     cur = conn.cursor()
 
     try:
-        cur.execute("""
-            CREATE TABLE IF NOT EXISTS realtime_violation_log (
-                "Timestamp" TIMESTAMP  PRIMARY KEY,
-                parameter TEXT NOT NULL,
-                message TEXT NOT NULL,
-                UNIQUE ("Timestamp", parameter)
-            );
-        """)
+        ensure_realtime_abnormal_log_table(cur)
         conn.commit()
 
         query = """
-            SELECT "Timestamp", parameter, message
-            FROM realtime_violation_log
-            WHERE "Timestamp" BETWEEN %s::timestamp AND %s::timestamp
+            SELECT start_time, end_time, parameter, message, violation_type
+            FROM realtime_abnormal_log
+            WHERE start_time BETWEEN %s::timestamp AND %s::timestamp
         """
         params = [start_dt, end_dt]
         if parameter:
             query += " AND parameter = %s"
             params.append(parameter)
-        query += " ORDER BY \"Timestamp\" DESC"
+        query += " ORDER BY end_time DESC"
 
         cur.execute(query, params)
         rows = cur.fetchall()
@@ -416,11 +467,14 @@ async def get_history_logs(
 
     return JSONResponse([
         {
-            "timestamp": ts.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3],
+            "timestamp": end_ts.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3],
+            "start_time": start_ts.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3],
+            "end_time": end_ts.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3],
             "parameter": param,
             "message": msg,
+            "violation_type": vtype,
         }
-        for ts, param, msg in rows
+        for start_ts, end_ts, param, msg, vtype in rows
     ])
 
 @app.post("/api/logs")
@@ -440,6 +494,7 @@ async def create_log(entry: dict = Body(...)):
     start_dt = _parse_time(entry.get("start"))
     end_dt = _parse_time(entry.get("end"))
     peak_dt = _parse_time(entry.get("peak_time"))
+    violation_type = entry.get("violation_type")
 
     message_payload = {
         "parameter": parameter,
@@ -452,10 +507,12 @@ async def create_log(entry: dict = Body(...)):
         "peak_time": peak_dt.isoformat() if peak_dt else None,
         "actual_value": entry.get("actual_value"),
         "predicted_value": entry.get("predicted_value"),
+        "violation_type": violation_type,
     }
 
     message_text = json.dumps(message_payload, ensure_ascii=False)
-    log_timestamp = datetime.utcnow()
+    if not start_dt or not end_dt:
+        raise HTTPException(status_code=400, detail="start and end times are required")
 
     conn = psycopg2.connect(
         dbname="postgres",
@@ -467,14 +524,24 @@ async def create_log(entry: dict = Body(...)):
     cur = conn.cursor()
 
     try:
-        ensure_realtime_log_table(cur)
+        ensure_realtime_abnormal_log_table(cur)
+        duration_seconds = (end_dt - start_dt).total_seconds()
         cur.execute(
             """
-            INSERT INTO realtime_violation_log ("Timestamp", parameter, message)
-            VALUES (%s, %s, %s)
-            ON CONFLICT ("Timestamp", parameter) DO NOTHING
+            INSERT INTO realtime_abnormal_log (
+                start_time, end_time, parameter,
+                duration_seconds, avg_diff_percent, message, violation_type,
+                created_at, updated_at
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, NOW(), NOW())
+            ON CONFLICT (parameter, start_time) DO UPDATE
+            SET end_time = EXCLUDED.end_time,
+                duration_seconds = EXCLUDED.duration_seconds,
+                avg_diff_percent = EXCLUDED.avg_diff_percent,
+                message = EXCLUDED.message,
+                violation_type = EXCLUDED.violation_type,
+                updated_at = NOW()
             """,
-            (log_timestamp, parameter, message_text),
+            (start_dt, end_dt, parameter, duration_seconds, entry.get("diff"), message_text, violation_type),
         )
         conn.commit()
     finally:
@@ -513,11 +580,16 @@ async def get_log_detail(time: str = Query(...), parameter: str = Query(...)):
         port=5432
     )
     cur = conn.cursor()
-    cur.execute("""
-        SELECT message FROM realtime_violation_log
-        WHERE "Timestamp" = %s AND parameter = %s
+    cur.execute(
+        """
+        SELECT message
+        FROM realtime_abnormal_log
+        WHERE end_time = %s AND parameter = %s
+        ORDER BY updated_at DESC
         LIMIT 1
-    """, (ts, parameter))
+        """,
+        (ts, parameter),
+    )
     row = cur.fetchone()
     cur.close()
     conn.close()

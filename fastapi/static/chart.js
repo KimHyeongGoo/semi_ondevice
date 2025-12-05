@@ -1,20 +1,143 @@
 const charts = {};
-const columns = Array.from(document.querySelectorAll(".toggle-chart")).map(cb => cb.dataset.col);
+const columns = Array.from(document.querySelectorAll(".toggle-chart")).map(cb => (cb.dataset.col || "").trim());
+const columnLookup = new Set(columns);
+const hasColumn = (name) => columnLookup.has((name || "").trim());
+const logEntryByParam = new Map();
+const logEntryByKey = new Map();
+const normalizeParam = (name) => (name || "").trim();
+const buildLogKey = (log) => {
+    const msg = typeof log.message === 'string' ? log.message : JSON.stringify(log.message || {});
+    return `${normalizeParam(log.parameter)}||${log.timestamp || ''}||${msg || ''}`;
+};
+
+let highlightState = { param: null, key: null };
+let settingsCache = {};
+const chartBoxByParam = new Map();
+
+function scrollElementIntoCenter(el) {
+    if (!el) return;
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function scrollChartIntoView(param) {
+    const target = chartBoxByParam.get(param) || document.querySelector(`.chart-box[data-param="${param}"]`);
+    scrollElementIntoCenter(target);
+}
+
+function scrollLogIntoView(param, key) {
+    let target = null;
+    if (key && logEntryByKey.has(key)) {
+        target = logEntryByKey.get(key);
+    }
+    if (!target) {
+        const entries = logEntryByParam.get(param) || [];
+        entries.forEach(el => {
+            if (!target || el.offsetTop < target.offsetTop) target = el;
+        });
+    }
+    scrollElementIntoCenter(target);
+}
+
+function applyHighlight() {
+    const { param, key } = highlightState;
+    document.querySelectorAll('.chart-box').forEach(box => {
+        const match = param && normalizeParam(box.dataset.param) === param;
+        box.classList.toggle('highlight', Boolean(param) && match);
+    });
+
+    logEntryByParam.forEach((entries, p) => {
+        const matchParam = param && p === param;
+        entries.forEach(el => {
+            const entryKey = el.dataset.key;
+            const active = Boolean(param) && (key ? entryKey === key : matchParam);
+            el.classList.toggle('highlight', active);
+        });
+    });
+}
+
+function setHighlight(newState, options = {}) {
+    highlightState = newState;
+    applyHighlight();
+    const active = Boolean(highlightState.param);
+    if (active && options.scrollToChart) {
+        scrollChartIntoView(highlightState.param);
+    }
+    if (active && options.scrollToLog) {
+        scrollLogIntoView(highlightState.param, highlightState.key);
+    }
+}
+
+function toggleHighlightForParam(param) {
+    const target = param ? normalizeParam(param) : null;
+    if (!target) {
+        setHighlight({ param: null, key: null });
+        return;
+    }
+    const isActive = highlightState.param === target && !highlightState.key;
+    if (isActive) {
+        setHighlight({ param: null, key: null });
+    } else {
+        setHighlight({ param: target, key: null }, { scrollToLog: true });
+    }
+}
+
+function toggleHighlightForEntry(param, key) {
+    const target = param ? normalizeParam(param) : null;
+    if (!target || !key) {
+        setHighlight({ param: null, key: null });
+        return;
+    }
+    const isActive = highlightState.key === key;
+    if (isActive) {
+        setHighlight({ param: null, key: null });
+    } else {
+        setHighlight({ param: target, key }, { scrollToChart: true });
+    }
+}
+
+function parseLogPayload(raw) {
+    if (!raw) return {};
+    if (typeof raw === 'object') return raw;
+    try {
+        return JSON.parse(raw);
+    } catch (e) {
+        try {
+            const fixed = raw.replace(/'/g, '"');
+            return JSON.parse(fixed);
+        } catch (e2) {
+            return {};
+        }
+    }
+}
+
+function formatPayloadTime(val, fallback) {
+    if (!val) return fallback;
+    const d = new Date(val);
+    if (!isNaN(d)) return formatKoreanTime(d);
+    return val;
+}
+
+function formatLimitType(raw) {
+    if (!raw) return '이상';
+    const t = String(raw).toLowerCase();
+    if (t.includes('min') || t.includes('하한')) return '하한선';
+    if (t.includes('max') || t.includes('상한')) return '상한선';
+    return raw;
+}
 let selectedDuration = 300; // 기본값: 5분
 let selectedStep = 10; //
 let hiddenColumns = [];
 let limits = {};
 let lastStepFallbackFetch = 0;
-let modalChart = null;
+let modalChart = null; // ECharts instance
+let modalChartFallback = null; // Chart.js fallback
 let modalOpenCol = null;
-let modalBaseRange = null;
-let modalCurrentRange = null;
 
 const categoryMap = {
     MFC: ["MFC7_DCS", "MFC8_NH3", "MFC1_N2-1", "MFC2_N2-2", "MFC3_N2-3", "MFC4_N2-4"],
     Pressure: ["VG11 Press value", "VG12 Press value", "VG13 Press value"],
     Temperature: ["Temp_Act_U", "Temp_Act_CU", "Temp_Act_C", "Temp_Act_CL", "Temp_Act_L"],
-    Actuator: ["MFC26_F.FWR", "MFC27_L.POS", "MFC28_R.POS"]
+    Actuator: ["MFC26_F.PWR", "MFC27_L.POS", "MFC28_R.POS"]
 };
 const stepNames = {
     2: 'END', 0: 'STANDBY/IDLE', 1: 'START', 17: 'B.UP', 3: 'WAIT',
@@ -38,6 +161,7 @@ async function loadSettings() {
         const res = await fetch('/api/settings');
         if (!res.ok) return;
         const s = await res.json();
+        settingsCache = s || {};
         if (s.duration) selectedDuration = s.duration;
         if (s.step) selectedStep = s.step;
         hiddenColumns = s.hidden_columns || [];
@@ -63,13 +187,14 @@ async function saveSettings() {
     document.querySelectorAll('.toggle-chart').forEach(cb => {
         if (!cb.checked) hidden.push(cb.dataset.col);
     });
-    const body = { duration: selectedDuration, step: selectedStep, hidden_columns: hidden };
+    const body = { ...settingsCache, duration: selectedDuration, step: selectedStep, hidden_columns: hidden };
     try {
         await fetch('/api/settings', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body)
         });
+        settingsCache = body;
     } catch (e) {
         console.error('failed to save settings', e);
     }
@@ -173,19 +298,6 @@ async function fetchAndUpdate() {
         chart.options.scales.x.max = xMax;
         chart.update();
 
-        // 모달이 열려 있으면 동기화
-        if (modalOpenCol === col && modalChart) {
-            const keepRange = modalCurrentRange || getRangeFromScales(modalChart);
-            modalChart.data = cloneChartData(chart);
-            modalChart.options = cloneChartOptions(chart);
-            modalBaseRange = getRangeFromDatasets(modalChart.data.datasets);
-            if (keepRange) {
-                modalCurrentRange = clampRange(keepRange, modalBaseRange);
-                applyRangeToChart(modalChart, modalCurrentRange);
-            }
-            modalChart.update();
-            modalChart.resize();
-        }
 
         const cb = document.querySelector(`.toggle-chart[data-col="${col}"]`);
         const canvas = document.getElementById(`chart-${col}`);
@@ -261,10 +373,10 @@ function createSettingsUI() {
     paramWrap.innerHTML = '';
     form.innerHTML = '';
 
-    const categories = Object.keys(categoryMap).filter(cat => categoryMap[cat].some(c => columns.includes(c)));
+    const categories = Object.keys(categoryMap).filter(cat => categoryMap[cat].some(hasColumn));
     if (categories.length === 0) return;
     let activeCat = categories[0];
-    let activeParam = categoryMap[activeCat].find(c => columns.includes(c)) || columns[0];
+    let activeParam = categoryMap[activeCat].find(hasColumn) || columns[0];
 
     function renderCategories() {
         catWrap.innerHTML = '';
@@ -274,7 +386,7 @@ function createSettingsUI() {
             btn.textContent = cat;
             btn.onclick = () => {
                 activeCat = cat;
-                activeParam = categoryMap[cat].find(c => columns.includes(c)) || activeParam;
+                activeParam = categoryMap[cat].find(hasColumn) || activeParam;
                 renderCategories();
                 renderParams();
                 renderStepTable(activeParam);
@@ -286,7 +398,7 @@ function createSettingsUI() {
     function renderParams() {
         paramWrap.innerHTML = '';
         categoryMap[activeCat].forEach(col => {
-            if (!columns.includes(col)) return;
+            if (!hasColumn(col)) return;
             const btn = document.createElement("button");
             btn.className = "param-btn" + (col === activeParam ? " active" : "");
             btn.textContent = col;
@@ -394,45 +506,25 @@ async function saveLimits() {
 
 function openChartModal(col) {
     const modal = document.getElementById('chart-modal');
-    const modalCanvas = document.getElementById('modal-canvas');
     const modalTitle = document.getElementById('modal-title');
-    if (!modal || !modalCanvas || !charts[col]) return;
-
-    if (modalChart) {
-        modalChart.destroy();
-        modalChart = null;
-    }
-
-    const src = charts[col];
-    // 먼저 표시 상태로 전환해 캔버스 크기가 0이 되지 않도록 함
-    modal.style.display = 'flex';
-    modalOpenCol = col;
-    const ctx = modalCanvas.getContext('2d');
-    const dataCopy = cloneChartData(src);
-    const optionCopy = cloneChartOptions(src);
-    modalChart = new Chart(ctx, {
-        type: src.config.type,
-        data: dataCopy,
-        options: optionCopy
-    });
-    modalBaseRange = getRangeFromDatasets(modalChart.data.datasets);
-    modalCurrentRange = modalBaseRange ? { ...modalBaseRange } : null;
-    if (modalCurrentRange) {
-        applyRangeToChart(modalChart, modalCurrentRange);
-    }
-    modalChart.resize();
-    modalTitle.textContent = col;
+    const container = document.getElementById('modal-echart');
+    const fallbackCanvas = document.getElementById('modal-canvas');
+    if (!modal || !modalTitle || !container || !fallbackCanvas || !charts[col]) return;
+    const datasets = cloneChartData(charts[col]).datasets;
+    renderModalChart(col, datasets, true);
 }
 
 function closeChartModal() {
     const modal = document.getElementById('chart-modal');
     if (modalChart) {
-        modalChart.destroy();
+        modalChart.clear();
         modalChart = null;
     }
+    if (modalChartFallback) {
+        modalChartFallback.destroy();
+        modalChartFallback = null;
+    }
     modalOpenCol = null;
-    modalBaseRange = null;
-    modalCurrentRange = null;
     if (modal) modal.style.display = 'none';
 }
 
@@ -452,89 +544,91 @@ function cloneChartData(srcChart) {
     return { datasets: clonedDatasets };
 }
 
-function cloneChartOptions(srcChart) {
-    const opt = JSON.parse(JSON.stringify(srcChart.options || {}));
-    if (opt?.scales?.x) {
-        if (opt.scales.x.min) opt.scales.x.min = new Date(opt.scales.x.min);
-        if (opt.scales.x.max) opt.scales.x.max = new Date(opt.scales.x.max);
-    }
-    opt.responsive = true;
-    opt.maintainAspectRatio = false;
-    opt.animation = false;
-    return opt;
-}
+function renderModalChart(param, datasets, showModal = false) {
+    const modal = document.getElementById('chart-modal');
+    const modalTitle = document.getElementById('modal-title');
+    const container = document.getElementById('modal-echart');
+    const fallbackCanvas = document.getElementById('modal-canvas');
+    if (!modal || !modalTitle || !container || !fallbackCanvas) return;
 
-function getRangeFromDatasets(datasets) {
-    const xs = [];
-    const ys = [];
-    datasets.forEach(ds => {
-        (ds.data || []).forEach(pt => {
-            if (!pt) return;
-            if (pt.x !== undefined) xs.push(pt.x instanceof Date ? pt.x.getTime() : new Date(pt.x).getTime());
-            if (pt.y !== undefined) ys.push(pt.y);
+    const regions = []; // no special regions; upper/lower는 별도 라인으로 존재
+    const useEcharts = typeof echarts !== 'undefined';
+    container.style.display = useEcharts ? 'block' : 'none';
+    fallbackCanvas.style.display = useEcharts ? 'none' : 'block';
+
+    if (useEcharts) {
+        if (!modalChart) {
+            modalChart = echarts.init(container);
+        } else {
+            modalChart.clear();
+        }
+        const series = datasets.map((ds, idx) => {
+            const data = (ds.data || []).map(p => [p.x, p.y]);
+            const serie = {
+                name: ds.label || `series ${idx + 1}`,
+                type: 'line',
+                showSymbol: false,
+                smooth: true,
+                data,
+                lineStyle: { width: ds.borderWidth || 2, color: ds.borderColor || undefined },
+                itemStyle: { color: ds.borderColor || undefined }
+            };
+            if (idx === 0 && regions.length) {
+                serie.markArea = {
+                    itemStyle: { color: 'rgba(255,0,0,0.08)' },
+                    data: regions.map(r => [{ xAxis: r.start }, { xAxis: r.end }])
+                };
+            }
+            return serie;
         });
-    });
-    if (!xs.length || !ys.length) return null;
-    return {
-        xMin: new Date(Math.min(...xs)),
-        xMax: new Date(Math.max(...xs)),
-        yMin: Math.min(...ys),
-        yMax: Math.max(...ys)
-    };
-}
+        const option = {
+            tooltip: { trigger: 'axis' },
+            legend: { top: 0 },
+            toolbox: {
+                feature: {
+                    saveAsImage: {},
+                    dataZoom: { yAxisIndex: 'none' },
+                    restore: {}
+                }
+            },
+            grid: { left: 50, right: 20, top: 40, bottom: 50 },
+            xAxis: { type: 'time' },
+            yAxis: { type: 'value', scale: true },
+            dataZoom: [
+                { type: 'inside', xAxisIndex: 0 },
+                { type: 'slider', xAxisIndex: 0 }
+            ],
+            series
+        };
+        modalChart.setOption(option, true);
+    } else {
+        const ctx = fallbackCanvas.getContext('2d');
+        if (modalChartFallback) {
+            modalChartFallback.destroy();
+            modalChartFallback = null;
+        }
+        modalChartFallback = new Chart(ctx, {
+            type: 'line',
+            data: { datasets },
+            options: {
+                animation: false,
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: true }
+                },
+                scales: { x: { type: 'time' }, y: { type: 'linear' } }
+            }
+        });
+    }
 
-function getRangeFromScales(chart) {
-    const xs = chart?.scales?.x;
-    const ys = chart?.scales?.y;
-    if (!xs || !ys) return null;
-    return {
-        xMin: xs.min instanceof Date ? xs.min : new Date(xs.min),
-        xMax: xs.max instanceof Date ? xs.max : new Date(xs.max),
-        yMin: ys.min,
-        yMax: ys.max
-    };
-}
-
-function clampRange(range, base) {
-    if (!range) return range;
-    if (!base) return range;
-    const xMin = Math.max(base.xMin.getTime(), range.xMin.getTime());
-    const xMax = Math.min(base.xMax.getTime(), range.xMax.getTime());
-    const yMin = Math.max(base.yMin, range.yMin);
-    const yMax = Math.min(base.yMax, range.yMax);
-    return {
-        xMin: new Date(xMin),
-        xMax: new Date(xMax),
-        yMin,
-        yMax
-    };
-}
-
-function applyRangeToChart(chart, range) {
-    if (!chart || !range) return;
-    chart.options.scales.x.min = range.xMin;
-    chart.options.scales.x.max = range.xMax;
-    chart.options.scales.y.min = range.yMin;
-    chart.options.scales.y.max = range.yMax;
-}
-
-function saveModalRangeFromChart(chart) {
-    modalCurrentRange = clampRange(getRangeFromScales(chart || modalChart), modalBaseRange);
-}
-
-function resetModalRange() {
-    if (!modalChart || !modalBaseRange) return;
-    modalCurrentRange = { ...modalBaseRange };
-    applyRangeToChart(modalChart, modalCurrentRange);
-    modalChart.update();
-}
-
-function zoomModal(factor = 0.8) {
-    // 기능 비활성: 버튼은 동작하지 않음
-}
-
-function panModal(direction = 'left', ratio = 0.2) {
-    // 기능 비활성: 버튼은 동작하지 않음
+    modalOpenCol = param;
+    modalTitle.textContent = param;
+    if (showModal) modal.style.display = 'flex';
+    setTimeout(() => {
+        if (modalChart) modalChart.resize();
+        if (modalChartFallback) modalChartFallback.resize();
+    }, 0);
 }
 
 async function fetchLogs() {
@@ -543,18 +637,48 @@ async function fetchLogs() {
         const logs = await res.json();
         const logContent = document.getElementById('log-content');
 
+        logEntryByParam.clear();
+        logEntryByKey.clear();
         if (!logs || logs.length === 0) {
             logContent.innerText = "(최근 이벤트 없음)";
         } else {
-            logContent.innerHTML = logs.map(log => {
+            logContent.innerHTML = '';
+            logs.forEach(log => {
                 const ts = formatKoreanTime(log.timestamp);
-                return `
-                    <div class="log-entry">
-                        <div class="log-time">⚠ ${ts}</div>
-                        <div class="log-msg">${log.message}</div>
+                const param = normalizeParam(log.parameter);
+                const key = buildLogKey(log);
+                const payload = parseLogPayload(log.message);
+                const violationTime = formatPayloadTime(payload['시간'] || payload.time || payload.timestamp || payload.end || payload.start, ts);
+                const limitTypeRaw = payload['이상종류'] || payload.limit_type || payload.type || '이상';
+                const limitType = formatLimitType(limitTypeRaw);
+                const predictedVal = payload['예측값'] ?? payload.predicted_value ?? payload.predicted ?? payload.actual_value;
+                const thresholdVal = payload['임계값'] ?? payload.threshold ?? payload.max ?? payload.min;
+                const predText = typeof predictedVal === 'number' ? predictedVal.toFixed(3) : (predictedVal ?? '-');
+                const thrText = typeof thresholdVal === 'number' ? thresholdVal : (thresholdVal ?? '-');
+                const summary = `[${param}] ${limitType} 침범 예상`;
+                const detail = `예측값: ${predText}, 임계값: ${thrText}`;
+                const entry = document.createElement('div');
+                entry.className = 'timeline-entry';
+                entry.dataset.param = param;
+                entry.dataset.key = key;
+                entry.innerHTML = `
+                    <div class="timeline-icon">⚠</div>
+                    <div class="timeline-body">
+                        <div class="timeline-time">${ts}</div>
+                        <div class="timeline-text"><strong>${summary}</strong><br>${detail}</div>
                     </div>
                 `;
-            }).join("");
+                entry.addEventListener('click', () => toggleHighlightForEntry(param, key));
+                logContent.appendChild(entry);
+                if (!logEntryByParam.has(param)) logEntryByParam.set(param, []);
+                logEntryByParam.get(param).push(entry);
+                logEntryByKey.set(key, entry);
+            });
+            if (highlightState.key && !logEntryByKey.has(highlightState.key)) {
+                setHighlight({ param: null, key: null });
+            } else {
+                applyHighlight();
+            }
         }
     } catch (e) {
         console.error("로그 로딩 실패:", e);
@@ -575,6 +699,8 @@ function formatKoreanTime(ts) {
 window.addEventListener("DOMContentLoaded", async () => {
     document.querySelectorAll('.chart-box').forEach(box => {
         box.style.order = box.dataset.order;
+        const param = normalizeParam(box.dataset.param);
+        if (param) chartBoxByParam.set(param, box);
     });
     await loadSettings();
     createCharts();
@@ -629,14 +755,18 @@ window.addEventListener("DOMContentLoaded", async () => {
             if (e.target === modal) closeChartModal();
         });
     }
-    const zoomInBtn = document.getElementById('chart-zoom-in');
-    const zoomOutBtn = document.getElementById('chart-zoom-out');
-    const panLeftBtn = document.getElementById('chart-pan-left');
-    const panRightBtn = document.getElementById('chart-pan-right');
-    const resetBtn = document.getElementById('chart-reset');
-    if (zoomInBtn) zoomInBtn.addEventListener('click', () => zoomModal(1.2));
-    if (zoomOutBtn) zoomOutBtn.addEventListener('click', () => zoomModal(0.8));
-    if (panLeftBtn) panLeftBtn.addEventListener('click', () => panModal('left'));
-    if (panRightBtn) panRightBtn.addEventListener('click', () => panModal('right'));
-    if (resetBtn) resetBtn.addEventListener('click', resetModalRange);
+
+    // 차트 박스 클릭 시 해당 파라미터 하이라이트 토글
+    document.querySelectorAll(".chart-box").forEach(box => {
+        box.addEventListener("click", (e) => {
+            if (e.target.closest('.expand-btn') || e.target.closest('.toggle-container') || e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') return;
+            const param = box.dataset.param ? normalizeParam(box.dataset.param) : null;
+            if (param) toggleHighlightForParam(param);
+        });
+    });
+});
+
+window.addEventListener('resize', () => {
+    if (modalChart) modalChart.resize();
+    if (modalChartFallback) modalChartFallback.resize();
 });

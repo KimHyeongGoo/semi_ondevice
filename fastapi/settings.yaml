@@ -1,3 +1,4 @@
-duration: 300
+duration: 60
 hidden_columns: []
 step: 30
+warning_enabled: false

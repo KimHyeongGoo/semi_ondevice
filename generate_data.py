@@ -3,9 +3,13 @@ import time
 import pandas as pd
 from glob import glob
 from datetime import datetime
+import json
+from pathlib import Path
 
-DATA_DIR = '../data'
-OUTPUT_DIR = '../realtimedata'
+BASE_DIR = Path(__file__).resolve().parent
+DATA_DIR = BASE_DIR.parent / 'data'
+OUTPUT_DIR = BASE_DIR.parent / 'realtimedata'
+HEALTH_PATH = BASE_DIR / 'generator_health.json'
 SLEEP_SEC = 1
 
 def load_and_concat_csvs(data_dir):
@@ -28,6 +32,15 @@ def replace_timestamp(row):
     return row
 
 
+def write_health():
+    try:
+        HEALTH_PATH.parent.mkdir(parents=True, exist_ok=True)
+        with open(HEALTH_PATH, 'w', encoding='utf-8') as f:
+            json.dump({"last_tick": datetime.now().isoformat()}, f)
+    except Exception:
+        pass
+
+
 def main():
     df = load_and_concat_csvs(DATA_DIR)
     total_rows = len(df)
@@ -45,6 +58,7 @@ def main():
     row.to_frame().T.to_csv(file_path, index=False, mode='w', header=True)
     line_in_file = 1
     current_idx = (current_idx + 1) % total_rows
+    write_health()
     time.sleep(SLEEP_SEC)
 
     while True:
@@ -55,6 +69,7 @@ def main():
         row.to_frame().T.to_csv(file_path, index=False, mode='a', header=False)
         line_in_file += 1
         current_idx = (current_idx + 1) % total_rows
+        write_health()
         time.sleep(SLEEP_SEC)
 
         if now_hour > prev_hour or (now_hour == '00' and prev_hour == '23'):
@@ -65,6 +80,7 @@ def main():
             row.to_frame().T.to_csv(file_path, index=False, mode='w', header=True)
             line_in_file = 1
             current_idx = (current_idx + 1) % total_rows
+            write_health()
             time.sleep(SLEEP_SEC)
             prev_hour = now_hour
 

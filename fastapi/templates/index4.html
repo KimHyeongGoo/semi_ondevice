@@ -6,11 +6,22 @@
     <title>실시간 이상감지</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+    <script src="/static/lib/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
             margin: 20px;
             background-color: #F7FBFF;
+        }
+
+        .page-surface {
+            background: #F9FAF7;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 18px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
         }
 
 
@@ -46,16 +57,34 @@
         }
 
         .step-info {
-            display: inline-flex;
-            gap: 24px;
+            display: flex;
             align-items: center;
+            justify-content: flex-start;
+            gap: 20px;
             margin-bottom: 16px;
-            padding: 12px 20px;
+            padding: 12px 16px;
             background-color: #AFABAB;
+            border: 1px solid #ccc;
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-            font-size: 16px;
+            font-size: 17px;
             color: #000000;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .step-meta {
+            display: flex;
+            align-items: center;
+            gap: 26px;
+            flex-wrap: wrap;
+        }
+
+        .step-meta span {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 16px;
         }
 
         .step-info span strong {
@@ -72,6 +101,43 @@
             display: flex;
             flex-direction: column;
             gap: 12px;
+        }
+
+        .chart-header-row {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            padding-left: 120px;
+            margin-bottom: -4px;
+        }
+
+        .chart-header {
+            flex: 1;
+            text-align: center;
+            font-weight: bold;
+            font-size: 20px;
+            color: #000;
+        }
+
+        .expand-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 30px;
+            height: 30px;
+            border: 1px solid #1F4E79;
+            border-radius: 6px;
+            background: #ffffff center / 18px 18px no-repeat;
+            cursor: pointer;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 24 24'%3E%3Cg fill='none' stroke='%231F4E79' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 4H4v5m11-5h5v5m0 6v5h-5M9 20H4v-5'/%3E%3Cpath d='M4 4l6 6m10-6l-6 6m6 10l-6-6M4 20l6-6'/%3E%3C/g%3E%3C/svg%3E");
+            z-index: 2;
+        }
+
+        .expand-btn:hover {
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+            transform: translateY(-1px);
         }
 
         .chart-row {
@@ -92,9 +158,23 @@
             border: 2px solid #a6a6a6;
             border-radius: 10px;
             padding: 8px;
-            height: 130px;
+            height: 140px;
             cursor: pointer;
             transition: background 0.2s ease, box-shadow 0.2s ease;
+            position: relative;
+        }
+
+        .chart-badge {
+            position: absolute;
+            top: 6px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.06);
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            color: #000;
+            pointer-events: none;
+            z-index: 2;
         }
 
         .chart-box.highlight {
@@ -105,6 +185,9 @@
         canvas {
             width: 100% !important;
             height: 100% !important;
+            display: block;
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: crisp-edges;
         }
 
         #log-panel {
@@ -125,6 +208,459 @@
         #log-content {
             position: relative;
             padding-left: 16px;
+        }
+
+        #chart-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.45);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 150;
+        }
+
+        #chart-modal .modal-content {
+            width: 90%;
+            max-width: 1100px;
+            background: #fff;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+        }
+
+        #chart-modal .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        #chart-modal #close-modal {
+            border: 1px solid #a6a6a6;
+            background: #f7f7f7;
+            border-radius: 6px;
+            padding: 6px 10px;
+            cursor: pointer;
+        }
+
+        #modal-echart,
+        #modal-canvas {
+            width: 100%;
+            height: 480px;
+            max-height: 80vh;
+        }
+
+        /* 리포트 모달 */
+        #report-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.4);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 400;
+        }
+
+        #report-modal .report-content {
+            width: 80vw;
+            height: 80vh;
+            max-width: 1400px;
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #report-modal .report-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        #report-close {
+            background: transparent;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        .report-summary {
+            background: #F2F2F2;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 12px;
+            line-height: 1.5;
+            white-space: pre-line;
+        }
+
+        .report-tabs {
+            display: grid;
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+            gap: 6px;
+            margin-bottom: 10px;
+        }
+
+        .report-tab {
+            background: #DAE3F3;
+            border: 2px solid #DAE3F3;
+            border-radius: 6px;
+            padding: 8px;
+            text-align: center;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.15s ease, border-color 0.15s ease;
+        }
+
+        .report-tab:hover {
+            background: #B4C7E7;
+            border-color: #002060;
+        }
+
+        .report-tab.active {
+            background: #B4C7E7;
+            border-color: #002060;
+            border-width: 2px;
+        }
+
+        .report-body {
+            flex: 1;
+            min-height: 0;
+            border: 3px solid #1f4e79;
+            border-radius: 8px;
+            padding: 12px;
+            overflow-y: auto;
+            line-height: 1.5;
+            background: #fff;
+        }
+
+        .report-3d-wrap {
+            background: #f9fafb;
+            border: 1px solid #d0d7de;
+            border-radius: 10px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .report-3d-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+
+        .report-3d-canvas {
+            width: 100%;
+            flex: 1 1 auto;
+            min-height: 320px;
+            background: #e5e7eb;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            position: relative;
+        }
+
+        .report-3d-note {
+            margin-top: 8px;
+            font-size: 13px;
+            color: #475569;
+        }
+
+        .report-cause-layout {
+            display: grid;
+            grid-template-columns: 1.35fr 1fr;
+            gap: 12px;
+            align-items: stretch;
+            height: 100%;
+        }
+
+        .report-cause-chart,
+        .report-cause-text {
+            background: #f9fafb;
+            border: 1px solid #d0d7de;
+            border-radius: 10px;
+            padding: 12px;
+        }
+
+        .report-cause-title {
+            font-weight: 700;
+            margin-bottom: 6px;
+            color: #0f172a;
+        }
+
+        .report-cause-chart {
+            height: 100%;
+            min-height: 320px;
+            overflow: hidden;
+        }
+
+        .report-cause-chart canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        .report-cause-text {
+            height: 100%;
+            min-height: 320px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .report-cause-lines {
+            overflow-y: auto;
+            flex: 1 1 auto;
+        }
+
+        .report-cause-badge {
+            display: inline-block;
+            background: #1f4e79;
+            color: #fff;
+            border-radius: 14px;
+            padding: 4px 10px;
+            font-size: 13px;
+            margin-bottom: 8px;
+        }
+
+        .report-cause-lines p {
+            margin: 6px 0;
+        }
+
+        .report-action-block {
+            background: #f9fafb;
+            border: 1px solid #d0d7de;
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 12px;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .report-action-two-col {
+            display: grid;
+            grid-template-columns: 1.1fr 0.9fr;
+            gap: 12px;
+            align-items: start;
+            flex: 1 1 auto;
+        }
+
+        .report-markdown {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 10px 12px;
+            height: 100%;
+            min-height: 320px;
+            overflow-y: auto;
+        }
+
+        .report-markdown img {
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #d0d7de;
+            border-radius: 6px;
+        }
+
+        .report-action-text {
+            line-height: 1.6;
+        }
+
+        .report-action-images {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 10px;
+        }
+
+        .report-action-images.two-col {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .report-action-images.single {
+            grid-template-columns: 1fr;
+        }
+
+        .report-action-list {
+            margin: 6px 0 0;
+            padding-left: 18px;
+            line-height: 1.6;
+        }
+
+        .report-action-list strong {
+            color: #0f172a;
+        }
+
+        .report-action-image {
+            width: 100%;
+            border: 1px solid #d0d7de;
+            border-radius: 8px;
+            background: #ffffff;
+        }
+
+        @media (max-width: 1100px) {
+            .report-cause-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .report-btn {
+            margin-left: auto;
+            padding: 4px 10px;
+            border: 1px solid #1f4e79;
+            background: #f7faff;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        /* 경고 모달 */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.35);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 300;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .warning-box {
+            position: relative;
+            width: 80%;
+            max-width: 700px;
+            background: #FCD6D6;
+            border-radius: 8px;
+            box-shadow: 0 10px 24px rgba(0, 0, 0, 0.25);
+            padding: 24px 24px 16px;
+        }
+
+        .warning-close {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: transparent;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+        }
+
+        .warning-icon {
+            font-size: 80px;
+            color: #FF0000;
+            text-align: center;
+            margin-top: 12px;
+        }
+
+        .warning-title {
+            text-align: center;
+            font-size: 36px;
+            font-weight: 800;
+            color: #FF0000;
+            margin: 8px 0;
+        }
+
+        .warning-desc {
+            text-align: center;
+            font-size: 18px;
+            color: #000;
+            margin-bottom: 20px;
+        }
+
+        .warning-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin-bottom: 14px;
+        }
+
+        .warning-btn-cancel {
+            background: #FFFFFF;
+            border: 1px solid #000000;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+            padding: 10px 26px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            color: #000;
+        }
+
+        .warning-btn-down {
+            background: #FF5D5D;
+            border: none;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+            padding: 10px 26px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .warning-stripe {
+            height: 18px;
+            background: repeating-linear-gradient(45deg, rgba(255, 0, 0, 0.4), rgba(255, 0, 0, 0.4) 8px, transparent 8px, transparent 16px);
+            border-radius: 0 0 8px 8px;
+            margin: 0 -24px -16px;
+        }
+
+        /* 확인 모달 */
+        .confirm-box {
+            position: relative;
+            width: 80%;
+            max-width: 720px;
+            background: #f1e0dc;
+            border-radius: 8px;
+            box-shadow: 0 10px 24px rgba(0, 0, 0, 0.25);
+            padding: 24px 24px 16px;
+        }
+
+        .confirm-inner {
+            background: #fff;
+            border-radius: 10px;
+            padding: 22px;
+            color: #000;
+            text-align: center;
+            line-height: 1.4;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .confirm-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin: 16px 0 8px;
+        }
+
+        .confirm-btn-no {
+            background: #FFFFFF;
+            border: 1px solid #000000;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+            padding: 10px 26px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 700;
+            color: #000;
+        }
+
+        .confirm-btn-yes {
+            background: #FF5D5D;
+            border: none;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+            padding: 10px 26px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 700;
+            color: #fff;
         }
 
         .timeline-entry {
@@ -173,17 +709,122 @@
         }
 
         button {
-            background-color: #005eff82;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            margin: 4px;
-            border-radius: 4px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid #1F4E79;
+            background: #9DC3E6;
+            color: #000;
+            font-weight: 700;
             cursor: pointer;
         }
 
         button:hover {
-            background-color: #0056b3;
+            background: #8ab7df;
+        }
+
+        .step-info span strong {
+            margin-left: 0;
+            padding: 6px 10px;
+            background: #F2F2F2;
+            border: 1px solid #b3b3b3;
+            border-radius: 6px;
+        }
+
+        .warning-toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .device-status-wrap {
+            margin-left: auto;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 700;
+        }
+
+        .device-toggle {
+            display: inline-flex;
+            align-items: stretch;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid #548235;
+        }
+
+        .device-toggle.down-active {
+            border-color: #FF0000;
+        }
+
+        .device-toggle .state {
+            padding: 6px 14px;
+            font-weight: 700;
+            border-right: 1px solid #cbd5e1;
+            background: #f2f2f2;
+            color: #000;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 70px;
+        }
+
+        .device-toggle .state:last-child {
+            border-right: none;
+        }
+
+        .device-toggle .state.active.run {
+            background: #C5E0B4;
+            color: #1f5126;
+        }
+
+        .device-toggle .state.active.down {
+            background: #FBE5D6;
+            color: #8b0000;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 40px;
+            height: 20px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 20px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 14px;
+            width: 14px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked+.slider {
+            background-color: #2196F3;
+        }
+
+        input:checked+.slider:before {
+            transform: translateX(20px);
         }
     </style>
 </head>
@@ -196,28 +837,110 @@
         <a href="/index3.html" class="{% if active_tab == 'index3' %}active{% endif %}">과거 공정 이력 검색</a>
         <a href="/index2.html" class="{% if active_tab == 'index2' %}active{% endif %}">공정 결과 추론</a>
     </div>
-    <h2>실시간 이상감지</h2>
-    <div class="step-info">
-        <span>STEP ID: <strong id="current-step-id">-</strong></span>
-        <span>STEP NAME: <strong id="current-step-name">-</strong></span>
-        <span><button id="toggle-datasets"></button></span>
-    </div>
-    <div id="layout-container">
-        <div id="charts-container">
-            {% for col in columns %}
-            {% set safe = col.replace(' ', '_').replace('.', '_').replace('-', '_') %}
-            <div class="chart-row" data-param="{{ col }}">
-                <div class="param-label">{{ col }}</div>
-                <div class="chart-box" data-type="process"><canvas id="proc-{{ safe }}" width="400"
-                        height="120"></canvas></div>
-                <div class="chart-box" data-type="recent"><canvas id="recent-{{ safe }}" width="400"
-                        height="120"></canvas></div>
-            </div>
-            {% endfor %}
+    <div class="page-surface">
+        <h2>실시간 이상감지</h2>
+        <div class="step-info">
+            <span>STEP ID: <strong id="current-step-id">-</strong></span>
+            <span>STEP NAME: <strong id="current-step-name">-</strong></span>
+            <span>데이터 출력: <button id="toggle-datasets"></button></span>
+            <span class="warning-toggle">
+                경고 팝업
+                <label class="switch">
+                    <input type="checkbox" id="warning-toggle" checked>
+                    <span class="slider"></span>
+                </label>
+            </span>
+            <span class="device-status-wrap">
+                <span>장비 상태</span>
+                <span class="device-toggle" id="device-toggle">
+                    <span class="state run" id="device-state-run">RUN</span>
+                    <span class="state down" id="device-state-down">DOWN</span>
+                </span>
+            </span>
         </div>
-        <div id="log-panel">
-            <label>공정 파라미터 이상 감지 로그</label>
-            <div id="log-content"></div>
+        <div id="layout-container">
+            <div id="charts-container">
+                <div class="chart-header-row">
+                    <div style="width: 120px;"></div>
+                    <div class="chart-header">최근 5분 데이터</div>
+                    <div class="chart-header">최근 1분 데이터</div>
+                </div>
+                {% for col in columns %}
+                {% set safe = col.replace(' ', '_').replace('.', '_').replace('-', '_') %}
+                <div class="chart-row" data-param="{{ col }}">
+                    <div class="param-label">{{ col }}</div>
+                    <div class="chart-box" data-type="process">
+                        <button class="expand-btn" data-param="{{ col }}" data-kind="process"
+                            aria-label="차트 확대"></button>
+                        <canvas id="proc-{{ safe }}"></canvas>
+                    </div>
+                    <div class="chart-box" data-type="recent">
+                        <button class="expand-btn" data-param="{{ col }}" data-kind="recent"
+                            aria-label="차트 확대"></button>
+                        <canvas id="recent-{{ safe }}"></canvas>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            <div id="log-panel">
+                <label>공정 파라미터 이상 감지 로그</label>
+                <div id="log-content"></div>
+            </div>
+        </div>
+        <div id="warning-modal" class="modal-overlay">
+            <div class="warning-box">
+                <button class="warning-close" id="warning-close">×</button>
+                <div class="warning-icon">⚠️</div>
+                <div class="warning-title">WARNING !</div>
+                <div class="warning-desc"><strong id="warning-param"></strong> 이상 감지</div>
+                <div class="warning-actions">
+                    <button class="warning-btn-cancel" id="warning-cancel">Cancel</button>
+                    <button class="warning-btn-down" id="warning-down">장비 Down</button>
+                </div>
+                <div class="warning-stripe"></div>
+            </div>
+        </div>
+        <div id="report-modal">
+            <div class="report-content">
+                <div class="report-header">
+                    <div>이상 로그 REPORT</div>
+                    <button id="report-close">×</button>
+                </div>
+                <div class="report-summary" id="report-summary"></div>
+                <div class="report-tabs">
+                    <div class="report-tab" data-tab="cause">원인 진단</div>
+                    <div class="report-tab" data-tab="action">조치 방법</div>
+                    <div class="report-tab" data-tab="parts">부품 확인</div>
+                    <div class="report-tab" data-tab="drawing">도면(이상 위치)</div>
+                    <div class="report-tab" data-tab="process">공정 단계 설명</div>
+                </div>
+                <div class="report-body" id="report-body">내용이 없습니다.</div>
+            </div>
+        </div>
+        <div id="confirm-modal" class="modal-overlay">
+            <div class="confirm-box">
+                <button class="warning-close" id="confirm-close">×</button>
+                <div class="confirm-inner">
+                    <p style="margin: 6px 0;">⚠ 장비 <strong>DOWN</strong>은 즉시 실행되며 되돌릴 수 없습니다.</p>
+                    <p style="margin: 6px 0;">공정/장비에 심각한 영향이 발생할 수 있습니다.</p>
+                    <p style="margin: 10px 0;">정말로 <strong>DOWN</strong>을 진행하시겠습니까?</p>
+                </div>
+                <div class="confirm-actions">
+                    <button class="confirm-btn-no" id="confirm-no">NO</button>
+                    <button class="confirm-btn-yes" id="confirm-yes">YES</button>
+                </div>
+                <div class="warning-stripe"></div>
+            </div>
+        </div>
+        <div id="chart-modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div id="modal-title" style="font-weight:bold; font-size:16px;"></div>
+                    <button id="close-modal">닫기</button>
+                </div>
+                <div id="modal-echart"></div>
+                <canvas id="modal-canvas" style="display:none;" height="400"></canvas>
+            </div>
         </div>
     </div>
     <script>

@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>STANDARD 공정 셋팅값 비교</title>
+    <title>과거 공정 이력 검색</title>
     <!-- Use the UMD build so Chart is available globally -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
@@ -12,6 +12,14 @@
             font-family: Arial, sans-serif;
             margin: 20px;
             background-color: #F7FBFF;
+        }
+
+        .page-surface {
+            background: #F9FAF7;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 18px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
         }
 
         .navbar {
@@ -54,7 +62,7 @@
             flex-wrap: wrap;
             gap: 16px;
             align-items: flex-end;
-            background: #ffffff;
+            background: #E7E6E6;
             border: 1px solid #d1d5db;
             border-radius: 8px;
             padding: 16px;
@@ -82,41 +90,111 @@
             background-color: #fff;
         }
 
+        .control-group select {
+            padding: 8px 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+            background-color: #fff;
+            height: 38px;
+        }
+
         .parameters-group {
             flex: 1 1 100%;
         }
 
-        #parameter-list {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px 16px;
-            max-height: 150px;
-            overflow-y: auto;
-            padding: 10px;
-            border: 1px solid #e0e0e0;
-            border-radius: 6px;
-            background: #f8f9fa;
-        }
-
-        .param-option {
+        .category-row {
             display: flex;
             align-items: center;
-            gap: 6px;
-            font-size: 14px;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 8px;
         }
 
-        .controls button {
-            padding: 8px 16px;
-            background-color: #007bff;
-            color: #fff;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
+        .category-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+            flex: 0 0 auto;
+        }
+
+        .param-sections {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .param-row {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .param-title {
             font-weight: bold;
+            min-width: 90px;
         }
 
-        .controls button.secondary {
-            background-color: #6c757d;
+        .param-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .category-btn,
+        .param-btn {
+            padding: 8px 14px;
+            border: 1px solid #A6A6A6;
+            background: #FFFFFF;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            min-width: 160px;
+            color: #000000;
+            transition: background 0.2s, color 0.2s;
+        }
+
+        .category-btn:hover,
+        .category-btn.active {
+            background: #A6A6A6;
+            color: #FFFFFF;
+        }
+
+        .param-btn {
+            border-style: dashed;
+            font-weight: 500;
+        }
+
+        .param-btn:hover,
+        .param-btn.active {
+            background: #A6A6A6;
+            color: #FFFFFF;
+        }
+
+        .action-buttons button {
+            padding: 8px 12px;
+            background-color: #9DC3E6;
+            color: #000000;
+            border: 1px solid #1F4E79;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            min-width: 160px;
+            text-align: center;
+        }
+
+        .action-buttons button.secondary {
+            background-color: #655f5fd8;
+            color: #ffffff;
+            border-color: #655f5fd8;
         }
 
         .controls button:disabled {
@@ -158,6 +236,12 @@
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
         }
 
+        .chart-card.chart-selected {
+            border: 2px solid #FF0000;
+            background: #FBE5D6;
+            box-shadow: 0 0 0 1px #FF0000 inset, 0 1px 3px rgba(0, 0, 0, 0.08);
+        }
+
         .chart-header {
             display: flex;
             justify-content: space-between;
@@ -184,11 +268,12 @@
 
         #log-area {
             flex: 1;
-            background: #ffffff;
-            border: 1px solid #dcdcdc;
-            border-radius: 8px;
+            border: 2px solid #E7E6E6;
             padding: 16px;
-            max-height: 80vh;
+            border-radius: 12px;
+            background: #E7E6E6;
+            max-height: none;
+            height: auto;
             overflow-y: auto;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
         }
@@ -198,34 +283,47 @@
             margin-bottom: 12px;
         }
 
-        .log-entry {
-            border-bottom: 1px solid #e5e5e5;
-            padding: 10px 0;
+        .timeline-entry {
+            position: relative;
+            display: flex;
+            gap: 12px;
+            padding: 12px 16px;
+            margin-left: 4px;
+            margin-bottom: 12px;
+            background: #f2f2f2;
+            border: 1px solid transparent;
+            border-radius: 12px;
+            transition: background 0.2s ease, transform 0.2s ease;
         }
 
-        .log-entry:last-child {
-            border-bottom: none;
+        .timeline-icon {
+            font-size: 20px;
+            color: #FF0000;
+            line-height: 1;
+            flex-shrink: 0;
+            margin-top: 2px;
         }
 
-        .log-time {
+        .timeline-body {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .timeline-time {
+            font-size: 14px;
             font-weight: bold;
-            color: #333;
+            color: #000000;
         }
 
-        .log-parameter {
-            color: #007bff;
-            font-weight: bold;
-            margin-top: 4px;
+        .timeline-text {
+            font-size: 15px;
+            color: #000000;
         }
 
-        .log-message {
-            margin-top: 6px;
-            background: #f5f5f5;
-            padding: 8px;
-            border-radius: 4px;
-            white-space: pre-wrap;
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 13px;
+        .timeline-entry.log-selected {
+            background: #FBE5D6;
+            border-color: #FF0000;
         }
 
         @media (max-width: 1200px) {
@@ -249,38 +347,56 @@
         <a href="/index3.html" class="{% if active_tab == 'index3' %}active{% endif %}">과거 공정 이력 검색</a>
         <a href="/index2.html" class="{% if active_tab == 'index2' %}active{% endif %}">공정 결과 추론</a>
     </div>
-    <h2>과거 공정 이력 검색</h2>
+    <div class="page-surface">
+        <h2>과거 공정 이력 검색</h2>
 
-    <div class="controls">
-        <div class="control-group">
-            <label for="startTime">시작 시간</label>
-            <input type="datetime-local" id="startTime" />
-        </div>
-        <div class="control-group">
-            <label for="endTime">종료 시간</label>
-            <input type="datetime-local" id="endTime" />
-        </div>
-        <div class="control-group parameters-group">
-            <label>파라미터 선택</label>
-            <div id="parameter-list"></div>
-            <div style="display: flex; gap: 8px; margin-top: 8px;">
-                <button type="button" id="selectAll" class="secondary">전체 선택</button>
-                <button type="button" id="clearAll" class="secondary">전체 해제</button>
+        <div class="controls">
+            <div class="control-group">
+                <label for="startTime">시작 시간</label>
+                <input type="datetime-local" id="startTime" />
+            </div>
+            <div class="control-group">
+                <label for="endTime">종료 시간</label>
+                <input type="datetime-local" id="endTime" />
+            </div>
+            <div class="control-group">
+                <label for="stepFilter">STEP NAME</label>
+                <select id="stepFilter">
+                    <option value="all">pre-NH3</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label for="sortOrder">로그출력순서</label>
+                <select id="sortOrder">
+                    <option value="desc">최신순</option>
+                    <option value="asc">과거순</option>
+                </select>
+            </div>
+            <div class="control-group parameters-group">
+                <label>파라미터 선택</label>
+                <div class="category-row">
+                    <div class="category-buttons" id="category-buttons"></div>
+                    <div class="action-buttons">
+                        <button type="button" id="selectAll" class="secondary">전체 선택</button>
+                        <button type="button" id="clearAll" class="secondary">전체 해제</button>
+                        <button type="button" id="searchBtn">검색</button>
+                    </div>
+                </div>
+                <div class="param-sections" id="param-sections"></div>
+            </div>
+            <div class="control-group" style="min-width: auto;">
+                <div id="status-message"></div>
             </div>
         </div>
-        <div class="control-group" style="min-width: auto;">
-            <button type="button" id="searchBtn">검색</button>
-            <div id="status-message"></div>
-        </div>
-    </div>
 
-    <div id="layout-container">
-        <div id="charts-area">
-            <div id="charts-container"></div>
-        </div>
-        <div id="log-area">
-            <h3>이상 로그</h3>
-            <div id="log-list"></div>
+        <div id="layout-container">
+            <div id="charts-area">
+                <div id="charts-container"></div>
+            </div>
+            <div id="log-area">
+                <h3>공정 파라미터 이상 감지 이력</h3>
+                <div id="log-list"></div>
+            </div>
         </div>
     </div>
 

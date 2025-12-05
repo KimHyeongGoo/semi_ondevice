@@ -7,8 +7,26 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            margin: 20px;
+            margin: 0;
+            padding: 20px;
             background-color: #F7FBFF;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .page-surface {
+            background: #F9FAF7;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 18px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            flex: 1;
+            height: calc(100vh - 40px);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            transform-origin: top center;
         }
 
         .navbar {
@@ -46,14 +64,29 @@
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
             gap: 16px;
+            flex: 1;
+            min-height: 0;
+            overflow: auto;
+            padding-right: 4px;
         }
 
         .page-nav {
             display: flex;
             justify-content: center;
             align-items: center;
-            margin-top: 10px;
             gap: 20px;
+            padding-top: 10px;
+            position: sticky;
+            bottom: 0;
+            background: linear-gradient(180deg, rgba(249, 250, 247, 0) 0%, #F9FAF7 40%);
+            padding-bottom: 6px;
+        }
+
+        .scale-warning {
+            display: none;
+            text-align: center;
+            font-size: 12px;
+            color: #555;
         }
 
         .page-nav button {
@@ -92,8 +125,13 @@
         .thickness-table th,
         .thickness-table td {
             border: 1px solid #ccc;
-            padding: 4px;
+            padding: clamp(6px, 1.2vh, 16px);
+            min-height: clamp(28px, 2vh, 52px);
             text-align: center;
+        }
+
+        .thickness-table {
+            table-layout: fixed;
         }
 
         .thickness-table th {
@@ -184,7 +222,7 @@
         }
 
         #heatmap-modal .modal-content {
-            background: #fff;
+            background: #FFFFFF;
             border-radius: 12px;
             width: 90%;
             max-width: 1200px;
@@ -254,42 +292,76 @@
         <a href="/index3.html" class="{% if active_tab == 'index3' %}active{% endif %}">과거 공정 이력 검색</a>
         <a href="/index2.html" class="{% if active_tab == 'index2' %}active{% endif %}">공정 결과 추론</a>
     </div>
-    <h2>웨이퍼 박막 두께값 추론 결과</h2>
-    <div class="filter-bar">
-        <div class="filter-group">
-            <label>공정번호</label>
-            <input type="number" id="proc-start" placeholder="시작">
-            <span>~</span>
-            <input type="number" id="proc-end" placeholder="끝">
-        </div>
-        <div class="filter-group">
-            <label>시작일</label>
-            <input type="datetime-local" id="date-start">
-        </div>
-        <div class="filter-group">
-            <label>종료일</label>
-            <input type="datetime-local" id="date-end">
-        </div>
-        <div class="filter-actions">
-            <button id="filter-apply">검색</button>
-            <button id="filter-reset">전체보기</button>
-        </div>
-    </div>
-    <div id="process-container" class="process-container"></div>
-    <div class="page-nav">
-        <button id="prevPage">◀</button>
-        <button id="nextPage">▶</button>
-    </div>
-    <div id="heatmap-modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Wafer Map</h3>
+    <div class="page-surface" id="page-surface">
+        <h2>웨이퍼 박막 두께값 추론 결과</h2>
+        <div class="filter-bar">
+            <div class="filter-group">
+                <label>공정번호</label>
+                <input type="number" id="proc-start" placeholder="시작">
+                <span>~</span>
+                <input type="number" id="proc-end" placeholder="끝">
             </div>
-            <div id="heatmap-modal-image"></div>
-            <div id="heatmap-modal-table"></div>
+            <div class="filter-group">
+                <label>시작일</label>
+                <input type="datetime-local" id="date-start">
+            </div>
+            <div class="filter-group">
+                <label>종료일</label>
+                <input type="datetime-local" id="date-end">
+            </div>
+            <div class="filter-actions">
+                <button id="filter-apply">검색</button>
+                <button id="filter-reset">전체보기</button>
+            </div>
+        </div>
+        <div id="process-container" class="process-container"></div>
+        <div class="page-nav">
+            <button id="prevPage">◀</button>
+            <button id="nextPage">▶</button>
+        </div>
+        <div class="scale-warning" id="scale-warning">화면에 맞추기 위해 화면 배율이 축소되었습니다.</div>
+        <div id="heatmap-modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Wafer Map</h3>
+                </div>
+                <div id="heatmap-modal-image"></div>
+                <div id="heatmap-modal-table"></div>
+            </div>
         </div>
     </div>
 
+    <script>
+        // 페이지 내용이 뷰포트보다 클 때 전체를 축소해서 스크롤 없이 보이게 함
+        (function () {
+            const surface = document.getElementById('page-surface');
+            const warning = document.getElementById('scale-warning');
+            const PADDING_TOTAL = 40; // body padding 20px * 2
+
+            function fitToViewport() {
+                if (!surface) return;
+                surface.style.transform = 'none';
+                surface.style.height = 'calc(100vh - 40px)';
+
+                const available = window.innerHeight - PADDING_TOTAL;
+                const needed = surface.scrollHeight;
+                if (needed <= available) {
+                    if (warning) warning.style.display = 'none';
+                    return;
+                }
+
+                const scale = Math.max(0.75, Math.min(1, available / needed));
+                surface.style.transform = `scale(${scale})`;
+                surface.style.height = `${available / scale}px`;
+                surface.style.width = `calc((100% - ${PADDING_TOTAL}px) / ${scale})`;
+
+                if (warning) warning.style.display = 'block';
+            }
+
+            window.addEventListener('resize', fitToViewport);
+            document.addEventListener('DOMContentLoaded', fitToViewport);
+        })();
+    </script>
     <script src="/static/trace.js" defer></script>
 </body>
 

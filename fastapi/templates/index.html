@@ -5,11 +5,20 @@
     <title>실시간 파라미터 예측</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
             margin: 20px;
             background-color: #F7FBFF;
+        }
+
+        .page-surface {
+            background: #F9FAF7;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 18px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
         }
 
         h2 {
@@ -46,6 +55,12 @@
             border-radius: 10px;
         }
 
+        .chart-box.highlight {
+            background: #FBE5D6;
+            border: 2px solid #FF0000;
+            box-shadow: 0 0 0 1px #FF0000;
+        }
+
         canvas {
 
             width: 100% !important;
@@ -64,50 +79,71 @@
 
         #log-panel {
             flex: 1;
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-start;
-            align-items: flex-start;
-            border: 1px solid #ccc;
-            padding: 12px;
-            border-radius: 8px;
-            background-color: #ffffff;
+            border: 2px solid #E7E6E6;
+            padding: 16px;
+            border-radius: 12px;
+            background: #E7E6E6;
             overflow-y: auto;
-            white-space: pre-wrap;
-            text-align: left;
         }
 
         #log-panel label {
-            margin: 0 0 8px 0;
             font-weight: bold;
-            text-align: left;
+            display: block;
+            margin-bottom: 12px;
         }
 
         #log-content {
-            text-align: left;
-            width: 100%;
+            position: relative;
+            padding-left: 0;
         }
 
-        .log-entry {
+        .timeline-entry {
+            position: relative;
+            display: flex;
+            gap: 12px;
+            padding: 12px 16px;
+            margin-bottom: 12px;
+            background: #f7f7f7;
+            border-radius: 12px;
+            border: 1px solid #e0e0e0;
+            cursor: pointer;
+            transition: background 0.2s ease, transform 0.2s ease;
+        }
+
+        .timeline-entry.highlight {
+            background: #FBE5D6;
+            border: 1px solid #FF0000;
+            box-shadow: 0 0 0 1px #FF0000;
+        }
+
+        .timeline-icon {
+            font-size: 20px;
+            color: #FF0000;
+            line-height: 1;
+            flex-shrink: 0;
+            margin-top: 2px;
+            display: flex;
+            align-items: center;
+        }
+
+        .timeline-body {
             display: flex;
             flex-direction: column;
-            gap: 6px;
-            padding: 10px 12px;
-            margin-bottom: 10px;
-            background: #f2f2f2;
-            border-radius: 8px;
-            border: 1px solid #ddd;
+            gap: 4px;
+            align-items: flex-start;
+        }
+
+        .timeline-time {
             font-size: 14px;
-            line-height: 1.4;
-        }
-
-        .log-entry .log-time {
             font-weight: bold;
-            color: #333;
+            color: #000000;
+            min-width: 70px;
         }
 
-        .log-entry .log-msg {
-            color: #000;
+        .timeline-text {
+            font-size: 15px;
+            color: #000000;
+            white-space: pre-wrap;
         }
 
         #settings-modal {
@@ -501,30 +537,11 @@
             cursor: pointer;
         }
 
+        #modal-echart,
         #modal-canvas {
             width: 100%;
             height: 480px;
-        }
-
-        .chart-tools {
-            display: flex;
-            gap: 6px;
-            align-items: center;
-        }
-
-        .chart-tool-btn {
-            width: 36px;
-            height: 32px;
-            border-radius: 6px;
-            border: 1px solid #1F4E79;
-            background: #9DC3E6;
-            color: #000;
-            font-weight: 700;
-            cursor: pointer;
-        }
-
-        .chart-tool-btn:hover {
-            background: #8ab7df;
+            max-height: 80vh;
         }
     </style>
 </head>
@@ -537,84 +554,88 @@
         <a href="/index3.html" class="{% if active_tab == 'index3' %}active{% endif %}">과거 공정 이력 검색</a>
         <a href="/index2.html" class="{% if active_tab == 'index2' %}active{% endif %}">공정 결과 추론</a>
     </div>
-    <h2>실시간 파라미터 예측</h2>
-    <div class="step-info">
-        <div class="step-meta">
-            <span>STEP ID: <strong id="current-step-id">-</strong></span>
-            <span>STEP NAME: <strong id="current-step-name">-</strong></span>
-            <label for="duration-select">표시 기간</label>
-            <select id="duration-select">
-                <option value="60">1분</option>
-                <option value="300" selected>5분</option>
-                <option value="600">10분</option>
-                <option value="3600">1시간</option>
-            </select>
-            <label for="step-select">예측 시점</label>
-            <select id="step-select">
-                <option value="10" selected>10초 후</option>
-                <option value="20">20초 후</option>
-                <option value="30">30초 후</option>
-            </select>
-            <button id="open-settings">Step별 상/하한 설정</button>
+    <div class="page-surface">
+        <h2>실시간 파라미터 예측</h2>
+        <div class="step-info">
+            <div class="step-meta">
+                <span>STEP ID: <strong id="current-step-id">-</strong></span>
+                <span>STEP NAME: <strong id="current-step-name">-</strong></span>
+                <label for="duration-select">표시 기간</label>
+                <select id="duration-select">
+                    <option value="60">1분</option>
+                    <option value="300" selected>5분</option>
+                    <option value="600">10분</option>
+                    <option value="3600">1시간</option>
+                </select>
+                <label for="step-select">예측 시점</label>
+                <select id="step-select">
+                    <option value="10" selected>10초 후</option>
+                    <option value="20">20초 후</option>
+                    <option value="30">30초 후</option>
+                </select>
+                <button id="open-settings">Step별 상/하한 설정</button>
+            </div>
         </div>
-    </div>
-    <br>
+        <br>
 
 
-    <div id="layout-container">
-        <div id="charts-container">
-            {% for col in columns %}
-            <div id="chart-box-{{ col }}" class="chart-box" data-order="{{ loop.index }}">
-                <button class="expand-btn" data-col="{{ col }}" aria-label="차트 확대"></button>
-                <label class="chart-title"><strong>{{ col }}</strong></label>
-                <div class="toggle-container">
-                    <span class="toggle-text">숨기기</span>
-                    <label class="switch">
-                        <input type="checkbox" class="toggle-chart" data-col="{{ col }}" checked>
-                        <span class="slider"></span>
-                    </label>
+        <div id="layout-container">
+            <div id="charts-container">
+                {% for col in columns %}
+                <div id="chart-box-{{ col }}" class="chart-box" data-order="{{ loop.index }}" data-param="{{ col }}">
+                    <button class="expand-btn" data-col="{{ col }}" aria-label="차트 확대"></button>
+                    <label class="chart-title"><strong>{{ col }}</strong></label>
+                    <div class="toggle-container">
+                        <span class="toggle-text">숨기기</span>
+                        <label class="switch">
+                            <input type="checkbox" class="toggle-chart" data-col="{{ col }}" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <canvas id="chart-{{ col }}"></canvas>
                 </div>
-                <canvas id="chart-{{ col }}"></canvas>
+                {% endfor %}
             </div>
-            {% endfor %}
+
+            <div id="log-panel">
+                <label>공정 파라미터 이상 예측 로그</label>
+                <div id="log-content"></div>
+            </div>
         </div>
 
-        <div id="log-panel">
-            <label><strong>이벤트 로그</strong></label>
-            <div id="log-content">()</div>
-        </div>
-    </div>
-
-    <div id="settings-modal">
-        <div class="settings-header">
-            <h3 style="margin: 0;">Step별 상/하한 설정</h3>
-            <div class="settings-actions">
-                <button id="save-settings" class="settings-btn primary">저장 및 적용</button>
-                <button id="close-settings" class="settings-btn secondary"
-                    onclick="document.getElementById('settings-modal').style.display='none'">닫기</button>
+        <div id="settings-modal">
+            <div class="settings-header">
+                <h3 style="margin: 0;">Step별 상/하한 설정</h3>
+                <div class="settings-actions">
+                    <button id="save-settings" class="settings-btn primary">저장 및 적용</button>
+                    <button id="close-settings" class="settings-btn secondary"
+                        onclick="document.getElementById('settings-modal').style.display='none'">닫기</button>
+                </div>
+            </div>
+            <div class="settings-row" style="margin-top: 4px;">
+                <h4>Parameter 선택</h4>
+            </div>
+            <div class="settings-row">
+                <strong>분류</strong>
+                <div id="category-buttons" class="settings-row"></div>
+            </div>
+            <div class="settings-row">
+                <strong>Parameter</strong>
+                <div id="param-buttons" class="settings-row"></div>
+            </div>
+            <div class="settings-table-wrap">
+                <div id="settings-form"></div>
             </div>
         </div>
-        <div class="settings-row" style="margin-top: 4px;">
-            <h4>Parameter 선택</h4>
-        </div>
-        <div class="settings-row">
-            <strong>분류</strong>
-            <div id="category-buttons" class="settings-row"></div>
-        </div>
-        <div class="settings-row">
-            <strong>Parameter</strong>
-            <div id="param-buttons" class="settings-row"></div>
-        </div>
-        <div class="settings-table-wrap">
-            <div id="settings-form"></div>
-        </div>
-    </div>
-    <div id="chart-modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <div class="modal-title" id="modal-title"></div>
+        <div id="chart-modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div class="modal-title" id="modal-title"></div>
+                    <button id="close-modal">닫기</button>
+                </div>
+                <div id="modal-echart"></div>
+                <canvas id="modal-canvas" style="display:none;" height="400"></canvas>
             </div>
-            <canvas id="modal-canvas" height="400"></canvas>
         </div>
     </div>
     <script src="/static/chart.js" defer></script>

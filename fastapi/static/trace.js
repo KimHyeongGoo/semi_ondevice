@@ -149,20 +149,18 @@ function attachHeatmapClicks(scope, proc) {
 
 let allData = [];
 let pageIndex = 0;
-let pageSize = 5;
+let pageSize = 2;
 let filteredData = [];
 
 function calcLayout() {
-    const container = document.getElementById('process-container');
-    const boxWidth = 320 + 16; // width + gap
-    const cols = Math.max(1, Math.floor(container.clientWidth / boxWidth));
-    pageSize = Math.max(1, Math.min(5, cols)); // 한 줄 최대 5개
+    // 고정 2개씩 표시
+    pageSize = 2;
 }
 
 function renderPage() {
     const container = document.getElementById('process-container');
     container.innerHTML = '';
-    if (pageSize <= 0) pageSize = 5;
+    if (pageSize <= 0) pageSize = 2;
     const start = pageIndex * pageSize;
     const slice = filteredData.slice(start, start + pageSize);
     slice.forEach(proc => {
@@ -189,7 +187,7 @@ function renderPage() {
 
 function updateLayout() {
     calcLayout();
-    if (pageSize <= 0) pageSize = 5;
+    if (pageSize <= 0) pageSize = 2;
     const totalPages = Math.max(1, Math.ceil(filteredData.length / pageSize));
     if (pageIndex > totalPages - 1) pageIndex = Math.max(0, totalPages - 1);
     renderPage();
@@ -202,7 +200,7 @@ async function fetchData() {
     allData = data;
     filteredData = [...allData];
     calcLayout();
-    pageIndex = Math.max(0, Math.ceil(filteredData.length / pageSize) - 1);
+    pageIndex = 0; // 가장 오래된 공정부터 시작
     renderPage();
     fetchCurrentStepInfo();
 }
@@ -222,7 +220,7 @@ function applyFilters() {
         return ok;
     });
     calcLayout();
-    pageIndex = Math.max(0, Math.ceil(filteredData.length / pageSize) - 1);
+    pageIndex = 0; // 필터 적용 후에도 첫 페이지(가장 오래된 공정)부터 표시
     renderPage();
 }
 
@@ -255,7 +253,7 @@ window.addEventListener('DOMContentLoaded', () => {
         }
     });
     document.getElementById('nextPage').addEventListener('click', () => {
-        if (pageSize <= 0) pageSize = 5;
+        if (pageSize <= 0) pageSize = 2;
         const totalPages = Math.max(1, Math.ceil(filteredData.length / pageSize));
         if (pageIndex < totalPages - 1) {
             pageIndex++;

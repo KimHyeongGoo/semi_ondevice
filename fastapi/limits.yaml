@@ -421,8 +421,8 @@ MFC7_DCS:
     max: 1
     min: -1
   '110':
-    max: 1.7
-    min: -0.5
+    max: 1.8
+    min: -1
   '111':
     max: 1.7
     min: -0.5
@@ -509,7 +509,7 @@ MFC7_DCS:
     max: 1
     min: -1
   all:
-    max: 1.8
+    max: 10
     min: -1
 MFC8_NH3:
   '0':
