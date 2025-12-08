@@ -14,6 +14,7 @@ let warningModalOpen = false;
 let modalChart = null; // ECharts instance for modal
 let modalChartFallback = null; // Chart.js fallback when ECharts unavailable
 let modalInfo = null;
+let modalFrozen = false;
 const warningToggleKey = 'anomalyWarningEnabled';
 let warningEnabled = true;
 let settingsCache = {};
@@ -161,6 +162,19 @@ function formatTime(ts) {
     return d.toLocaleTimeString('ko-KR', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
 }
 
+function toMillis(ts) {
+    if (ts === null || ts === undefined) return null;
+    const num = Number(ts);
+    if (Number.isFinite(num)) {
+        // 10자리 초 단위 입력을 ms로 변환
+        if (num > 0 && num < 1e11) return num * 1000;
+        return num;
+    }
+    const d = new Date(ts);
+    const v = d.getTime();
+    return Number.isNaN(v) ? null : v;
+}
+
 function parseTimestamp(ts) {
     if (ts instanceof Date) return ts;
     if (typeof ts === 'number') return new Date(ts);
@@ -272,10 +286,9 @@ function getEntryKey(param, entry) {
 
 function formatTimelineTime(ts) {
     const d = new Date(ts);
-    if (Number.isNaN(d.getTime())) {
-        return '-';
-    }
-    return d.toLocaleTimeString('ko-KR', { hour12: false });
+    if (Number.isNaN(d.getTime())) return '-';
+    const pad = (n) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}년 ${pad(d.getMonth() + 1)}월 ${pad(d.getDate())}일 ${pad(d.getHours())}시 ${pad(d.getMinutes())}분 ${pad(d.getSeconds())}초`;
 }
 
 function buildLogText(param, entry) {
@@ -310,8 +323,8 @@ function normalizeLogEntry(item) {
     if (!param) return null;
     const startStr = parsed.start || item.start_time || item.timestamp;
     const endStr = parsed.end || item.end_time || item.timestamp;
-    const startMs = startStr ? new Date(startStr).getTime() : null;
-    const endMs = endStr ? new Date(endStr).getTime() : null;
+    const startMs = toMillis(startStr);
+    const endMs = toMillis(endStr);
     return {
         param,
         entry: {
@@ -323,7 +336,7 @@ function normalizeLogEntry(item) {
             step_name: parsed.step_name || [],
             actual_value: parsed.actual_value ?? null,
             predicted_value: parsed.predicted_value ?? null,
-            peak_time: parsed.peak_time ? new Date(parsed.peak_time).getTime() : null,
+            peak_time: toMillis(parsed.peak_time),
             violation_type: parsed.violation_type ?? item.violation_type ?? null,
             violation_type: parsed.violation_type ?? item.violation_type ?? null,
         },
@@ -365,6 +378,12 @@ function getHighlightRegions(param, startMs, endMs) {
         start: Math.max(e.start ?? -Infinity, startMs),
         end: Math.min(e.end ?? Infinity, endMs),
     })).filter(r => Number.isFinite(r.start) && Number.isFinite(r.end) && r.end > r.start);
+}
+
+function updateTimeRangeLabel(startMs, endMs) {
+    const el = document.getElementById('chart-time-range');
+    if (!el) return;
+    el.textContent = `조회 구간: ${formatTimelineTime(startMs)} ~ ${formatTimelineTime(endMs)}`;
 }
 
 function applyHighlightState() {
@@ -582,6 +601,7 @@ function updateCharts(col, data) {
     setDatasetVisibility(rChart, visibilityMode);
     rChart.update();
 
+    refreshModalIfNeeded(col);
 }
 
 function cloneDatasets(chart) {
@@ -591,7 +611,12 @@ function cloneDatasets(chart) {
     }));
 }
 
-function openChartModal(param, kind) {
+function refreshModalIfNeeded(col) {
+    if (!modalInfo || modalFrozen || modalInfo.param !== col) return;
+    renderModalChart(modalInfo.param, modalInfo.kind, false);
+}
+
+function renderModalChart(param, kind, showModal) {
     const modal = document.getElementById('chart-modal');
     const title = document.getElementById('modal-title');
     const container = document.getElementById('modal-echart');
@@ -599,23 +624,20 @@ function openChartModal(param, kind) {
     if (!modal || !title || !container || !fallbackCanvas) return;
     const source = kind === 'recent' ? recentCharts[param] : processCharts[param];
     if (!source) return;
-    modal.style.display = 'flex'; // 먼저 열어 컨테이너 크기 확보
     const datasets = cloneDatasets(source);
     const regions = source.options?.plugins?.highlightRegion?.regions || [];
     const canUseEcharts = typeof echarts !== 'undefined';
 
-    // reset visibility
     container.style.display = canUseEcharts ? 'block' : 'none';
     fallbackCanvas.style.display = canUseEcharts ? 'none' : 'block';
+    if (showModal) modal.style.display = 'flex';
 
     if (canUseEcharts) {
         if (!modalChart) {
             modalChart = echarts.init(container);
-        } else {
-            modalChart.clear();
         }
         const series = datasets.map((ds, idx) => {
-            const data = (ds.data || []).map(p => [p.x, p.y]);
+            const data = (ds.data || []).map(p => [+new Date(p.x), p.y]);
             const serie = {
                 name: ds.label || `series ${idx + 1}`,
                 type: 'line',
@@ -651,7 +673,11 @@ function openChartModal(param, kind) {
             ],
             series
         };
-        modalChart.setOption(option, true);
+        modalChart.setOption(option, { notMerge: false, replaceMerge: ['series'], silent: true });
+        modalChart.off('dataZoom');
+        modalChart.off('restore');
+        modalChart.on('dataZoom', () => { modalFrozen = true; });
+        modalChart.on('restore', () => { modalFrozen = false; renderModalChart(param, kind, false); });
         setTimeout(() => modalChart?.resize(), 0);
     } else {
         const ctx = fallbackCanvas.getContext('2d');
@@ -676,10 +702,19 @@ function openChartModal(param, kind) {
     }
     modalInfo = { param, kind };
     title.textContent = `${param} (${kind === 'recent' ? '최근 1분' : '최근 5분'})`;
-    setTimeout(() => {
-        if (modalChart) modalChart.resize();
-        if (modalChartFallback) modalChartFallback.resize();
-    }, 0);
+}
+
+function openChartModal(param, kind) {
+    modalFrozen = false;
+    const modal = document.getElementById('chart-modal');
+    const title = document.getElementById('modal-title');
+    const container = document.getElementById('modal-echart');
+    const fallbackCanvas = document.getElementById('modal-canvas');
+    if (!modal || !title || !container || !fallbackCanvas) return;
+    const source = kind === 'recent' ? recentCharts[param] : processCharts[param];
+    if (!source) return;
+    modal.style.display = 'flex'; // 먼저 열어 컨테이너 크기 확보
+    renderModalChart(param, kind, true);
 }
 
 function closeChartModal() {
@@ -694,6 +729,7 @@ function closeChartModal() {
         modalChartFallback = null;
     }
     modalInfo = null;
+    modalFrozen = false;
 }
 
 function openWarningModal(param, text) {
@@ -940,16 +976,19 @@ function replaceCanvasWithMessage(canvas, text) {
     canvas.replaceWith(msg);
 }
 
-async function drawReportChart(entry, canvas) {
+async function drawReportChart(entry, canvas, timeWindow) {
     if (!canvas) return;
     destroyReportChart();
     const ctx = canvas.getContext('2d');
     canvas.style.height = '300px';
     canvas.height = 300;
     const centerRaw = entry.peak_time ?? entry.end ?? entry.start ?? Date.now();
-    const center = typeof centerRaw === 'string' ? new Date(centerRaw).getTime() : centerRaw;
-    const startIso = new Date(center - 5000).toISOString();
-    const endIso = new Date(center + 5000).toISOString();
+    const center = toMillis(centerRaw) ?? Date.now();
+    const windowMs = timeWindow?.windowMs ?? 15000; // 넉넉히 ±15초 범위
+    const startMs = timeWindow?.startMs ?? (center - windowMs);
+    const endMs = timeWindow?.endMs ?? (center + windowMs);
+    const startIso = new Date(startMs).toISOString();
+    const endIso = new Date(endMs).toISOString();
     let payload;
     try {
         const res = await fetch(`/api/event_chart?param=${encodeURIComponent(entry.param)}&start=${encodeURIComponent(startIso)}&end=${encodeURIComponent(endIso)}`);
@@ -960,8 +999,18 @@ async function drawReportChart(entry, canvas) {
         replaceCanvasWithMessage(canvas, '차트 데이터를 불러오지 못했습니다.');
         return;
     }
-    const actual = (payload?.actual || []).map(d => ({ ...d, x: parseTimestamp(d.x), y: d.y }));
-    const predicted = (payload?.predicted || []).map(d => ({ ...d, x: parseTimestamp(d.x), y: d.y }));
+    const mapPoints = (arr) => (arr || []).map(pt => {
+        const xRaw = pt.x ?? pt.time ?? pt.timestamp ?? pt.t;
+        const yRaw = pt.y ?? pt.value ?? pt.v;
+        const x = parseTimestamp(xRaw);
+        if (Number.isNaN(x?.getTime())) return null;
+        const y = Number(yRaw);
+        if (!Number.isFinite(y)) return null;
+        return { x, y };
+    }).filter(Boolean);
+
+    const actual = mapPoints(payload?.actual);
+    const predicted = mapPoints(payload?.predicted);
     const regions = [];
     if (entry.start && entry.end) {
         regions.push({ start: entry.start, end: entry.end });
@@ -994,7 +1043,7 @@ async function drawReportChart(entry, canvas) {
                     type: 'time',
                     min: parseTimestamp(startIso),
                     max: parseTimestamp(endIso),
-                    time: { unit: 'second', tooltipFormat: 'HH:mm:ss' },
+                    time: { unit: 'second', tooltipFormat: 'yyyy-MM-dd HH:mm:ss' },
                     ticks: { autoSkip: true, maxRotation: 0 }
                 },
                 y: {
@@ -1012,6 +1061,11 @@ async function renderMfcCauseTab(entry) {
     if (!body) return;
     const vt = Number(entry?.violation_type);
     const headline = buildCauseHeadline(entry);
+    const centerRaw = entry.peak_time ?? entry.end ?? entry.start ?? Date.now();
+    const center = toMillis(centerRaw) ?? Date.now();
+    const windowMs = 15000;
+    const startMs = center - windowMs;
+    const endMs = center + windowMs;
     const causeTexts = {
         1: 'MFC Zero Point Drift 발생으로 인해 기준 유량이 정확히 설정되지 않아 실제 유량 편차 및 공정 불안정이 확인되었습니다.',
         2: 'Baratron 게이지 이상으로 인한 공정 불안정(압력 오차/경보/읽힘 불가)이 확인되었습니다.',
@@ -1025,6 +1079,7 @@ async function renderMfcCauseTab(entry) {
             <div class="report-cause-chart">
                 <div class="report-cause-title">${label} 유량 추이 (±5초)</div>
                 <canvas id="report-cause-canvas" aria-label="${label} 이상 구간 차트"></canvas>
+                <div class="report-cause-time">조회 구간: ${formatTimelineTime(startMs)} ~ ${formatTimelineTime(endMs)}</div>
             </div>
             <div class="report-cause-text">
                 <div class="report-cause-badge">원인 진단</div>
@@ -1036,7 +1091,7 @@ async function renderMfcCauseTab(entry) {
         </div>
     `;
     const canvas = document.getElementById('report-cause-canvas');
-    await drawReportChart(entry, canvas);
+    await drawReportChart(entry, canvas, { startMs, endMs, windowMs });
 }
 
 function renderMfcActionTab(entry) {
@@ -1168,10 +1223,12 @@ async function fetchAbnormalLogs() {
 function fetchData() {
     if (!processStart) return;
     const now = new Date();
-    const processStartTime = new Date(processStart).getTime();
-    const thirtyMinAgo = now.getTime() - 300000; // 10 minutes
-    const startIso = new Date(Math.max(processStartTime, thirtyMinAgo)).toISOString();
-    const nowIso = now.toISOString();
+    const processStartTime = processStart ? new Date(processStart).getTime() : 0;
+    const windowStartMs = Math.max(processStartTime, now.getTime() - 300000); // 최근 5분
+    const windowEndMs = now.getTime();
+    const startIso = new Date(windowStartMs).toISOString();
+    const nowIso = new Date(windowEndMs).toISOString();
+    updateTimeRangeLabel(windowStartMs, windowEndMs);
     columns.forEach(col => {
         fetch(`/api/event_chart?param=${encodeURIComponent(col)}&start=${encodeURIComponent(startIso)}&end=${encodeURIComponent(nowIso)}`)
             .then(res => res.json())

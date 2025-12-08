@@ -194,7 +194,7 @@ function updateLayout() {
 }
 
 async function fetchData() {
-    const res = await fetch('/api/trace_info?limit=50');
+    const res = await fetch('/api/trace_info?limit=300');
     const data = await res.json();
     data.sort((a, b) => new Date(a.start_time) - new Date(b.start_time)); // 오래된 -> 최신
     allData = data;

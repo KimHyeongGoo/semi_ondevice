@@ -132,6 +132,7 @@ let lastStepFallbackFetch = 0;
 let modalChart = null; // ECharts instance
 let modalChartFallback = null; // Chart.js fallback
 let modalOpenCol = null;
+let modalFrozen = false;
 
 const categoryMap = {
     MFC: ["MFC7_DCS", "MFC8_NH3", "MFC1_N2-1", "MFC2_N2-2", "MFC3_N2-3", "MFC4_N2-4"],
@@ -297,6 +298,13 @@ async function fetchAndUpdate() {
         chart.options.scales.x.min = xMin;
         chart.options.scales.x.max = xMax;
         chart.update();
+
+        if (modalOpenCol === col) {
+            const cloned = cloneChartData(chart);
+            if (!modalFrozen) {
+                renderModalChart(col, cloned.datasets, false);
+            }
+        }
 
 
         const cb = document.querySelector(`.toggle-chart[data-col="${col}"]`);
@@ -505,6 +513,7 @@ async function saveLimits() {
 }
 
 function openChartModal(col) {
+    modalFrozen = false;
     const modal = document.getElementById('chart-modal');
     const modalTitle = document.getElementById('modal-title');
     const container = document.getElementById('modal-echart');
@@ -525,6 +534,7 @@ function closeChartModal() {
         modalChartFallback = null;
     }
     modalOpenCol = null;
+    modalFrozen = false;
     if (modal) modal.style.display = 'none';
 }
 
@@ -563,7 +573,7 @@ function renderModalChart(param, datasets, showModal = false) {
             modalChart.clear();
         }
         const series = datasets.map((ds, idx) => {
-            const data = (ds.data || []).map(p => [p.x, p.y]);
+            const data = (ds.data || []).map(p => [+new Date(p.x), p.y]);
             const serie = {
                 name: ds.label || `series ${idx + 1}`,
                 type: 'line',
@@ -600,7 +610,16 @@ function renderModalChart(param, datasets, showModal = false) {
             ],
             series
         };
-        modalChart.setOption(option, true);
+        modalChart.setOption(option, { notMerge: false, replaceMerge: ['series'], silent: true });
+        modalChart.off('dataZoom');
+        modalChart.off('restore');
+        modalChart.on('dataZoom', () => { modalFrozen = true; });
+        modalChart.on('restore', () => {
+            modalFrozen = false;
+            const src = charts[param];
+            const fresh = src ? cloneChartData(src).datasets : datasets;
+            renderModalChart(param, fresh, false);
+        });
     } else {
         const ctx = fallbackCanvas.getContext('2d');
         if (modalChartFallback) {

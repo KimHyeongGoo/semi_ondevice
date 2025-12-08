@@ -1,0 +1,8 @@
+[2025-12-08 16:22:42] ray_predict() : 시퀀스 데이터 부족
+[2025-12-08 16:22:43] ray_predict() : 시퀀스 데이터 부족
+[2025-12-08 16:24:42] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-08 16:24:42] 'NoneType' object is not subscriptable
+[2025-12-08 16:24:42] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-08 16:24:42] 'NoneType' object is not subscriptable
+[2025-12-08 16:24:42] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-08 16:24:42] 'NoneType' object is not subscriptable

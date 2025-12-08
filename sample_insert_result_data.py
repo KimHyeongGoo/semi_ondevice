@@ -34,12 +34,12 @@ def insert_trace_info_with_thickness(start_time, end_time, start_table, end_tabl
 
 if __name__ == "__main__":
     # 1) 시간 설정
-    start_time = datetime(2025, 11, 26, 10, 5, 25)
-    end_time   = datetime(2025, 11, 26, 14, 21, 7)
+    start_time = datetime(2025, 8, 10, 10, 5, 25)
+    end_time   = datetime(2025, 8, 10, 14, 21, 7)
 
     # 2) 테이블 이름 (rawdataYYYYMMDD 형식 그대로 사용)
-    start_table = "rawdata20251126"
-    end_table   = "rawdata20251126"
+    start_table = "rawdata20250810"
+    end_table   = "rawdata20250810"
 
     # 3) thickness 값 45개 (앞 9줄×5개 사용 예시)
     thicknesses = [

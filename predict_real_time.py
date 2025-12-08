@@ -54,7 +54,7 @@ temp_add_columns = [
 ]    
 # 공정 모니터링 변수
 #selected_cols = ['ProcessRecipeStepID', 'MFC1_N2-1', 'MFC2_N2-2', 'MFC3_N2-3', 'MFC4_N2-4', 'MFC26_F.PWR', 'MFC27_L.POS', 'MFC28_R.POS', 'MFC7_DCS', 'MFC8_NH3', 'MFC9_F2', 'APC Valve Value (Angle)', 'VG11 Press value', 'VG12 Press value', 'VG13 Press value', 'Temp_Act_U', 'Temp_Act_CU', 'Temp_Act_C', 'Temp_Act_CL', 'Temp_Act_L', 'ValveAct_1:1', 'ValveAct_2:2', 'ValveAct_3:3', 'ValveAct_4:4', 'ValveAct_5:5', 'ValveAct_9:9', 'ValveAct_11:11', 'ValveAct_12:12', 'ValveAct_14:14', 'ValveAct_15:15', 'ValveAct_16:16', 'ValveAct_26:26', 'ValveAct_28:28', 'ValveAct_29:29', 'ValveAct_30:30', 'ValveAct_60:71', 'ValveAct_63:75', 'ValveAct_73:83', 'ValveAct_75:85', 'ValveAct_76:86', 'ValveAct_80:DPO', 'ValveAct_86:HT1', 'ValveAct_87:HT2', 'ValveAct_88:HT3', 'ValveAct_89:RF', 'ValveAct_90:PST']
-selected_cols = ['ProcessRecipeStepID', 'MFC1_N2-1', 'MFC2_N2-2', 'MFC3_N2-3', 'MFC4_N2-4', 'MFC26_F.PWR', 'MFC27_L.POS', 'MFC28_R.POS', 'MFC7_DCS', 'MFC8_NH3', 'MFC9_F2', 'APC Valve Value (Angle)', 'VG11 Press value', 'VG12 Press value', 'VG13 Press value', 'Temp_Act_U', 'Temp_Act_CU', 'Temp_Act_C', 'Temp_Act_CL', 'Temp_Act_L', 'ValveAct_2:2', 'ValveAct_3:3', 'ValveAct_4:4', 'ValveAct_5:5', 'ValveAct_9:9', 'ValveAct_12:12', 'ValveAct_14:14', 'ValveAct_16:16', 'ValveAct_26:26', 'ValveAct_28:28', 'ValveAct_29:29', 'ValveAct_60:71', 'ValveAct_63:75', 'ValveAct_73:83', 'ValveAct_80:DPO', 'ValveAct_89:RF', 'ValveAct_90:PST']
+selected_cols = ['PPExecStepID', 'MFC1_N2-1', 'MFC2_N2-2', 'MFC3_N2-3', 'MFC4_N2-4', 'MFC26_F.PWR', 'MFC27_L.POS', 'MFC28_R.POS', 'MFC7_DCS', 'MFC8_NH3', 'MFC9_F2', 'APC Valve Value (Angle)', 'VG11 Press value', 'VG12 Press value', 'VG13 Press value', 'Temp_Act_U', 'Temp_Act_CU', 'Temp_Act_C', 'Temp_Act_CL', 'Temp_Act_L', 'ValveAct_2:2', 'ValveAct_3:3', 'ValveAct_4:4', 'ValveAct_5:5', 'ValveAct_9:9', 'ValveAct_12:12', 'ValveAct_14:14', 'ValveAct_16:16', 'ValveAct_26:26', 'ValveAct_28:28', 'ValveAct_29:29', 'ValveAct_60:71', 'ValveAct_63:75', 'ValveAct_73:83', 'ValveAct_80:DPO', 'ValveAct_89:RF', 'ValveAct_90:PST']
 step_reverse_dict = {'END': 2, 'STANDBY': 255, 'START': 1, 'B.UP': 17, 'WAIT': 3, 'S.P-1': 74, 'S.P-2': 75, 'R.UP1': 25, 'STAB1': 22, 'S.P-3': 76, 'M.P-3': 81, 'L.CHK': 72, 'PREPRG1': 44, 'EVAC1': 99, 'EVAC2': 100, 'N-EVA1': 111, 'CLOSE1': 128, 'SI-FL1': 119, 'SI-EVA1': 117, 'CHANGE': 152, 'N-PRE1': 113, 'N-FL1': 115, 'N-FL2': 116, 'pre-NH3P': 110, 'DEPO1': 49, 'post_NH3P': 135, 'N2PRG1': 103, 'SI-EVA4': 149, 'A.VAC2': 85, 'A.PRG2': 90, 'A.VAC1': 84, 'A.PRG1': 89, 'N2PRG2': 104, 'N2PRG3': 105, 'A.VAC3': 86, 'A.PRG3': 91, 'A.VAC4': 87, 'A.PRG4': 92, 'CYCLE1': 130, 'A.PRG5': 93, 'R.DOWN1': 31, 'B.FILL1': 94, 'B.FILL2': 95, 'B.FILL3': 96, 'B.FILL4': 97, 'B.FILL5': 98, 'B.DOWN': 18, 'None': 0, 'nan': 0, 'NaN': 0, 'null': 0, 'NULL': 0, 'IDLE': 0}
 
 def logg(log_file, content):
@@ -293,7 +293,7 @@ def get_data_by_start_end(pool, selected_cols, start, end, add_columns):
         dfs = []
         for raw_table in raw_tables:
             try:
-                colnames = ', '.join([f'"{col}"' for col in selected_cols + add_columns + ["ProcessRecipeStepRemainTime", "ProcessRecipeStepName", "Timestamp"]])
+                colnames = ', '.join([f'"{col}"' for col in selected_cols + add_columns + ["ProcessRecipeStepRemainTime", 'ProcessRecipeStepID', "ProcessRecipeStepName", "Timestamp"]])
                 query = f"""
                     SELECT {colnames}
                     FROM "{raw_table}"
@@ -514,7 +514,7 @@ def ray_predict(proc_idx, selected_cols, predict_columns, window_size, predict_s
                 for add_col in temp_add_columns:
                     add_columns.append(add_col+temp_pos)
         data = get_data_by_start_end(pool, selected_cols, start, end, add_columns)
-        data['ProcessRecipeStepID'] = data['ProcessRecipeStepID'].replace(255, 0)
+        data['PPExecStepID'] = data['PPExecStepID'].replace(255, 0)
         data.fillna(method='ffill', inplace=True)
         #print(1,len(data))
         # 빈 시점 탐색
@@ -556,7 +556,7 @@ def ray_predict(proc_idx, selected_cols, predict_columns, window_size, predict_s
         
         if len(last_date) == 26: last_date = last_date[:-3]
         #print(predict_column,last_raw_time, start, last_date)
-        step_data = data[["ProcessRecipeStepRemainTime", "ProcessRecipeStepID", "ProcessRecipeStepName"]]
+        step_data = data[["ProcessRecipeStepID", "ProcessRecipeStepName"]]
         # 3. 데이터 전처리 및 예측
         try:
             sequence_data = data[selected_cols + add_columns]
@@ -569,22 +569,8 @@ def ray_predict(proc_idx, selected_cols, predict_columns, window_size, predict_s
         last_step_ids = []
         last_step_names = []
         for predict_step in predict_steps:
-            try:
-                remain_str = step_data.iloc[-1]['ProcessRecipeStepRemainTime']
-                if remain_str == "00:00:00":
-                    last_remain_sec = 100
-                else:
-                    h, m, s = map(int, remain_str.split(":"))
-                    last_remain_sec = h * 3600 + m * 60 + s
-                if last_remain_sec >= predict_step:
-                    last_step_id = step_data.iloc[-1]["ProcessRecipeStepID"]
-                    last_step_name = step_data.iloc[-1]["ProcessRecipeStepName"]
-                else:
-                    last_step_id = -1
-                    last_step_name = 'UNKNOWN'
-            except:
-                last_step_id = -1
-                last_step_name = 'UNKNOWN'
+            last_step_id = -1
+            last_step_name = 'UNKNOWN'
             last_step_ids.append(last_step_id)
             last_step_names.append(last_step_name)
         #logg(f"[PID|{proc_pid}].log", f"⏱ 소요 시간2: {time.time() - start_time_proc:.3f}초")

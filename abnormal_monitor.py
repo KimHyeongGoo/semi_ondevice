@@ -24,6 +24,16 @@ for idx, cols in enumerate(TASKS):
     for col in cols:
         PARAM_TABLE_MAP[col] = f"pred_proc{idx}"
 
+# 이상감지 대상 파라미터만 필터링
+ALLOWED_PARAMS = {
+    'MFC7_DCS',
+    'MFC8_NH3',
+    'MFC1_N2-1',
+    'MFC2_N2-2',
+    'MFC3_N2-3',
+    'MFC4_N2-4',
+}
+
 
 PREDICT_STEP = 10
 THRESHOLD_PERCENT = 10.0  # 10% 이상
@@ -143,6 +153,12 @@ class Monitor:
         return actual_rows, pred_rows
 
     def upsert_event(self, param, event):
+        def _to_py(val):
+            import numpy as np
+            if isinstance(val, np.generic):
+                return val.item()
+            return val
+
         conn = self.pool.getconn()
         try:
             with conn.cursor() as cur:
@@ -151,13 +167,13 @@ class Monitor:
                     "start": event["start"].isoformat(),
                     "end": event["end"].isoformat(),
                     "duration_seconds": event["duration"],
-                    "diff_percent": event["avg_diff"],
+                    "diff_percent": _to_py(event["avg_diff"]),
                     "peak_time": event.get("peak_time").isoformat() if event.get("peak_time") else None,
-                    "actual_value": event.get("peak_actual"),
-                    "predicted_value": event.get("peak_pred"),
+                    "actual_value": _to_py(event.get("peak_actual")),
+                    "predicted_value": _to_py(event.get("peak_pred")),
                     "step_id": sorted(event.get("step_ids", [])),
                     "step_name": sorted(event.get("step_names", [])),
-                    "violation_type": event.get("violation_type"),
+                    "violation_type": _to_py(event.get("violation_type")),
                 }
                 message_text = json.dumps(message_payload, ensure_ascii=False)
                 cur.execute(
@@ -184,13 +200,13 @@ class Monitor:
                         event["start"],
                         event["end"],
                         param,
-                        event["duration"],
-                        event["avg_diff"],
-                        event["max_diff"],
+                        _to_py(event["duration"]),
+                        _to_py(event["avg_diff"]),
+                        _to_py(event["max_diff"]),
                         event.get("peak_time"),
-                        event.get("peak_actual"),
-                        event.get("peak_pred"),
-                        event.get("violation_type"),
+                        _to_py(event.get("peak_actual")),
+                        _to_py(event.get("peak_pred")),
+                        _to_py(event.get("violation_type")),
                         message_text,
                     ),
                 )
@@ -296,6 +312,8 @@ class Monitor:
         while True:
             loop_start = datetime.now(KST)
             for param in PARAM_TABLE_MAP.keys():
+                if param not in ALLOWED_PARAMS:
+                    continue
                 since = self.last_ts.get(param)
                 if since is None:
                     since = loop_start - timedelta(seconds=10)

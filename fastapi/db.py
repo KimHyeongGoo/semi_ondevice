@@ -186,6 +186,19 @@ def get_current_step():
 
 def get_event_chart_data(param, start, end, step=10):
     """Return actual and predicted data for a parameter between two timestamps."""
+    def _parse_ts(raw, default=None):
+        if not raw:
+            return default
+        try:
+            dt = parser.parse(raw)
+        except Exception:
+            return default
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=KST)
+        else:
+            dt = dt.astimezone(KST)
+        return dt
+
     conn = psycopg2.connect(
         dbname="postgres",
         user="keti",
@@ -195,33 +208,19 @@ def get_event_chart_data(param, start, end, step=10):
     )
     cur = conn.cursor()
 
-    #from_ts = parser.parse(start)
-    #to_ts = parser.parse(end)
-    
-    to_ts = datetime.now(ZoneInfo("Asia/Seoul"))
-    from_ts = to_ts - timedelta(seconds=300)
-    #print(to_ts)
+    now_kst = datetime.now(ZoneInfo("Asia/Seoul"))
+    to_ts = _parse_ts(end, now_kst)
+    from_ts = _parse_ts(start, to_ts - timedelta(seconds=300))
+
+    # guard: if swap needed
+    if from_ts > to_ts:
+        from_ts, to_ts = to_ts - timedelta(seconds=300), to_ts
+
     date_suffix = from_ts.strftime("%Y%m%d")
-    #print(date_suffix)
     raw_table = f"rawdata{date_suffix}"
     param_modified = param.replace(' ', '_').replace('.', '_').replace('-', '_')
     table_name = param_table_map.get(param)
 
-    if len(str(from_ts)) >= 26:
-        from_ts = str(from_ts)[:23]
-        to_ts = str(to_ts)[:23]
-    print(to_ts)
-    '''
-    from_ts = parser.parse(from_ts)
-    to_ts = parser.parse(to_ts)
-
-    if from_ts.tzinfo is None:
-        from_ts = from_ts.replace(tzinfo=timezone.utc).astimezone(KST)
-        to_ts = to_ts.replace(tzinfo=timezone.utc).astimezone(KST)
-    else:
-        from_ts = from_ts.astimezone(KST)
-        to_ts = to_ts.astimezone(KST)
-    ''' 
     try:
         cur.execute(
             f"""
@@ -246,7 +245,7 @@ def get_event_chart_data(param, start, end, step=10):
         ]
         if table_name:
             # Predicted 테이블 조회는 3시간 빼서 조회
-
+            offset = timedelta(hours=3)
             cur.execute(
                 f"""
                 SELECT DATE_TRUNC('second', "Timestamp") AS ts, "{param_modified}"
@@ -254,10 +253,21 @@ def get_event_chart_data(param, start, end, step=10):
                 WHERE "PredictStep" = %s AND "Timestamp" BETWEEN %s::timestamp AND %s::timestamp
                 ORDER BY ts ASC
                 """,
-                (step, from_ts, to_ts),
+                (step, from_ts - offset, to_ts - offset),
             )
             preds = [{"x": str(ts), "y": val} for ts, val in cur.fetchall()]
-            #print(adj_from_ts, adj_to_ts)
+            # 빈 경우 오프셋 없이 한 번 더 조회 (타임존 차이 대비)
+            if len(preds) == 0:
+                cur.execute(
+                    f"""
+                    SELECT DATE_TRUNC('second', "Timestamp") AS ts, "{param_modified}"
+                    FROM "{table_name}"
+                    WHERE "PredictStep" = %s AND "Timestamp" BETWEEN %s::timestamp AND %s::timestamp
+                    ORDER BY ts ASC
+                    """,
+                    (step, from_ts, to_ts),
+                )
+                preds = [{"x": str(ts), "y": val} for ts, val in cur.fetchall()]
         else:
             preds = []
     except Exception as e:
