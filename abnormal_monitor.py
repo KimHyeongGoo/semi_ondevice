@@ -1,4 +1,5 @@
 import json
+import os
 import random
 import time
 from collections import defaultdict
@@ -37,7 +38,7 @@ ALLOWED_PARAMS = {
 
 PREDICT_STEP = 10
 THRESHOLD_PERCENT = 10.0  # 10% 이상
-THRESHOLD_ABS = 0.25      # 절대값 0.25 이상
+THRESHOLD_ABS = 0.1      # 절대값 0.1 이상
 MIN_DURATION_SEC = 4.0    # 이상 구간 최소 지속시간
 CLEAR_GAP_SEC = 2.0       # 2초 이상 정상 구간이면 종료
 POLL_INTERVAL_SEC = 1.0
@@ -96,6 +97,8 @@ class Monitor:
         self.pool = SimpleConnectionPool(1, 5, **DB_CONF)
         self.state = defaultdict(dict)  # param -> event state
         self.last_ts = {}  # param -> last processed timestamp
+        os.makedirs("./log", exist_ok=True)
+        self.log_file = os.path.join("./log", f"abnormal_monitor_{os.getpid()}.log")
         conn = self.pool.getconn()
         try:
             ensure_abnormal_log_table(conn)
@@ -104,7 +107,14 @@ class Monitor:
 
     def log(self, msg):
         now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        print(f"[{now}] {msg}")
+        line = f"[{now}] {msg}"
+        print(line)
+        try:
+            with open(self.log_file, "a", encoding="utf-8") as f:
+                f.write(line + "\n")
+        except Exception:
+            # 파일 로깅 실패시 콘솔만 유지
+            pass
 
     def fetch_rows(self, param, since):
         """Fetch actual and predicted rows newer than `since` for the parameter."""
@@ -122,8 +132,8 @@ class Monitor:
                         f"""
                         SELECT date_trunc('second', "Timestamp") AS ts,
                                "{param}",
-                               "PPExecStepStepID",
-                               "PPExecStepStepName"
+                               "PPExecStepID",
+                               "PPExecStepName"
                         FROM "{raw_table}"
                         WHERE "Timestamp" > %s
                         ORDER BY "Timestamp" ASC
@@ -131,8 +141,9 @@ class Monitor:
                         (since,)
                     )
                     actual_rows = cur.fetchall()
-                except Exception:
+                except Exception as e:
                     conn.rollback()
+                    self.log(f"[WARN] actual fetch 실패 param={param}, table={raw_table}, since={since}: {e}")
 
                 if pred_table:
                     try:
@@ -146,8 +157,9 @@ class Monitor:
                             (PREDICT_STEP, since),
                         )
                         pred_rows = cur.fetchall()
-                    except Exception:
+                    except Exception as e:
                         conn.rollback()
+                        self.log(f"[WARN] predict fetch 실패 param={param}, table={pred_table}, since={since}: {e}")
         finally:
             self.pool.putconn(conn)
         return actual_rows, pred_rows
@@ -255,6 +267,13 @@ class Monitor:
             diff_pct = 0.0
         diff_abs = abs(actual_val - pred_val)
         is_anomaly = diff_pct > THRESHOLD_PERCENT and diff_abs > THRESHOLD_ABS
+
+        # 로그 출력 (초 단위)
+        ts_str = ts.strftime("%Y-%m-%d %H:%M:%S")
+        self.log(
+            f"{param} | 실제값: [{ts_str}] [{actual_val}] | 예측값: [{ts_str}] [{pred_val}] | "
+            f"diff_abs: {diff_abs:.4f}, diff_pct: {diff_pct:.2f}% | {'이상' if is_anomaly else '정상'}"
+        )
 
         if is_anomaly:
             if not state.get("active"):

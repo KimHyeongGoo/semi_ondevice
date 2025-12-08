@@ -289,6 +289,13 @@ async def get_assistant(request: Request):
         "index5.html",
         {"request": request, "active_tab": "assistant"}
     )
+
+@app.get("/index6.html", response_class=HTMLResponse)
+async def get_page6(request: Request):
+    return templates.TemplateResponse(
+        "index6.html",
+        {"request": request, "active_tab": "index6"}
+    )
     
 @app.get("/api/data")
 async def get_data(duration: int = 300, step: int = 10):
