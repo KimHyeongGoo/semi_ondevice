@@ -69,6 +69,10 @@
 
     <script>
         let selectedStep = 10; // 예측 시점 10초
+        const displayParam = (name) => {
+            const m = String(name || '').match(/^MFC\\d+[_ ]?(.*)$/i);
+            return m && m[1] ? m[1] : name;
+        };
 
         function toKSTISOString(date) {
             const tzOffset = date.getTimezoneOffset() * 60000;
@@ -224,7 +228,7 @@
                     const container = document.getElementById('main-chart');
                     const chartBox = document.createElement('div');
                     chartBox.className = 'chart-box';
-                    chartBox.innerHTML = `<h4>${param}</h4><canvas id="main-chart-canvas" width="100%"></canvas>`;
+                    chartBox.innerHTML = `<h4>${displayParam(param)}</h4><canvas id="main-chart-canvas" width="100%"></canvas>`;
                     container.appendChild(chartBox);
                     updateInfoHeight();
 
@@ -268,7 +272,7 @@
                         const container = document.getElementById('charts-container');
                         const chartBox = document.createElement('div');
                         chartBox.className = 'chart-box';
-                        chartBox.innerHTML = `<h4>${p}</h4><canvas id="chart-${p}" width="100%"></canvas>`;
+                        chartBox.innerHTML = `<h4>${displayParam(p)}</h4><canvas id="chart-${p}" width="100%"></canvas>`;
                         container.appendChild(chartBox);
                         updateInfoHeight();
 
@@ -310,7 +314,7 @@
                         const container = document.getElementById('process-charts-container');
                         const chartBox = document.createElement('div');
                         chartBox.className = 'chart-box';
-                        chartBox.innerHTML = `<h4>${p}</h4><canvas id="proc-chart-${p}" width="100%"></canvas>`;
+                        chartBox.innerHTML = `<h4>${displayParam(p)}</h4><canvas id="proc-chart-${p}" width="100%"></canvas>`;
                         container.appendChild(chartBox);
                         updateInfoHeight();
 

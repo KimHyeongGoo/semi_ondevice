@@ -369,7 +369,7 @@ def check_columns(col):
     """Check if the given column has a corresponding auxiliary model."""
 
     main_cols = {
-        'MFC1_N2-1',
+        #'MFC1_N2-1',
         'MFC2_N2-2',
         'MFC3_N2-3',
         'MFC4_N2-4',

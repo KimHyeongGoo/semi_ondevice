@@ -38,8 +38,8 @@ ALLOWED_PARAMS = {
 
 PREDICT_STEP = 10
 THRESHOLD_PERCENT = 10.0  # 10% 이상
-THRESHOLD_ABS = 0.1      # 절대값 0.1 이상
-MIN_DURATION_SEC = 4.0    # 이상 구간 최소 지속시간
+THRESHOLD_ABS = 0.4      # 절대값 0.25 이상
+MIN_DURATION_SEC = 5.0    # 이상 구간 최소 지속시간
 CLEAR_GAP_SEC = 2.0       # 2초 이상 정상 구간이면 종료
 POLL_INTERVAL_SEC = 1.0
 
@@ -98,7 +98,6 @@ class Monitor:
         self.state = defaultdict(dict)  # param -> event state
         self.last_ts = {}  # param -> last processed timestamp
         os.makedirs("./log", exist_ok=True)
-        self.log_file = os.path.join("./log", f"abnormal_monitor_{os.getpid()}.log")
         conn = self.pool.getconn()
         try:
             ensure_abnormal_log_table(conn)
@@ -109,12 +108,6 @@ class Monitor:
         now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         line = f"[{now}] {msg}"
         print(line)
-        try:
-            with open(self.log_file, "a", encoding="utf-8") as f:
-                f.write(line + "\n")
-        except Exception:
-            # 파일 로깅 실패시 콘솔만 유지
-            pass
 
     def fetch_rows(self, param, since):
         """Fetch actual and predicted rows newer than `since` for the parameter."""

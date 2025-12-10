@@ -244,8 +244,7 @@ def get_event_chart_data(param, start, end, step=10):
             for ts, val, step_id, step_name in cur.fetchall()
         ]
         if table_name:
-            # Predicted 테이블 조회는 3시간 빼서 조회
-            offset = timedelta(hours=3)
+            # 예측값은 실제 Timestamp 기준으로 동일 구간 조회 (오프셋 제거)
             cur.execute(
                 f"""
                 SELECT DATE_TRUNC('second', "Timestamp") AS ts, "{param_modified}"
@@ -253,21 +252,9 @@ def get_event_chart_data(param, start, end, step=10):
                 WHERE "PredictStep" = %s AND "Timestamp" BETWEEN %s::timestamp AND %s::timestamp
                 ORDER BY ts ASC
                 """,
-                (step, from_ts - offset, to_ts - offset),
+                (step, from_ts, to_ts),
             )
             preds = [{"x": str(ts), "y": val} for ts, val in cur.fetchall()]
-            # 빈 경우 오프셋 없이 한 번 더 조회 (타임존 차이 대비)
-            if len(preds) == 0:
-                cur.execute(
-                    f"""
-                    SELECT DATE_TRUNC('second', "Timestamp") AS ts, "{param_modified}"
-                    FROM "{table_name}"
-                    WHERE "PredictStep" = %s AND "Timestamp" BETWEEN %s::timestamp AND %s::timestamp
-                    ORDER BY ts ASC
-                    """,
-                    (step, from_ts, to_ts),
-                )
-                preds = [{"x": str(ts), "y": val} for ts, val in cur.fetchall()]
         else:
             preds = []
     except Exception as e:

@@ -21,6 +21,21 @@ let settingsCache = {};
 const storedWarning = typeof localStorage !== 'undefined' ? localStorage.getItem(warningToggleKey) : null;
 if (storedWarning !== null) warningEnabled = storedWarning === 'true';
 let deviceStatus = { status: 'RUN', lastTick: null };
+const displayParam = (name) => {
+    const m = String(name || '').match(/^MFC\\d+[_ ]?(.*)$/i);
+    return m && m[1] ? m[1] : name;
+};
+function applyDisplayLabels() {
+    document.querySelectorAll('.chart-row').forEach(row => {
+        const param = row.dataset.param;
+        const labelEl = row.querySelector('.param-label');
+        if (labelEl) labelEl.textContent = displayParam(param);
+        row.querySelectorAll('.expand-btn').forEach(btn => {
+            const kind = btn.dataset.kind === 'recent' ? '최근 1분' : '최근 5분';
+            btn.setAttribute('aria-label', `${displayParam(param)} ${kind} 차트 확대`);
+        });
+    });
+}
 
 let latestStepTimestamp = 0;
 let lastStepUpdate = 0;
@@ -32,6 +47,164 @@ let reportChart = null;
 const mfcParams = new Set(['MFC7_DCS', 'MFC8_NH3', 'MFC1_N2-1', 'MFC2_N2-2', 'MFC3_N2-3', 'MFC4_N2-4']);
 let threeViewer = null;
 const htmlCache = new Map();
+const partsCatalog = {
+    default: {
+        title: '부품 정보',
+        image: null,
+        usage: '설치 상태, 마모/누설 여부, 교정 기록을 확인해 주세요.',
+        feature: '',
+        principle: '',
+        vendors: []
+    },
+    byViolation: {
+        1: {
+            title: 'MFC 부품 정보',
+            image: { src: '/static/img/MFC.png', alt: 'MFC', caption: 'MFC' },
+            usage: '전구체(Precursor)와 반응체(Reactant) 가스뿐만 아니라 퍼지(Purge) 가스의 질량 유량을 정확한 비율과 양으로 챔버에 공급하여 박막의 두께와 균일성을 직접 제어합니다.',
+            feature: '빠른 응답 속도와 매우 높은 유량 제어 정확도 및 반복성을 가지며, 특히 고순도 공정 가스의 오염을 방지하기 위해 내부식성 재료와 금속 씰(Metal Seal) 구조를 주로 사용합니다.',
+            principle: '주로 열식(Thermal) 센서를 사용하여 흐르는 가스에 가한 열량 변화를 측정하여 질량 유량을 계산하고, 이 신호를 바탕으로 내장된 제어 밸브(Control Valve)를 구동하여 설정된 유량을 일정하게 유지합니다.',
+            vendors: [
+                { no: 1, name: 'MKP', biz: '230-87-00261', link: 'https://www.mkpsemi.com/products/prod-catalog', contact: 'TEL: 031-613-3359' },
+                { no: 2, name: 'MRC', biz: '193-86-00631', link: 'http://www.mfc-mrc.com/product', contact: 'TEL: 031-348-0855' },
+                { no: 3, name: 'HORIBA', biz: '192-81-15730', link: 'https://www.horiba.com/int/semiconductor/products/mass-flow-controller-and-module/', contact: 'TEL: 031-8025-6500' },
+                { no: 4, name: 'Brooks Instrument', biz: '135-81-95781', link: 'https://www.brooksinstrument.com/en/markets/semiconductor-manufacturing', contact: 'TEL: 031-708-2521' }
+            ]
+        },
+        2: {
+            title: 'Baratron Gauge 부품 정보',
+            image: { src: '/static/img/Baratron%20Gauge.png', alt: 'Baratron Gauge', caption: 'Baratron Gauge' },
+            usage: 'ALD 공정 챔버 내부의 초정밀 진공 압력을 실시간으로 측정하여, 압력 자동 제어(APC) 시스템과 연동해 전구체 도징 및 반응 조건을 일정하게 유지하는 핵심 센서 역할을 수행합니다.',
+            feature: '측정되는 가스의 종류에 영향을 받지 않고, 넓은 온도 범위에서 최고의 측정 정확도(±0.12%)와 반복성을 가지며, 플라즈마 공정에서도 사용 가능하도록 내구성이 높습니다.',
+            principle: '정전 용량 다이어프램 게이지(CDG) 원리를 사용하며, 압력 변화에 따라 다이어프램(Diaphragm)이 변형될 때 발생하는 정전 용량 변화를 측정하여 실제 압력으로 환산합니다.',
+            vendors: [
+                { no: 1, name: 'MKS', biz: '126-81-79956', link: 'https://www.mks.com/c/capacitance-manometers', contact: 'TEL: 031-695-9200' },
+                { no: 2, name: '브이시스', biz: '142-81-44975', link: 'http://www.vsys.co.kr/V2/02_product/product_01_1.php', contact: 'TEL: 031-8067-7750' },
+                { no: 3, name: 'ZEUS', biz: '229-81-05323', link: 'https://www.globalzeus.com/kr/sub/products/list.asp?p_cate=1312', contact: 'TEL: 031-5187-1774' },
+                { no: 4, name: '다이나믹세미텍', biz: '565-88-00577', link: 'https://www.dynamicsemi.co.kr/?act=shop.goods_list&GC=GD0301', contact: 'TEL: 054-437-2062' }
+            ]
+        },
+        3: {
+            title: 'Magnetic Seal 부품 정보',
+            image: { src: '/static/img/M_Seal.png', alt: 'Magnetic Seal', caption: 'M.Seal' },
+            usage: '마그네틱 씰은 회전하는 하부 챔버(Substrate Holder) 등을 통해 구동 동력을 전달하면서, ALD 공정의 핵심인 초고진공 상태를 안정적으로 유지하기 위해 사용됩니다.',
+            feature: '회전이 가능하여, 특히 공간 분할 ALD와 같은 회전형 배치/세미 배치 장비의 고생산성 구현에 필수적인 핵심 부품입니다.',
+            principle: '자성 유체(Ferrofluid)와 영구 자석(Nd Magnet)을 사용하여 비접촉식 실링을 구현하며, 기존 기계식 씰의 문제점인 파티클 발생, 높은 구동 토크, 짧은 수명 등의 단점을 극복합니다.',
+            vendors: [
+                { no: 1, name: '마그넥스', biz: '124-86-10394', link: 'https://www.magnex.co.kr/www/product/A?ca=A0001', contact: 'TEL: 043-276-8598' },
+                { no: 2, name: '디노솔루션', biz: '135-86-32836', link: 'https://dinosolution.co.kr/magnetic-seal', contact: 'TEL: 031-206-6406' },
+                { no: 3, name: 'LOTCES', biz: '135-86-28690', link: 'https://lotces.com/bbs/board.php?bo_table=CM&wr_id=8', contact: 'TEL: 041-548-6540' },
+                { no: 4, name: 'KSM', biz: '137-86-07202', link: 'https://www.ksm.co.kr/component/en/product/product_ferro01.php', contact: 'TEL: 031-983-7700' }
+            ]
+        },
+        4: {
+            title: 'CKD 밸브 부품 정보',
+            image: { src: '/static/img/CKD.png', alt: 'CKD Valve', caption: 'CKD' },
+            usage: 'ALD 공정에서 전구체/반응체 가스의 유량을 초정밀하게 도징(Dosing) 및 차단하며, 가스 라인 등 공정 배관의 안정적인 개폐 및 유량 제어에 사용됩니다.',
+            feature: '고순정, 내식성, 내열 특성을 갖춘 모델이 많고, 응답 속도, 내구성, 누설 관리가 우수하여 자동화 장비의 반복 동작에서도 높은 신뢰성을 보장합니다.',
+            principle: '주로 다이어프램(Diaphragm) 구조를 채택하여 가스와의 접촉을 최소화하고, 공압(Air Operated) 또는 솔레노이드(Solenoid) 방식으로 빠르게 개폐하여 정밀한 펄스 시간을 제어합니다.',
+            vendors: [
+                { no: 1, name: '삼인CKD', biz: '138-81-06721', link: 'https://www.samin4u.com/product/product_view.php?pg_no=201', contact: 'TEL: 031-433-9922' },
+                { no: 2, name: 'NAT', biz: '128-81-19363', link: 'http://www.nat21.co.kr/gnuboard4/bbs/board.php?bo_table=p03', contact: 'TEL: 02-2676-4483' },
+                { no: 3, name: '한국도키멕유공압', biz: '118-81-03618', link: 'https://tkp.imweb.me/72', contact: 'TEL: 070-7123-4603' },
+                { no: 4, name: 'Inatech&CORP', biz: '106-81-42171', link: 'https://www.inacorp.co.kr/product/product2_2.jsp?pbuid=2', contact: 'TEL: 02-2026-0660' }
+            ]
+        }
+    }
+};
+
+const processSteps = [
+    {
+        title: '1. SI-FL1 Step',
+        subtitle: 'Silicon Flow 1: Source Injection & Adsorption',
+        image: { src: '/static/img/step_1.png', alt: 'Silicon Source Feed', caption: 'Silicon Source Feed' },
+        sections: [
+            {
+                label: '공정 동작',
+                text: '다이클로로실레인(SiH2Cl2, DCS)이 저장된 Si Source Tank와 반응 챔버 사이의 밸브가 순간적으로 열립니다. 탱크 내의 높은 압력(Charge된 상태)을 이용해 DCS 가스가 챔버 내부로 빠르게 분사됩니다.'
+            },
+            {
+                label: '화학적 메커니즘 (Chemisorption)',
+                text: '웨이퍼 표면(이전 사이클로 인해 NHx 또는 OH 기로 마감된 상태)에 DCS 분자가 도달합니다. DCS는 표면의 활성 자리(Active Site)와 반응하여 화학 흡착(Chemisorption)을 일으킵니다. 자기 제한적 반응(Self-Limiting): 표면의 모든 활성 자리가 DCS 분자로 덮이면(1 Monolayer 포화), 더 이상 물리적으로 흡착된 가스들은 표면과 결합하지 못하고 겉돌게 됩니다.'
+            },
+            {
+                label: '핵심 포인트',
+                text: '가스 유량이 너무 적으면 표면 포화가 안 되어 박막 성장률(GPC)이 떨어지고, 너무 많으면 파티클의 원인이 되므로 Source Tank의 압력 제어와 투입 시간(Feeding Time) 최적화가 필수적입니다.'
+            }
+        ]
+    },
+    {
+        title: '2. SI-EVA1 Step',
+        subtitle: 'Silicon Evacuation 1: Purge & Desorption',
+        image: { src: '/static/img/step_2.png', alt: 'Silicon Source Purge', caption: 'Silicon Source Purge' },
+        sections: [
+            {
+                label: '공정 동작',
+                text: 'DCS 공급을 차단하고, 불활성 가스인 질소(N2)를 챔버 내로 강하게 불어넣습니다(Purge). 동시에 진공 펌프를 통해 챔버 내부 기체를 배기(Evacuation)합니다.'
+            },
+            {
+                label: '물리/화학적 메커니즘',
+                text: '표면에 화학적으로 강하게 결합하지 못한 물리 흡착(Physisorption) 분자들과 잉여 DCS 가스를 챔버 밖으로 밀어냅니다. 이 단계가 불완전하면 잔류 DCS가 다음 단계의 NH3와 기상(Gas-phase)에서 반응하여 파티클(Powder)을 형성하거나, ALD가 아닌 CVD 거동을 보여 박막 두께 균일도(Uniformity)를 해치게 됩니다.'
+            },
+            {
+                label: '핵심 포인트',
+                text: '완벽한 퍼지를 통해 오직 표면에 단단히 결합한 1층의 Si 전구체만 남기는 것이 이 스텝의 핵심입니다.'
+            }
+        ]
+    },
+    {
+        title: '3. N-FL1 Step',
+        subtitle: 'Nitrogen Flow 1: Plasma Ignition & Radical Generation',
+        image: { src: '/static/img/step_3.png', alt: 'NH3 Source Feed + Plasma On', caption: 'NH3 Source Feed + Plasma On' },
+        sections: [
+            {
+                label: '공정 동작',
+                text: 'NH3 가스가 챔버 상단의 Plasma Area로 주입됩니다. 동시에 RF Power가 인가되어 NH3를 분해합니다.'
+            },
+            {
+                label: '화학적 메커니즘 (Radical Reaction)',
+                text: 'NH3 가스는 열에너지로는 저온에서 잘 분해되지 않기 때문에, RF 플라즈마 에너지를 이용해 고반응성 질소 라디칼(N*, NH*, NH* 등)로 분해됩니다. 생성된 라디칼들은 Plasma Area에서 Wafer가 있는 반응 영역(Reaction Zone)으로 이동합니다. 질소 라디칼은 웨이퍼 표면에 흡착된 DCS의 리간드(-Cl, -H)를 공격하여 떨어뜨리고, 그 자리에 질소가 결합하며 Si-N 결합을 형성합니다. (부산물로 HCl, H2 가스 생성)'
+            },
+            {
+                label: '핵심 포인트',
+                text: '웨이퍼에 직접 플라즈마를 때리는 것이 아니라, 상부에서 생성된 라디칼을 이용(Remote Plasma 방식)함으로써 기판 손상(Plasma Damage)을 최소화합니다.'
+            }
+        ]
+    },
+    {
+        title: '4. N-FL2 Step',
+        subtitle: 'Nitrogen Flow 2: Reaction Saturation & Precursor Refill',
+        image: { src: '/static/img/step_4.png', alt: 'NH3 Source Feed + Plasma On + Si Tank Charge', caption: 'NH3 Source Feed + Plasma On + Si Tank Charge' },
+        sections: [
+            {
+                label: '공정 동작',
+                text: '<strong>반응 챔버 :</strong><br>NH3 공급과 RF Power는 계속 유지됩니다. N 라디칼이 웨이퍼 표면의 미처 반응하지 못한 구석구석까지 침투하여 Si-N 반응을 포화(Saturation) 상태로 만듭니다.<br><br><strong>가스 라인 (Back-end) :</strong><br>이와 동시에, 다음 사이클을 준비하기 위해 SiH2Cl2 공급 라인(MFC 후단)에서 비어 있는 Si Source Tank로 DCS를 다시 채워넣는(Charge/Refill) 과정이 일어납니다.'
+            },
+            {
+                label: '목적',
+                text: '공정 시간을 단축(Throughput 향상)하기 위해 반응 시간(Reaction Time)을 확보함과 동시에 전구체 충전(Bottling)을 병렬로 수행하는 효율적인 단계입니다.'
+            }
+        ]
+    },
+    {
+        title: '5. N-EVA1 Step',
+        subtitle: 'Nitrogen Evacuation 2: Byproduct Removal & Film Formation',
+        image: { src: '/static/img/step_5.png', alt: 'Si3N4 생성 + Byproduct 휘발', caption: 'Si3N4 생성 + Byproduct 휘발' },
+        sections: [
+            {
+                label: '공정 동작',
+                text: 'RF Power를 끄고 NH3 공급을 중단합니다. 다시 N2 가스를 이용하여 챔버를 퍼지하고 배기합니다.'
+            },
+            {
+                label: '물리/화학적 메커니즘',
+                text: '반응 후 생성된 부산물 (HCl 가스 등)과 반응에 참여하지 않고 남은 잉여 N라디칼, NH3 가스를 제거합니다. 이 과정이 끝나면 웨이퍼 표면은 다시 NHx 등의 활성기로 덮인 상태가 되어, 다음 사이클의 DCS와 반응할 준비가 완료됩니다.'
+            },
+            {
+                label: '최종 결과',
+                text: '이 5단계를 거치면 웨이퍼 위에는 불순물이 적고 두께가 매우 균일한 단원자층 두께의 Si3N4 박막이 형성됩니다. 이를 원하는 두께가 될 때까지 수십~수백 회 반복합니다.'
+            }
+        ]
+    }
+];
 
 function updateCurrentStepDisplay(stepId, stepName) {
     const idEl = document.getElementById('current-step-id');
@@ -39,9 +212,7 @@ function updateCurrentStepDisplay(stepId, stepName) {
     if (idEl) {
         idEl.textContent = stepId !== null && stepId !== undefined ? stepId : '-';
     }
-    if (nameEl) {
-        nameEl.textContent = stepName ? stepName : '-';
-    }
+    if (nameEl) nameEl.textContent = 'DEPO';
     lastStepUpdate = Date.now();
 }
 
@@ -305,7 +476,7 @@ function buildLogText(param, entry) {
     } else {
         descriptor = `유량 편차 ${diff}% 감지`;
     }
-    return `${param} ${descriptor}`;
+    return `${displayParam(param)} ${descriptor}`;
 }
 
 function tryParseMessage(msg) {
@@ -701,7 +872,7 @@ function renderModalChart(param, kind, showModal) {
         });
     }
     modalInfo = { param, kind };
-    title.textContent = `${param} (${kind === 'recent' ? '최근 1분' : '최근 5분'})`;
+    title.textContent = `${displayParam(param)} (${kind === 'recent' ? '최근 1분' : '최근 5분'})`;
 }
 
 function openChartModal(param, kind) {
@@ -735,7 +906,7 @@ function closeChartModal() {
 function openWarningModal(param, text) {
     if (!warningEnabled) return;
     if (!warningElements.warningModal || !warningElements.warningParam) return;
-    warningElements.warningParam.textContent = text || `${param} 이상 감지`;
+    warningElements.warningParam.textContent = text || `${displayParam(param)} 이상 감지`;
     warningElements.warningModal.classList.add('show');
     warningModalOpen = true;
 }
@@ -784,6 +955,37 @@ async function loadHtml(path, cacheKey) {
 function renderHtml(htmlContainer, htmlText) {
     if (!htmlContainer) return;
     htmlContainer.innerHTML = htmlText;
+}
+
+function loadScriptOnce(src) {
+    return new Promise((resolve, reject) => {
+        const existing = document.querySelector(`script[data-dynamic-src="${src}"]`);
+        if (existing) {
+            if (existing.dataset.loaded === 'true') {
+                resolve();
+            } else if (existing.dataset.loaded === 'error') {
+                existing.remove();
+                resolve(loadScriptOnce(src));
+            } else {
+                existing.addEventListener('load', resolve, { once: true });
+                existing.addEventListener('error', () => reject(new Error(`failed to load ${src}`)), { once: true });
+            }
+            return;
+        }
+        const script = document.createElement('script');
+        script.src = src;
+        script.async = true;
+        script.dataset.dynamicSrc = src;
+        script.addEventListener('load', () => {
+            script.dataset.loaded = 'true';
+            resolve();
+        }, { once: true });
+        script.addEventListener('error', () => {
+            script.dataset.loaded = 'error';
+            reject(new Error(`failed to load ${src}`));
+        }, { once: true });
+        document.head.appendChild(script);
+    });
 }
 
 function disposeThreeViewer() {
@@ -857,10 +1059,57 @@ async function loadStlGeometry(url) {
     throw new Error('Unsupported STL format');
 }
 
-function attachOrbitControls(canvas, camera, target) {
+async function ensureGltfLoader() {
+    if (THREE.GLTFLoader) return;
+    const localSrc = '/static/lib/GLTFLoader.js';
+    const cdnVersion = '0.150.0';
+    const cdnSrc = `https://cdn.jsdelivr.net/npm/three@${cdnVersion}/examples/js/loaders/GLTFLoader.js`;
+    let lastErr = null;
+    try {
+        await loadScriptOnce(localSrc);
+    } catch (err) {
+        lastErr = err;
+    }
+    if (!THREE.GLTFLoader) {
+        try {
+            await loadScriptOnce(cdnSrc);
+        } catch (err) {
+            lastErr = err;
+        }
+    }
+    if (!THREE.GLTFLoader) {
+        throw new Error(`GLTFLoader unavailable (local/CDN load failed${lastErr ? ': ' + lastErr.message : ''})`);
+    }
+}
+
+async function loadGltfModel(url) {
+    await ensureGltfLoader();
+    return new Promise((resolve, reject) => {
+        const loader = new THREE.GLTFLoader();
+        loader.load(
+            url,
+            (gltf) => {
+                const root = gltf.scene || gltf.scenes?.[0];
+                if (!root) {
+                    reject(new Error('empty gltf scene'));
+                    return;
+                }
+                root.updateMatrixWorld(true);
+                const box = new THREE.Box3().setFromObject(root);
+                resolve({ object: root, box });
+            },
+            undefined,
+            (err) => reject(err || new Error('failed to load glb'))
+        );
+    });
+}
+
+function attachOrbitControls(canvas, camera, target, opts = {}) {
+    const minRadius = opts.minRadius ?? 0.1;
+    const maxRadius = opts.maxRadius ?? 5000;
     let isRotating = false;
     let lastX = 0, lastY = 0;
-    let radius = camera.position.length();
+    let radius = camera.position.clone().sub(target).length();
     const spherical = new THREE.Spherical().setFromVector3(camera.position.clone().sub(target));
     const onPointerDown = (e) => {
         if (e.button !== 0) return;
@@ -886,8 +1135,8 @@ function attachOrbitControls(canvas, camera, target) {
         e.preventDefault();
         e.stopPropagation();
         const delta = e.deltaY * 0.001;
-        radius *= (1 + delta);
-        radius = Math.max(5, radius);
+        const zoomFactor = Math.exp(delta); // smoother zoom curve
+        radius = Math.min(maxRadius, Math.max(minRadius, radius * zoomFactor));
         spherical.radius = radius;
         const vec = new THREE.Vector3().setFromSpherical(spherical).add(target);
         camera.position.copy(vec);
@@ -914,42 +1163,86 @@ async function createThreeViewer(container, modelUrl) {
     const width = container.clientWidth || 600;
     const height = 420;
     const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setPixelRatio(window.devicePixelRatio || 1);
     renderer.setSize(width, height);
-    renderer.setClearColor(0xf8fafc, 1);
+    renderer.setClearColor(0xededf1, 1);
+    renderer.outputEncoding = THREE.sRGBEncoding;
+    renderer.toneMappingExposure = 1.45;
     container.innerHTML = '';
     container.appendChild(renderer.domElement);
 
     const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xededf1);
     const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 5000);
     camera.position.set(0, 0, 200);
 
-    scene.add(new THREE.AmbientLight(0xffffff, 0.6));
-    const dir = new THREE.DirectionalLight(0xffffff, 0.8);
-    dir.position.set(60, 80, 120);
+    scene.add(new THREE.AmbientLight(0xffffff, 1.2));
+    scene.add(new THREE.HemisphereLight(0xffffff, 0xdde3ee, 1.0));
+    const dir = new THREE.DirectionalLight(0xffffff, 1.8);
+    dir.position.set(0, 120, 220); // 메인 라이트를 정면 위쪽에서 비추도록 조정
     scene.add(dir);
+    const dirFill = new THREE.DirectionalLight(0xf7f7f7, 0.85);
+    dirFill.position.set(30, 50, 180); // 정면 보조광
+    scene.add(dirFill);
+    const rim = new THREE.DirectionalLight(0xf0f0f0, 0.4);
+    rim.position.set(0, 140, -120);
+    scene.add(rim);
+    const frontFill = new THREE.PointLight(0xffffff, 0.6, 2000);
+    frontFill.position.set(0, 40, 260);
+    scene.add(frontFill);
 
     let cleanup = null;
+    const modelGroup = new THREE.Group();
+    scene.add(modelGroup);
     try {
-        const geometry = await loadStlGeometry(modelUrl);
-        geometry.center();
-        // 중립적인 그레이 톤으로 렌더링
-        // 더 밝은 그레이 톤
-        const material = new THREE.MeshPhongMaterial({ color: 0xe6e6e6, specular: 0x666666, shininess: 18 });
-        const mesh = new THREE.Mesh(geometry, material);
-        scene.add(mesh);
-        const box = new THREE.Box3().setFromObject(mesh);
-        const size = box.getSize(new THREE.Vector3()).length() || 100;
-        const center = box.getCenter(new THREE.Vector3());
-        camera.position.copy(center).add(new THREE.Vector3(size * 0.6, size * 0.6, size * 0.6));
+        const lower = (modelUrl || '').toLowerCase();
+        let box = null;
+        let target = new THREE.Vector3();
+        let size = 100;
+        if (lower.endsWith('.stl')) {
+            const geometry = await loadStlGeometry(modelUrl);
+            geometry.center();
+            const material = new THREE.MeshPhongMaterial({
+                color: 0xf8f8f8,
+                specular: 0x999999,
+                shininess: 45,
+                emissive: 0x121212
+            });
+            const mesh = new THREE.Mesh(geometry, material);
+            modelGroup.add(mesh);
+            box = new THREE.Box3().setFromObject(modelGroup);
+        } else if (lower.endsWith('.glb') || lower.endsWith('.gltf')) {
+            const { object, box: gltfBox } = await loadGltfModel(modelUrl);
+            modelGroup.add(object);
+            box = new THREE.Box3().setFromObject(modelGroup);
+        } else {
+            throw new Error('Unsupported model type');
+        }
+        modelGroup.rotation.y = Math.PI; // 초기 뷰에서 앞면이 보이도록 180도 회전
+        size = box?.getSize(new THREE.Vector3()).length() || 100;
+        target = box?.getCenter(new THREE.Vector3()) || new THREE.Vector3();
+        // 초기 시야를 정면-약간 위쪽에서 바라보도록 설정해 뒤집힌 느낌을 방지
+        const frontDistance = size * 1.1; // 초기 배치를 더 가깝게
+        camera.position.set(target.x, target.y + size * 0.12, target.z + frontDistance);
         camera.near = size / 200;
         camera.far = size * 20;
         camera.updateProjectionMatrix();
-        camera.lookAt(center);
-        cleanup = attachOrbitControls(renderer.domElement, camera, center.clone());
+        camera.lookAt(target);
+        const minRadius = Math.max(0.1, size * 0.01); // 더 깊게 확대 허용
+        const maxRadius = size * 50;
+        cleanup = attachOrbitControls(renderer.domElement, camera, target.clone(), { minRadius, maxRadius });
     } catch (err) {
-        console.error('STL load failed', err);
-        const tooLarge = String(err?.message || '').includes('too large');
-        container.innerHTML = tooLarge ? '모델이 너무 커서 표시할 수 없습니다. 용량을 줄인 STL을 제공해 주세요.' : '3D 모델을 불러오지 못했습니다.';
+        console.error('3D load failed', err);
+        const msg = String(err?.message || '');
+        const tooLarge = msg.includes('too large') || msg.includes('Exceeded');
+        const loaderMissing = msg.includes('GLTFLoader unavailable');
+        if (loaderMissing) {
+            container.innerHTML = 'GLTFLoader를 불러오지 못했습니다. /static/lib/GLTFLoader.js를 배포하거나 네트워크 접속을 허용해 주세요.';
+        } else if (tooLarge) {
+            container.innerHTML = '모델이 너무 커서 표시할 수 없습니다. 용량을 줄인 모델을 제공해 주세요.';
+        } else {
+            container.innerHTML = `3D 모델을 불러오지 못했습니다. (${msg || '원인 미상'})`;
+        }
         return;
     }
 
@@ -1129,21 +1422,132 @@ function renderMfcDrawingTab(entry) {
     destroyReportChart();
     disposeThreeViewer();
     const label = entry?.param || 'MFC';
-    // 경량화된 STL 사용 (STEP은 브라우저에서 바로 로드 불가)
-    const encoded = encodeURIComponent('ALD_20.stl');
+    // 경량화된 GLB 사용 (STEP은 브라우저에서 바로 로드 불가)
+    const encoded = encodeURIComponent('ALD_5_ver8.glb');
     const modelUrl = `/static/3D/${encoded}`;
     body.innerHTML = `
         <div class="report-3d-wrap">
             <div class="report-3d-header">
                 <span>도면 (3D)</span>
-                <span style="font-size:13px; color:#475569;">파일: ALD_20.stl</span>
+                <span style="font-size:13px; color:#475569;">파일: ALD_5_ver8.glb</span>
             </div>
             <div class="report-3d-canvas" id="report-3d-container">로딩 중...</div>
-            <div class="report-3d-note">마우스 드래그: 회전 · 스크롤: 줌 · 오른쪽 버튼: 이동</div>
+            <div class="report-3d-note">마우스 드래그: 회전 · 스크롤: 줌 · 오른쪽 버튼: 이동 (대용량 파일은 로딩이 다소 지연될 수 있습니다)</div>
         </div>
     `;
     const container = document.getElementById('report-3d-container');
     createThreeViewer(container, modelUrl);
+}
+
+function getPartsData(entry) {
+    const vt = Number(entry?.violation_type);
+    if (partsCatalog.byViolation[vt]) return partsCatalog.byViolation[vt];
+    return partsCatalog.default;
+}
+
+function renderPartsTab(entry) {
+    const body = reportElements.reportBody;
+    if (!body) return;
+    destroyReportChart();
+    disposeThreeViewer();
+    const data = getPartsData(entry);
+    const vendorRows = (data.vendors || []).map(v => `
+        <tr>
+            <td>${v.no ?? ''}</td>
+            <td>${v.name ?? ''}</td>
+            <td>${v.biz ?? ''}</td>
+            <td>${v.link ? `<a href="${v.link}" target="_blank" rel="noopener">제품상세정보</a>` : ''}</td>
+            <td>${v.contact ?? ''}</td>
+        </tr>
+    `).join('');
+    const imageHtml = data.image ? `
+        <figure class="parts-figure">
+            <img src="${data.image.src}" alt="${data.image.alt || data.title || ''}">
+            <figcaption>${data.image.caption || ''}</figcaption>
+        </figure>
+    ` : '';
+    const usage = data.usage ? `<div class="parts-text-block"><div class="label">용도</div><div>${data.usage}</div></div>` : '';
+    const feature = data.feature ? `<div class="parts-text-block"><div class="label">특성</div><div>${data.feature}</div></div>` : '';
+    const principle = data.principle ? `<div class="parts-text-block"><div class="label">작동원리</div><div>${data.principle}</div></div>` : '';
+    body.innerHTML = `
+        <div class="parts-tablist" role="tablist" aria-label="부품 확인 탭">
+            <button class="parts-subtab active" data-sub="info" role="tab" aria-selected="true">부품 정보</button>
+            <button class="parts-subtab" data-sub="vendor" role="tab" aria-selected="false">판매 기업</button>
+        </div>
+        <div class="parts-panel active" data-sub="info" role="tabpanel">
+            <div class="parts-section">
+                <div class="parts-section-title">${data.title}</div>
+                <div class="parts-info-layout">
+                    ${imageHtml}
+                    <div class="parts-text-cols">
+                        ${usage || ''}
+                        ${feature || ''}
+                        ${principle || ''}
+                        ${(!usage && !feature && !principle) ? '<div class="parts-note">부품 정보가 없습니다.</div>' : ''}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="parts-panel" data-sub="vendor" role="tabpanel">
+            ${vendorRows ? `
+                <table class="parts-table">
+                    <thead>
+                        <tr><th>NO</th><th>업체명</th><th>사업자번호</th><th>제품상세정보</th><th>제품문의처</th></tr>
+                    </thead>
+                    <tbody>
+                        ${vendorRows}
+                    </tbody>
+                </table>
+            ` : '<div class="parts-note">등록된 판매 기업 정보가 없습니다.</div>'}
+        </div>
+    `;
+    const tabs = body.querySelectorAll('.parts-subtab');
+    const panels = body.querySelectorAll('.parts-panel');
+    tabs.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const target = btn.dataset.sub;
+            tabs.forEach(b => {
+                const active = b === btn;
+                b.classList.toggle('active', active);
+                b.setAttribute('aria-selected', active ? 'true' : 'false');
+            });
+            panels.forEach(panel => {
+                panel.classList.toggle('active', panel.dataset.sub === target);
+            });
+        });
+    });
+}
+
+function renderProcessTab() {
+    const body = reportElements.reportBody;
+    if (!body) return;
+    destroyReportChart();
+    disposeThreeViewer();
+    if (!Array.isArray(processSteps) || processSteps.length === 0) {
+        body.textContent = '공정 단계 설명이 없습니다.';
+        return;
+    }
+    const step = processSteps[Math.floor(Math.random() * processSteps.length)];
+    const sections = (step.sections || []).map(sec => `
+        <div class="parts-text-block">
+            <div class="label">${sec.label}</div>
+            <div>${sec.text}</div>
+        </div>
+    `).join('');
+    body.innerHTML = `
+        <div class="parts-section">
+            <div class="parts-section-title">${step.title}${step.subtitle ? ` (${step.subtitle})` : ''}</div>
+            <div class="parts-info-layout process-layout">
+                <figure class="parts-figure">
+                    <img src="${step.image?.src || ''}" alt="${step.image?.alt || ''}">
+                    <figcaption>${step.image?.caption || ''}</figcaption>
+                </figure>
+                <div class="parts-text-cols">
+                    ${sections || '<div class="parts-note">설명 정보가 없습니다.</div>'}
+                </div>
+            </div>
+        </div>
+    `;
 }
 
 async function setActiveReportTab(tabKey) {
@@ -1154,7 +1558,7 @@ async function setActiveReportTab(tabKey) {
     });
     const body = reportElements.reportBody;
     if (!body || !currentReportEntry) return;
-    const base = `${currentReportEntry.param} 관련 리포트가 준비되지 않았습니다.`;
+    const base = `${displayParam(currentReportEntry.param)} 관련 리포트가 준비되지 않았습니다.`;
     const defaultMap = {
         parts: '부품 확인 정보가 없습니다.',
         drawing: '도면(이상 위치) 정보가 없습니다.',
@@ -1165,6 +1569,8 @@ async function setActiveReportTab(tabKey) {
             await renderMfcCauseTab(currentReportEntry);
         } else if (tabKey === 'action') {
             renderMfcActionTab(currentReportEntry);
+        } else if (tabKey === 'parts') {
+            renderPartsTab(currentReportEntry);
         } else if (tabKey === 'drawing') {
             if (mfcParams.has(currentReportEntry.param)) {
                 renderMfcDrawingTab(currentReportEntry);
@@ -1173,6 +1579,8 @@ async function setActiveReportTab(tabKey) {
                 disposeThreeViewer();
                 body.textContent = defaultMap[tabKey] || base;
             }
+        } else if (tabKey === 'process') {
+            renderProcessTab();
         } else {
             destroyReportChart();
             disposeThreeViewer();
@@ -1211,7 +1619,7 @@ function closeReportModal() {
 
 async function fetchAbnormalLogs() {
     try {
-        const res = await fetch('/api/logs');
+        const res = await fetch('/api/anomaly_logs');
         if (!res.ok) throw new Error('bad response');
         const data = await res.json();
         setServerLogs(Array.isArray(data) ? data : []);
@@ -1257,6 +1665,7 @@ function checkProcess() {
 }
 
 window.addEventListener('DOMContentLoaded', () => {
+    applyDisplayLabels();
     loadSettings().finally(() => {
         const warningToggle = document.getElementById('warning-toggle');
         const stored = localStorage.getItem(warningToggleKey);

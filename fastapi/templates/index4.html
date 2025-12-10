@@ -343,6 +343,13 @@
             overflow-y: auto;
             line-height: 1.5;
             background: #fff;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .report-body>* {
+            flex: 0 0 auto;
+            min-height: 0;
         }
 
         .report-3d-wrap {
@@ -430,8 +437,9 @@
             background: #1f4e79;
             color: #fff;
             border-radius: 14px;
-            padding: 4px 10px;
-            font-size: 13px;
+            padding: 6px 12px;
+            font-size: 15px;
+            font-weight: 800;
             margin-bottom: 8px;
         }
 
@@ -508,6 +516,283 @@
             border: 1px solid #d0d7de;
             border-radius: 8px;
             background: #ffffff;
+        }
+
+        /* 부품 확인 서브 탭 */
+        .parts-tablist {
+            display: inline-flex;
+            gap: 12px;
+            margin-bottom: 8px;
+            padding: 0 4px 4px;
+            border-bottom: 2px solid #d0d7de;
+            flex: 0 0 auto;
+        }
+
+        .parts-subtab {
+            background: transparent;
+            border: none;
+            padding: 8px 12px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            color: #1f2937;
+            height: 40px;
+            line-height: 24px;
+        }
+
+        .parts-subtab.active {
+            border-bottom-color: #1f4e79;
+            color: #1f4e79;
+        }
+
+        .parts-panel {
+            display: none;
+            margin-top: 0;
+            flex: 0 0 auto;
+        }
+
+        .parts-panel.active {
+            display: block;
+        }
+
+        .parts-section {
+            background: #f8fafc;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            height: 100%;
+        }
+
+        .parts-section-title {
+            font-weight: 700;
+            font-size: 16px;
+            margin-bottom: 8px;
+            color: #0f172a;
+        }
+
+        .parts-kv-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .parts-kv {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 10px 12px;
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .parts-kv .label {
+            color: #475569;
+            font-weight: 600;
+        }
+
+        .parts-note {
+            margin-top: 6px;
+            color: #334155;
+            line-height: 1.5;
+        }
+
+        .parts-vendor-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 12px;
+        }
+
+        .parts-vendor-card {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+        }
+
+        .parts-vendor-name {
+            font-weight: 700;
+            font-size: 15px;
+            color: #0f172a;
+        }
+
+        .parts-vendor-contact {
+            color: #334155;
+            font-size: 14px;
+        }
+
+        .parts-vendor-note {
+            color: #475569;
+            font-size: 13px;
+        }
+
+        .parts-info-layout {
+            display: flex;
+            gap: 14px;
+            align-items: flex-start;
+            flex-wrap: nowrap;
+            flex: 1 1 auto;
+            min-height: 0;
+            height: auto;
+        }
+
+        .parts-figure {
+            flex: 1 1 45%;
+            max-width: 420px;
+            min-width: 280px;
+            height: auto;
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 14px;
+            text-align: center;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+            align-self: flex-start;
+        }
+
+        .parts-figure img {
+            max-width: 100%;
+            max-height: 100%;
+            width: auto;
+            height: auto;
+            object-fit: contain;
+            border-radius: 6px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .parts-figure figcaption {
+            margin-top: 6px;
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .parts-text-cols {
+            flex: 1 1 55%;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+            min-height: 0;
+            align-self: flex-start;
+        }
+
+        .parts-text-block {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 12px 14px;
+            line-height: 1.6;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+        }
+
+        .parts-text-block .label {
+            display: inline-block;
+            font-weight: 700;
+            margin-bottom: 4px;
+            color: #0f172a;
+        }
+
+        .parts-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #fff;
+            border: 1px solid #d0d7de;
+            border-radius: 8px;
+            overflow: hidden;
+            font-size: 15px;
+        }
+
+        .parts-table th,
+        .parts-table td {
+            border: 1px solid #c6cbd4;
+            padding: 10px 12px;
+        }
+
+        .parts-table thead {
+            background: #0b2c6a;
+            color: #fff;
+            font-weight: 700;
+            text-align: center;
+        }
+
+        .parts-table a {
+            color: #1f4e79;
+            text-decoration: underline;
+            word-break: break-all;
+        }
+
+        .parts-table tbody tr:nth-child(odd) {
+            background: #f8fafc;
+        }
+
+        .parts-table tbody tr:nth-child(even) {
+            background: #fff;
+        }
+
+        .parts-table tbody td {
+            text-align: center;
+            color: #1f2937;
+        }
+
+        .parts-table tbody td:first-child {
+            font-weight: 700;
+            width: 70px;
+        }
+
+        .parts-table tbody td:last-child {
+            color: #0f172a;
+        }
+
+        .parts-table th:not(:last-child),
+        .parts-table td:not(:last-child) {
+            border-right: 1px dotted #9ba5b5;
+        }
+
+        /* 공정 단계 설명 레이아웃 */
+        .process-layout {
+            align-items: stretch;
+            flex-wrap: nowrap;
+            height: 100%;
+        }
+
+        .process-layout .parts-figure {
+            flex: 1 1 0;
+            max-width: none;
+            width: auto;
+            height: auto;
+            max-height: 420px;
+            align-self: flex-start;
+        }
+
+        .process-layout .parts-text-cols {
+            flex: 1 1 0;
+            height: 100%;
+        }
+
+        @media (max-width: 1100px) {
+            .parts-info-layout {
+                flex-wrap: wrap;
+            }
+
+            .parts-figure,
+            .process-layout .parts-figure,
+            .parts-text-cols,
+            .process-layout .parts-text-cols {
+                flex: 1 1 100%;
+                max-width: none;
+            }
         }
 
         @media (max-width: 1100px) {
@@ -848,7 +1133,7 @@
         <h2>실시간 이상감지</h2>
         <div class="step-info">
             <span>STEP ID: <strong id="current-step-id">-</strong></span>
-            <span>STEP NAME: <strong id="current-step-name">-</strong></span>
+            <span>STEP NAME: <strong id="current-step-name">DEPO</strong></span>
             <span>데이터 출력: <button id="toggle-datasets"></button></span>
             <span class="warning-toggle">
                 경고 팝업
@@ -872,7 +1157,6 @@
                     <div class="chart-header">최근 5분 데이터</div>
                     <div class="chart-header">최근 1분 데이터</div>
                 </div>
-                <div id="chart-time-range" class="chart-time-range"></div>
                 {% for col in columns %}
                 {% set safe = col.replace(' ', '_').replace('.', '_').replace('-', '_') %}
                 <div class="chart-row" data-param="{{ col }}">

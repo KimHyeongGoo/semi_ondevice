@@ -10,6 +10,10 @@ const logElements = new Map();
 const highlightRegionsByParam = new Map();
 let stepFilterValue = 'all';
 let sortOrder = 'desc';
+const displayParam = (name) => {
+    const m = String(name || '').match(/^MFC\\d+[_ ]?(.*)$/i);
+    return m && m[1] ? m[1] : name;
+};
 
 const CATEGORY_GROUPS = {
     MFC: [
@@ -95,6 +99,7 @@ function parseLogMessage(message) {
 function buildLogDescription(log) {
     const parsed = parseLogMessage(log.message);
     const param = parsed?.parameter || log.parameter || '';
+    const label = displayParam(param);
     const diffVal = parsed?.diff_percent ?? parsed?.diff;
     const actualVal = parsed?.actual_value;
     const predictedVal = parsed?.predicted_value;
@@ -115,7 +120,7 @@ function buildLogDescription(log) {
     } else {
         descriptor = `유량 편차 ${diff}% 감지`;
     }
-    return `[${param}] ${descriptor}`;
+    return `[${label}] ${descriptor}`;
 }
 
 function setStatus(message, type = 'info') {
@@ -197,7 +202,7 @@ function renderParamSections() {
             const btn = document.createElement('button');
             btn.type = 'button';
             btn.className = 'param-btn';
-            btn.textContent = param;
+            btn.textContent = displayParam(param);
             if (selectedParams.has(param)) btn.classList.add('active');
             btn.addEventListener('click', () => {
                 if (selectedParams.has(param)) {
@@ -409,7 +414,7 @@ function createChartCard(parameter) {
     const safe = safeId(parameter);
     card.innerHTML = `
         <div class="chart-header">
-            <div class="chart-title">${parameter}</div>
+            <div class="chart-title">${displayParam(parameter)}</div>
         </div>
         <canvas id="chart-${safe}"></canvas>
         <div class="chart-message" id="message-${safe}"></div

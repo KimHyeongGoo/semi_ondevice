@@ -1,2 +1,0 @@
-[2025-11-13 16:24:34] ray_predict() : 상하한 터치 이벤트 처리시 오류발생
-[2025-11-13 16:24:34] 'NoneType' object has no attribute 'get'

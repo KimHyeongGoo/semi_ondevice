@@ -538,46 +538,147 @@
 
     <script>
         const rows = [
-            { occur: '11/26/2025 09:26:12', recipe: 'O_P_IH_HD02', alarmId: '', level: '', pmcMode: '', alarmName: '' },
-            { occur: '11/26/2025 09:26:07', recipe: 'O_P_IH_HD02', alarmId: '', level: '', pmcMode: '', alarmName: '' },
-            { occur: '11/26/2025 09:23:11', recipe: 'O_P_IH_HD02', alarmId: '', level: '', pmcMode: '', alarmName: '' },
-            { occur: '11/26/2025 09:23:01', recipe: 'O_P_IH_HD02', alarmId: '', level: '', pmcMode: '', alarmName: '' },
-            { occur: '11/26/2025 09:19:53', recipe: 'O_P_IH_HD02', alarmId: '', level: '', pmcMode: '', alarmName: '' },
-            { occur: '11/26/2025 09:15:44', recipe: 'O_P_IH_HD02', alarmId: '', level: '', pmcMode: '', alarmName: '' },
-            { occur: '11/26/2025 09:10:12', recipe: 'O_P_IH_HD02', alarmId: '', level: '', pmcMode: '', alarmName: '' },
-            { occur: '11/26/2025 09:03:31', recipe: 'O_P_IH_HD02', alarmId: '', level: '', pmcMode: '', alarmName: '' },
-            { occur: '11/26/2025 08:55:02', recipe: 'O_P_IH_HD02', alarmId: '', level: '', pmcMode: '', alarmName: '' },
-            { occur: '11/26/2025 08:47:13', recipe: 'O_P_IH_HD02', alarmId: '', level: '', pmcMode: '', alarmName: '' },
-            { occur: '11/26/2025 08:41:55', recipe: 'O_P_IH_HD02', alarmId: '', level: '', pmcMode: '', alarmName: '' },
-            { occur: '11/26/2025 08:32:44', recipe: 'O_P_IH_HD02', alarmId: '', level: '', pmcMode: '', alarmName: '' },
-            { occur: '11/26/2025 08:26:18', recipe: 'O_P_IH_HD02', alarmId: '', level: '', pmcMode: '', alarmName: '' },
-            { occur: '11/26/2025 08:19:10', recipe: 'O_P_IH_HD02', alarmId: '', level: '', pmcMode: '', alarmName: '' },
-            { occur: '11/26/2025 08:10:42', recipe: 'O_P_IH_HD02', alarmId: '', level: '', pmcMode: '', alarmName: '' },
-            { occur: '11/26/2025 08:05:22', recipe: 'O_P_IH_HD02', alarmId: '', level: '', pmcMode: '', alarmName: '' },
-            { occur: '11/26/2025 07:58:11', recipe: 'O_P_IH_HD02', alarmId: '', level: '', pmcMode: '', alarmName: '' },
-            { occur: '11/26/2025 07:50:45', recipe: 'O_P_IH_HD02', alarmId: '', level: '', pmcMode: '', alarmName: '' },
-            { occur: '11/26/2025 07:42:33', recipe: 'O_P_IH_HD02', alarmId: '', level: '', pmcMode: '', alarmName: '' },
-            { occur: '11/26/2025 07:38:12', recipe: 'O_P_IH_HD02', alarmId: '', level: '', pmcMode: '', alarmName: '' },
-            { occur: '11/26/2025 07:30:01', recipe: 'O_P_IH_HD02', alarmId: '', level: '', pmcMode: '', alarmName: '' },
-            { occur: '11/26/2025 07:22:16', recipe: 'O_P_IH_HD02', alarmId: '', level: '', pmcMode: '', alarmName: '' },
-            { occur: '11/26/2025 07:15:44', recipe: 'O_P_IH_HD02', alarmId: '', level: '', pmcMode: '', alarmName: '' },
-            { occur: '11/26/2025 07:10:18', recipe: 'O_P_IH_HD02', alarmId: '', level: '', pmcMode: '', alarmName: '' },
-            { occur: '11/26/2025 07:02:55', recipe: 'O_P_IH_HD02', alarmId: '', level: '', pmcMode: '', alarmName: '' },
-            { occur: '11/26/2025 06:55:22', recipe: 'O_P_IH_HD02', alarmId: '', level: '', pmcMode: '', alarmName: '' },
-            { occur: '11/26/2025 06:48:05', recipe: 'O_P_IH_HD02', alarmId: '', level: '', pmcMode: '', alarmName: '' },
-            { occur: '11/26/2025 06:40:30', recipe: 'O_P_IH_HD02', alarmId: '', level: '', pmcMode: '', alarmName: '' },
-            { occur: '11/26/2025 06:33:18', recipe: 'O_P_IH_HD02', alarmId: '', level: '', pmcMode: '', alarmName: '' },
-            { occur: '11/26/2025 06:25:44', recipe: 'O_P_IH_HD02', alarmId: '', level: '', pmcMode: '', alarmName: '' }
+            { occur: '11/26/2025 09:26:12', recipe: 'O_P_IH_HD02' },
+            { occur: '11/26/2025 09:26:07', recipe: 'O_P_IH_HD02' },
+            { occur: '11/26/2025 09:23:11', recipe: 'O_P_IH_HD02' },
+            { occur: '11/26/2025 09:23:01', recipe: 'O_P_IH_HD02' },
+            { occur: '11/26/2025 09:19:53', recipe: 'O_P_IH_HD02' },
+            { occur: '11/26/2025 09:15:44', recipe: 'O_P_IH_HD02' },
+            { occur: '11/26/2025 09:10:12', recipe: 'O_P_IH_HD02' },
+            { occur: '11/26/2025 09:03:31', recipe: 'O_P_IH_HD02' },
+            { occur: '11/26/2025 08:55:02', recipe: 'O_P_IH_HD02' },
+            { occur: '11/26/2025 08:47:13', recipe: 'O_P_IH_HD02' },
+            { occur: '11/26/2025 08:41:55', recipe: 'O_P_IH_HD02' },
+            { occur: '11/26/2025 08:32:44', recipe: 'O_P_IH_HD02' },
+            { occur: '11/26/2025 08:26:18', recipe: 'O_P_IH_HD02' },
+            { occur: '11/26/2025 08:19:10', recipe: 'O_P_IH_HD02' },
+            { occur: '11/26/2025 08:10:42', recipe: 'O_P_IH_HD02' },
+            { occur: '11/26/2025 08:05:22', recipe: 'O_P_IH_HD02' },
+            { occur: '11/26/2025 07:58:11', recipe: 'O_P_IH_HD02' },
+            { occur: '11/26/2025 07:50:45', recipe: 'O_P_IH_HD02' },
+            { occur: '11/26/2025 07:42:33', recipe: 'O_P_IH_HD02' },
+            { occur: '11/26/2025 07:38:12', recipe: 'O_P_IH_HD02' },
+            { occur: '11/26/2025 07:30:01', recipe: 'O_P_IH_HD02' },
+            { occur: '11/26/2025 07:22:16', recipe: 'O_P_IH_HD02' },
+            { occur: '11/26/2025 07:15:44', recipe: 'O_P_IH_HD02' },
+            { occur: '11/26/2025 07:10:18', recipe: 'O_P_IH_HD02' },
+            { occur: '11/26/2025 07:02:55', recipe: 'O_P_IH_HD02' },
+            { occur: '11/26/2025 06:55:22', recipe: 'O_P_IH_HD02' },
+            { occur: '11/26/2025 06:48:05', recipe: 'O_P_IH_HD02' },
+            { occur: '11/26/2025 06:40:30', recipe: 'O_P_IH_HD02' },
+            { occur: '11/26/2025 06:33:18', recipe: 'O_P_IH_HD02' },
+            { occur: '11/26/2025 06:25:44', recipe: 'O_P_IH_HD02' }
         ];
+
+        const sampleDetails = [
+            {
+                alarmId: 'A-1501',
+                level: 'WARN',
+                pmcMode: 'AUTO',
+                alarmName: 'Zone1 온도 상한 초과',
+                recipeInfo: [
+                    { label: 'Lot ID', value: 'LOT-24-11-01', remark: '증착 4/25' },
+                    { label: 'Operator', value: 'KIM', remark: '자동 진행' },
+                    { label: 'Chamber', value: 'IH-01', remark: '온도 튜닝 필요' },
+                    { label: 'Process Time', value: '38m 12s', remark: 'Step 7에서 상승' }
+                ],
+                alarmHistory: [
+                    { id: 'A-1501', level: 'WARN', desc: 'Zone1 히터 온도 5°C 초과' },
+                    { id: 'A-1088', level: 'INFO', desc: 'Purge 완료 보고' },
+                    { id: 'A-1205', level: 'WARN', desc: 'MFC7 유량 편차 감지' }
+                ]
+            },
+            {
+                alarmId: 'A-2107',
+                level: 'CRIT',
+                pmcMode: 'MAN',
+                alarmName: 'Chamber Pressure Drop',
+                recipeInfo: [
+                    { label: 'Lot ID', value: 'LOT-24-11-02', remark: '압력 저하' },
+                    { label: 'Operator', value: 'LEE', remark: '수동 개입' },
+                    { label: 'Chamber', value: 'IH-01', remark: 'Valve 체크' },
+                    { label: 'Process Time', value: '41m 04s', remark: 'Step 5에서 정지' }
+                ],
+                alarmHistory: [
+                    { id: 'A-2107', level: 'CRIT', desc: '챔버 압력 15 mTorr 미만' },
+                    { id: 'A-0990', level: 'INFO', desc: '배기 밸브 수동 개방' },
+                    { id: 'A-1875', level: 'WARN', desc: '스테이지 냉각 지연' }
+                ]
+            },
+            {
+                alarmId: 'A-3305',
+                level: 'INFO',
+                pmcMode: 'AUTO',
+                alarmName: 'Recipe Complete With Notes',
+                recipeInfo: [
+                    { label: 'Lot ID', value: 'LOT-24-11-03', remark: '기록 확인' },
+                    { label: 'Operator', value: 'PARK', remark: '점검 모드' },
+                    { label: 'Chamber', value: 'IH-02', remark: '정상' },
+                    { label: 'Process Time', value: '35m 49s', remark: '메모 남김' }
+                ],
+                alarmHistory: [
+                    { id: 'A-3305', level: 'INFO', desc: '레시피 정상 완료' },
+                    { id: 'A-1450', level: 'WARN', desc: '전달 온도 기준 상한 근접' },
+                    { id: 'A-0762', level: 'INFO', desc: '후처리 건조 완료' }
+                ]
+            }
+        ];
+
+        rows.forEach((row, idx) => Object.assign(row, sampleDetails[idx % sampleDetails.length]));
 
         let selectedIndex = 4;
         let sortOrder = 'desc'; // 'desc' 최신순, 'asc' 과거순
 
         function parseOccur(str) {
+            if (!str) return new Date(NaN);
             // 11/26/2025 09:26:12 -> ISO
             const [mdy, time] = str.split(' ');
+            if (!mdy || !time) return new Date(NaN);
             const [m, d, y] = mdy.split('/');
             return new Date(`${y}-${m}-${d}T${time}`);
+        }
+
+        function formatOccurYmd(str) {
+            const date = parseOccur(str);
+            if (Number.isNaN(date.getTime())) return str || '-';
+            const pad = (n) => String(n).padStart(2, '0');
+            return `${date.getFullYear()}/${pad(date.getMonth() + 1)}/${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+        }
+
+        function renderRecipeInfo(recipeInfo) {
+            const tbody = document.querySelector('#recipe-table tbody');
+            if (!tbody) return;
+            const list = (recipeInfo && recipeInfo.length) ? recipeInfo : [{
+                label: '정보 없음',
+                value: '-',
+                remark: '표시할 데이터가 없습니다.'
+            }];
+            tbody.innerHTML = list.map((item, idx) => `
+                <tr>
+                    <td>${idx + 1}</td>
+                    <td>${item.label}</td>
+                    <td>${item.value}</td>
+                    <td>${item.remark || ''}</td>
+                </tr>
+            `).join('');
+        }
+
+        function renderAlarmHistory(alarmHistory) {
+            const tbody = document.querySelector('#alarm-table tbody');
+            if (!tbody) return;
+            const list = (alarmHistory && alarmHistory.length) ? alarmHistory : [{
+                id: '-',
+                level: '-',
+                desc: '표시할 알람 내역이 없습니다.'
+            }];
+            tbody.innerHTML = list.map((item, idx) => `
+                <tr>
+                    <td>${idx + 1}</td>
+                    <td>${item.id}</td>
+                    <td>${item.level}</td>
+                    <td>${item.desc}</td>
+                </tr>
+            `).join('');
         }
 
         function renderTable() {
@@ -664,8 +765,10 @@
             if (!modalEl) return;
             const timeEl = document.getElementById('modal-time');
             const recipeEl = document.getElementById('modal-recipe');
-            if (timeEl) timeEl.textContent = row.occur || '-';
+            if (timeEl) timeEl.textContent = formatOccurYmd(row.occur);
             if (recipeEl) recipeEl.textContent = `Recipe Name: ${row.recipe || '-'}`;
+            renderRecipeInfo(row.recipeInfo);
+            renderAlarmHistory(row.alarmHistory);
             modalEl.style.display = 'flex';
         }
 

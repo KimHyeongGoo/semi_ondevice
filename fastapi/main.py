@@ -182,6 +182,18 @@ def ensure_realtime_abnormal_log_table(cur):
         """
     )
 
+def ensure_realtime_violation_log_table(cur):
+    cur.execute(
+        """
+        CREATE TABLE IF NOT EXISTS realtime_violation_log (
+            "Timestamp" TIMESTAMP PRIMARY KEY,
+            parameter TEXT NOT NULL,
+            message TEXT NOT NULL,
+            UNIQUE ("Timestamp", parameter)
+        );
+        """
+    )
+
 # main.py
 PREDICT_STEPS = [10, 20, 30]
 
@@ -393,6 +405,45 @@ async def api_model_columns():
 
 @app.get("/api/logs")
 async def get_logs():
+    conn = psycopg2.connect(
+        dbname="postgres",
+        user="keti",
+        password="keti1234!",
+        host="localhost",
+        port=5432
+    )
+    cur = conn.cursor()
+    ensure_realtime_violation_log_table(cur)
+    conn.commit()
+
+    cur.execute(
+        """
+        SELECT "Timestamp", parameter, message
+        FROM realtime_violation_log
+        ORDER BY "Timestamp" DESC
+        LIMIT 50
+        """
+    )
+    rows = cur.fetchall()
+    cur.close()
+    conn.close()
+
+    result = []
+    for ts, param, msg in rows:
+        result.append({
+            "timestamp": ts.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3],
+            "parameter": param,
+            "message": msg,
+            "start_time": ts.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3],
+            "end_time": ts.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3],
+            "violation_type": None,
+        })
+
+    return JSONResponse(result)
+
+@app.get("/api/anomaly_logs")
+async def get_anomaly_logs():
+    """실시간 이상감지 화면(index4)용: realtime_abnormal_log에서 최근 로그 조회"""
     conn = psycopg2.connect(
         dbname="postgres",
         user="keti",

@@ -5,6 +5,10 @@ const hasColumn = (name) => columnLookup.has((name || "").trim());
 const logEntryByParam = new Map();
 const logEntryByKey = new Map();
 const normalizeParam = (name) => (name || "").trim();
+const displayParam = (name) => {
+    const m = String(name || '').match(/^MFC\\d+[_ ]?(.*)$/i);
+    return m && m[1] ? m[1] : name;
+};
 const buildLogKey = (log) => {
     const msg = typeof log.message === 'string' ? log.message : JSON.stringify(log.message || {});
     return `${normalizeParam(log.parameter)}||${log.timestamp || ''}||${msg || ''}`;
@@ -176,7 +180,7 @@ async function loadSettings() {
             const box = document.getElementById(`chart-box-${col}`);
             if (box) box.style.order = cb.checked ? box.dataset.order : 999;
             const text = cb.closest('.toggle-container').querySelector('.toggle-text');
-            if (text) text.textContent = cb.checked ? '숨기기' : col;
+            if (text) text.textContent = cb.checked ? '숨기기' : displayParam(col);
         });
     } catch (e) {
         console.error('failed to load settings', e);
@@ -219,7 +223,7 @@ function createCharts() {
                 plugins: {
                     title: {
                         display: true,
-                        text: col,
+                        text: displayParam(col),
                         position: 'left',
                         padding: { top: 8, bottom: 4 },
                         font: { size: 14, weight: 'bold' }
@@ -328,9 +332,7 @@ function updateCurrentStepDisplay(stepId, stepName) {
     if (idEl) {
         idEl.textContent = stepId !== null && stepId !== undefined ? stepId : '-';
     }
-    if (nameEl) {
-        nameEl.textContent = stepName ? stepName : '-';
-    }
+    if (nameEl) nameEl.textContent = 'DEPO';
 }
 
 function extractLatestStep(data) {
@@ -409,7 +411,7 @@ function createSettingsUI() {
             if (!hasColumn(col)) return;
             const btn = document.createElement("button");
             btn.className = "param-btn" + (col === activeParam ? " active" : "");
-            btn.textContent = col;
+            btn.textContent = displayParam(col);
             btn.onclick = () => {
                 activeParam = col;
                 renderParams();
@@ -642,7 +644,7 @@ function renderModalChart(param, datasets, showModal = false) {
     }
 
     modalOpenCol = param;
-    modalTitle.textContent = param;
+    modalTitle.textContent = displayParam(param);
     if (showModal) modal.style.display = 'flex';
     setTimeout(() => {
         if (modalChart) modalChart.resize();
@@ -674,7 +676,7 @@ async function fetchLogs() {
                 const thresholdVal = payload['임계값'] ?? payload.threshold ?? payload.max ?? payload.min;
                 const predText = typeof predictedVal === 'number' ? predictedVal.toFixed(3) : (predictedVal ?? '-');
                 const thrText = typeof thresholdVal === 'number' ? thresholdVal : (thresholdVal ?? '-');
-                const summary = `[${param}] ${limitType} 침범 예상`;
+                const summary = `[${displayParam(param)}] ${limitType} 침범 예상`;
                 const detail = `예측값: ${predText}, 임계값: ${thrText}`;
                 const entry = document.createElement('div');
                 entry.className = 'timeline-entry';
@@ -720,6 +722,14 @@ window.addEventListener("DOMContentLoaded", async () => {
         box.style.order = box.dataset.order;
         const param = normalizeParam(box.dataset.param);
         if (param) chartBoxByParam.set(param, box);
+        const title = box.querySelector('.chart-title strong');
+        if (title) title.textContent = displayParam(param);
+        const toggleLabel = box.querySelector('.toggle-container .toggle-text');
+        if (toggleLabel && toggleLabel.textContent !== '숨기기') {
+            toggleLabel.textContent = displayParam(param);
+        }
+        const expandBtn = box.querySelector('.expand-btn');
+        if (expandBtn) expandBtn.setAttribute('aria-label', `${displayParam(param)} 차트 확대`);
     });
     await loadSettings();
     createCharts();
@@ -750,7 +760,7 @@ window.addEventListener("DOMContentLoaded", async () => {
             const box = document.getElementById(`chart-box-${col}`);
             if (box) box.style.order = cb.checked ? box.dataset.order : 999;
             const text = cb.closest('.toggle-container').querySelector('.toggle-text');
-            if (text) text.textContent = cb.checked ? '숨기기' : col;
+            if (text) text.textContent = cb.checked ? '숨기기' : displayParam(col);
             saveSettings();
         });
     });
