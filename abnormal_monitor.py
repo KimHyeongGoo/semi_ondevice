@@ -263,11 +263,12 @@ class Monitor:
 
         # 로그 출력 (초 단위)
         ts_str = ts.strftime("%Y-%m-%d %H:%M:%S")
+        '''
         self.log(
             f"{param} | 실제값: [{ts_str}] [{actual_val}] | 예측값: [{ts_str}] [{pred_val}] | "
             f"diff_abs: {diff_abs:.4f}, diff_pct: {diff_pct:.2f}% | {'이상' if is_anomaly else '정상'}"
         )
-
+        '''
         if is_anomaly:
             if not state.get("active"):
                 state["active"] = True

@@ -1,4 +1,5 @@
 fastapi
+pandas
 uvicorn
 jinja2
 psycopg2-binary
@@ -10,3 +11,4 @@ pyyaml
 xgboost
 numpy
 matplotlib
+psycopg2

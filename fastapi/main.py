@@ -308,6 +308,215 @@ async def get_page6(request: Request):
         "index6.html",
         {"request": request, "active_tab": "index6"}
     )
+
+@app.get("/api/equipment_history")
+async def get_equipment_history(process_recipe: str | None = Query(default=None)):
+    """equipment_history 테이블에서 데이터 조회"""
+    conn = psycopg2.connect(
+        dbname="postgres",
+        user="keti",
+        password="keti1234!",
+        host="localhost",
+        port=5432
+    )
+    cur = conn.cursor()
+    
+    try:
+        query = """
+            SELECT PJOB_ID, ProcessRecipe, ProcessStartTime, ProcessEndTime, EndStatus
+            FROM equipment_history
+        """
+        params = []
+        
+        if process_recipe and process_recipe != "전체":
+            query += " WHERE ProcessRecipe = %s"
+            params.append(process_recipe)
+        
+        query += " ORDER BY ProcessStartTime DESC"
+        
+        cur.execute(query, params)
+        rows = cur.fetchall()
+        
+        result = []
+        for idx, (pjob_id, process_recipe_val, start_time, end_time, end_status) in enumerate(rows, 1):
+            result.append({
+                "no": idx,
+                "pjob_id": pjob_id or "",
+                "process_recipe": process_recipe_val or "",
+                "process_start_time": start_time.strftime("%Y-%m-%d %H:%M:%S") if start_time else "",
+                "process_end_time": end_time.strftime("%Y-%m-%d %H:%M:%S") if end_time else "",
+                "end_status": end_status or ""
+            })
+    except Exception as e:
+        print(f"[get_equipment_history ERROR] {e}")
+        result = []
+    finally:
+        cur.close()
+        conn.close()
+    
+    return JSONResponse(result)
+
+@app.get("/api/equipment_history/recipes")
+async def get_equipment_history_recipes():
+    """equipment_history 테이블에서 ProcessRecipe 목록 조회"""
+    conn = psycopg2.connect(
+        dbname="postgres",
+        user="keti",
+        password="keti1234!",
+        host="localhost",
+        port=5432
+    )
+    cur = conn.cursor()
+    
+    try:
+        cur.execute("""
+            SELECT DISTINCT ProcessRecipe
+            FROM equipment_history
+            WHERE ProcessRecipe IS NOT NULL
+            ORDER BY ProcessRecipe
+        """)
+        rows = cur.fetchall()
+        recipes = ["전체"] + [row[0] for row in rows if row[0]]
+    except Exception as e:
+        print(f"[get_equipment_history_recipes ERROR] {e}")
+        recipes = ["전체"]
+    finally:
+        cur.close()
+        conn.close()
+    
+    return JSONResponse(recipes)
+
+@app.get("/api/csv_files")
+async def get_csv_files(pjob_id: str = Query(...)):
+    """KE-PJ000000000XX 디렉토리의 CSV 파일 목록 조회"""
+    import glob
+    from pathlib import Path
+    
+    base_path = Path("/home/goo4168/semi_platform/traceData/2025/11")
+    pjob_folder = base_path / pjob_id
+    
+    if not pjob_folder.exists() or not pjob_folder.is_dir():
+        return JSONResponse([])
+    
+    csv_files = []
+    csv_paths = sorted(glob.glob(str(pjob_folder / "*.csv")))
+    
+    for csv_path in csv_paths:
+        csv_file = Path(csv_path)
+        try:
+            # 파일 수정 시간 가져오기
+            edit_time = datetime.fromtimestamp(csv_file.stat().st_mtime)
+            edit_datetime = edit_time.strftime("%Y-%m-%d %H:%M:%S")
+            
+            # Recipe Name은 DB에서 가져온 ProcessRecipe와 동일하므로
+            # equipment_history에서 조회
+            conn = psycopg2.connect(
+                dbname="postgres",
+                user="keti",
+                password="keti1234!",
+                host="localhost",
+                port=5432
+            )
+            cur = conn.cursor()
+            cur.execute("""
+                SELECT ProcessRecipe
+                FROM equipment_history
+                WHERE PJOB_ID = %s
+                LIMIT 1
+            """, (pjob_id,))
+            row = cur.fetchone()
+            recipe_name = row[0] if row else ""
+            cur.close()
+            conn.close()
+            
+            csv_files.append({
+                "file_name": csv_file.name,
+                "edit_datetime": edit_datetime,
+                "recipe_name": recipe_name
+            })
+        except Exception as e:
+            print(f"[get_csv_files ERROR] {e}")
+            continue
+    
+    return JSONResponse(csv_files)
+
+@app.get("/api/csv_data")
+async def get_csv_data(pjob_id: str = Query(...), file_name: str = Query(...)):
+    """CSV 파일의 데이터를 읽어서 반환"""
+    import csv
+    from pathlib import Path
+    
+    base_path = Path("/home/goo4168/semi_platform/traceData/2025/11")
+    csv_path = base_path / pjob_id / file_name
+    
+    if not csv_path.exists() or not csv_path.is_file():
+        return JSONResponse({"error": "CSV 파일을 찾을 수 없습니다."}, status_code=404)
+    
+    try:
+        with open(csv_path, 'r', encoding='utf-8') as f:
+            lines = f.readlines()
+            
+            if len(lines) < 6:
+                return JSONResponse({"error": "CSV 파일 형식이 올바르지 않습니다."}, status_code=400)
+            
+            # 헤더는 5번째 줄 (인덱스 4), 데이터는 6번째 줄부터 (인덱스 5)
+            header_line = lines[4].strip()
+            headers = [h.strip() for h in header_line.split(',')]
+            
+            # 데이터 파싱
+            data_rows = []
+            start_time = None
+            end_time = None
+            
+            for i in range(5, len(lines)):
+                line = lines[i].strip()
+                if not line:
+                    continue
+                
+                # CSV 파싱 (쉼표로 분리)
+                parts = line.split(',')
+                if len(parts) < 6:
+                    continue
+                
+                no = parts[0].strip()
+                step_name = parts[3].strip() if len(parts) > 3 else ""
+                date = parts[4].strip() if len(parts) > 4 else ""
+                time = parts[5].strip() if len(parts) > 5 else ""
+                
+                # 첫 번째와 마지막 시간 저장
+                if i == 5:
+                    start_time = f"{date} {time}"
+                end_time = f"{date} {time}"
+                
+                # numeric 데이터 추출 (6번째 컬럼부터)
+                numeric_data = []
+                for j in range(6, len(parts)):
+                    if j < len(headers):
+                        value = parts[j].strip()
+                        numeric_data.append(value)
+                
+                data_rows.append({
+                    "no": no,
+                    "step_name": step_name,
+                    "date": date,
+                    "time": time,
+                    "numeric_data": numeric_data
+                })
+            
+            # 헤더에서 numeric 컬럼명 추출
+            numeric_headers = []
+            if len(headers) > 6:
+                numeric_headers = headers[6:]
+            
+            return JSONResponse({
+                "start_time": start_time or "",
+                "end_time": end_time or "",
+                "headers": numeric_headers,
+                "data": data_rows
+            })
+    except Exception as e:
+        print(f"[get_csv_data ERROR] {e}")
+        return JSONResponse({"error": str(e)}, status_code=500)
     
 @app.get("/api/data")
 async def get_data(duration: int = 300, step: int = 10):

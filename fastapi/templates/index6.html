@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <title>과거 공정 이력 검색 2</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
     <style>
         * {
             box-sizing: border-box;
@@ -78,6 +79,7 @@
             gap: 10px;
             align-items: stretch;
             margin-bottom: 10px;
+            width: 70%;
         }
 
         .tab-btn {
@@ -101,9 +103,16 @@
             flex-direction: column;
             justify-content: center;
             gap: 6px;
-            font-size: 13px;
+            font-size: 16px;
             box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
             height: 52px;
+        }
+
+        .field.status-ready {
+            flex-direction: row;
+            align-items: center;
+            justify-content: space-between;
+            background: #c5e0b4;
         }
 
         .field .label {
@@ -114,6 +123,42 @@
 
         .field .value {
             font-size: 15px;
+        }
+
+        .field:has(#current-time) {
+            justify-content: center;
+            align-items: center;
+        }
+
+        .field select {
+            width: 100%;
+            padding: 6px 8px;
+            border: 1px solid #000;
+            border-radius: 4px;
+            font-size: 14px;
+            background: #fff;
+            height: 32px;
+            box-sizing: border-box;
+        }
+
+        .field.recipe-select {
+            padding: 0;
+            border: none;
+            box-shadow: none;
+            background: transparent;
+        }
+
+        .field.recipe-select select {
+            width: 100%;
+            height: 100%;
+            padding: 12px 10px;
+            border: 1px solid #000;
+            border-radius: 4px;
+            font-size: 16px;
+            font-weight: 700;
+            background: #fff;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+            box-sizing: border-box;
         }
 
         .input-row {
@@ -174,7 +219,8 @@
         .table-wrap {
             background: #fff;
             overflow: auto;
-            height: 520px;
+            height: calc(100vh - 250px);
+            min-height: 300px;
         }
 
         .history-table {
@@ -204,7 +250,27 @@
 
         .history-table th:nth-child(2),
         .history-table td:nth-child(2) {
-            width: 220px;
+            width: 180px;
+        }
+
+        .history-table th:nth-child(3),
+        .history-table td:nth-child(3) {
+            width: 200px;
+        }
+
+        .history-table th:nth-child(4),
+        .history-table td:nth-child(4) {
+            width: 180px;
+        }
+
+        .history-table th:nth-child(5),
+        .history-table td:nth-child(5) {
+            width: 180px;
+        }
+
+        .history-table th:nth-child(6),
+        .history-table td:nth-child(6) {
+            width: 150px;
         }
 
         .history-table tbody tr:nth-child(odd) {
@@ -387,6 +453,479 @@
             flex: 1;
             min-height: 200px;
         }
+
+        /* Numeric Table Modal */
+        .numeric-modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.45);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .numeric-modal-content {
+            background: #e5e5e5;
+            border: 2px solid #9a9a9a;
+            border-radius: 8px;
+            width: 90vw;
+            height: 90vh;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .numeric-modal-header {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 10px;
+            justify-content: flex-start;
+        }
+
+        .numeric-info-box {
+            border: 1px solid #000;
+            border-radius: 4px;
+            padding: 10px 12px;
+            font-size: 14px;
+            width: 180px;
+            max-width: 200px;
+            text-align: center;
+        }
+
+        .numeric-modal-header .modal-back {
+            margin-left: auto;
+        }
+
+        .numeric-info-box:first-child {
+            background: #fff2cc;
+        }
+
+        .numeric-info-box:nth-child(2),
+        .numeric-info-box:nth-child(3) {
+            background: #fff;
+        }
+
+        .numeric-info-box-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .numeric-info-box .label {
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .numeric-info-box-wrapper .label {
+            font-weight: 700;
+        }
+
+        .numeric-modal-body {
+            display: flex;
+            gap: 12px;
+            flex: 1;
+            min-height: 0;
+        }
+
+        .numeric-table-container {
+            flex: 1;
+            background: #fff;
+            border: 1px solid #b3b3b3;
+            border-radius: 4px;
+            overflow: auto;
+            position: relative;
+        }
+
+        .numeric-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            table-layout: fixed;
+            font-size: 12px;
+        }
+
+
+        .numeric-table th,
+        .numeric-table td {
+            border: 1px solid #c6c6c6;
+            padding: 6px 8px;
+            text-align: center;
+            background: #fff;
+        }
+
+        /* 칼럼명 열 (첫 번째 열) */
+        .numeric-table td:first-child {
+            width: 150px;
+            text-align: center;
+            position: sticky;
+            left: 0;
+            z-index: 15;
+            font-weight: 600;
+        }
+
+        /* 첫 4줄의 첫 번째 열 - 남색 배경, sticky 유지 */
+        .numeric-table tbody tr:nth-child(1) td:first-child,
+        .numeric-table tbody tr:nth-child(2) td:first-child,
+        .numeric-table tbody tr:nth-child(3) td:first-child,
+        .numeric-table tbody tr:nth-child(4) td:first-child {
+            background: #0b2c6a;
+            color: #fff;
+            position: sticky;
+            left: 0;
+            z-index: 16;
+        }
+
+        /* 첫 4줄 제외한 첫 번째 열 - 하늘색 배경 */
+        .numeric-table tbody tr:nth-child(n+5) td:first-child {
+            background: #d7e6ff;
+            color: #000;
+        }
+
+        /* 첫 4줄의 모든 셀 - 남색 배경, 흰 글씨, 스크롤 시 상단 고정 */
+        .numeric-table tbody tr:nth-child(1) td,
+        .numeric-table tbody tr:nth-child(2) td,
+        .numeric-table tbody tr:nth-child(3) td,
+        .numeric-table tbody tr:nth-child(4) td {
+            background: #0b2c6a;
+            color: #fff;
+            position: sticky;
+            z-index: 10;
+        }
+
+        /* 첫 4줄의 각 행별 top 위치는 JavaScript로 동적 계산 */
+
+        /* 첫 4줄의 첫 번째 열은 z-index를 더 높게 */
+        .numeric-table tbody tr:nth-child(1) td:first-child,
+        .numeric-table tbody tr:nth-child(2) td:first-child,
+        .numeric-table tbody tr:nth-child(3) td:first-child,
+        .numeric-table tbody tr:nth-child(4) td:first-child {
+            z-index: 16;
+        }
+
+        /* 칼럼명 셀 제외한 나머지 셀들 가로 크기 동일하게 */
+        .numeric-table td:not(:first-child) {
+            width: 80px;
+            min-width: 80px;
+            text-align: center;
+        }
+
+        /* 나머지 행들 스타일 */
+        .numeric-table tbody tr:nth-child(n+5) {
+            background: #fff;
+        }
+
+        .numeric-table tbody tr:nth-child(n+5):nth-child(odd) {
+            background: #fafafa;
+        }
+
+        .numeric-table tbody tr:nth-child(n+5):nth-child(odd) td:not(:first-child) {
+            background: #fafafa;
+        }
+
+        .numeric-table tbody tr:nth-child(n+5):nth-child(even) td:not(:first-child) {
+            background: #fff;
+        }
+
+        .numeric-table tbody tr:nth-child(n+5):hover {
+            background: #e3edff;
+        }
+
+        .numeric-table tbody tr:nth-child(n+5):hover td:not(:first-child) {
+            background: #e3edff;
+        }
+
+        .numeric-table tbody tr:nth-child(n+5):hover td:first-child {
+            background: #c7d9f7;
+        }
+
+        .numeric-control-buttons {
+            display: flex;
+            flex-direction: row;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .numeric-page-info {
+            text-align: center;
+            font-size: 14px;
+            font-weight: 600;
+            padding: 10px 12px;
+            background: #f2f2f2;
+            border: 1px solid #8b8b8b;
+            border-radius: 4px;
+            height: fit-content;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .numeric-page-input-container {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 0;
+            justify-content: center;
+            height: fit-content;
+        }
+
+        .numeric-page-input {
+            width: 50px;
+            padding: 10px 6px;
+            border: 1px solid #8b8b8b;
+            border-radius: 4px;
+            text-align: center;
+            font-size: 14px;
+            height: fit-content;
+        }
+
+        .numeric-page-total {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .numeric-btn {
+            padding: 10px 12px;
+            border-radius: 4px;
+            border: 1px solid #8b8b8b;
+            background: #f2f2f2;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+            font-size: 14px;
+            transition: opacity 0.2s, background 0.2s;
+            height: fit-content;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .numeric-btn:hover:not(:disabled) {
+            background: #e4e4e4;
+        }
+
+        .numeric-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .numeric-btn.graph {
+            background: #d7e6ff;
+            border: 1px solid #3c73c7;
+            color: #0a234b;
+        }
+
+        .numeric-btn.graph:hover:not(:disabled) {
+            background: #c7d9f7;
+        }
+
+        /* Graph Modal Styles */
+        .graph-modal-body {
+            display: flex;
+            gap: 12px;
+            flex: 1;
+            min-height: 0;
+        }
+
+        .graph-chart-container {
+            flex: 1;
+            background: #fff;
+            border: 1px solid #b3b3b3;
+            border-radius: 4px;
+            padding: 10px;
+            min-height: 0;
+        }
+
+        .graph-parameter-panel {
+            width: 400px;
+            background: #f1f1f1;
+            border: 1px solid #b1b1b1;
+            border-radius: 6px;
+            padding: 10px;
+            overflow-y: auto;
+            flex-shrink: 0;
+        }
+
+        .parameter-group {
+            margin-bottom: 12px;
+            background: #fff;
+            border: 1px solid #b1b1b1;
+            border-radius: 4px;
+            padding: 8px;
+        }
+
+        .parameter-group-header {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .parameter-group-btn {
+            flex: 1;
+            padding: 8px 10px;
+            border: 1px solid #8b8b8b;
+            border-radius: 4px;
+            background: #f2f2f2;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .parameter-group-btn:hover {
+            background: #e4e4e4;
+        }
+
+        .parameter-select-all-btn,
+        .parameter-deselect-all-btn {
+            padding: 6px 8px;
+            border: 1px solid #8b8b8b;
+            border-radius: 4px;
+            background: #f2f2f2;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 11px;
+        }
+
+        .parameter-select-all-btn:hover,
+        .parameter-deselect-all-btn:hover {
+            background: #e4e4e4;
+        }
+
+        .parameter-list {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+        }
+
+        .parameter-btn {
+            padding: 6px 8px;
+            border: 1px solid #8b8b8b;
+            border-radius: 4px;
+            background: #f2f2f2;
+            font-weight: 500;
+            cursor: pointer;
+            font-size: 11px;
+            text-align: center;
+            transition: background 0.2s;
+        }
+
+        .parameter-btn:hover {
+            background: #e4e4e4;
+        }
+
+        .parameter-btn.active {
+            background: #d7e6ff;
+            border-color: #3c73c7;
+            color: #0a234b;
+        }
+
+        /* Graph Control Buttons */
+        .graph-control-buttons {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .graph-zoom-btn,
+        .graph-nav-btn {
+            padding: 10px 12px;
+            border: 1px solid #8b8b8b;
+            border-radius: 4px;
+            background: #f2f2f2;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+            height: fit-content;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .graph-zoom-btn {
+            background: #fff;
+            color: #000;
+            border-color: #000;
+        }
+
+        .graph-zoom-btn:hover {
+            background: #f5f5f5;
+            border-color: #000;
+            transform: translateY(-1px);
+        }
+
+        .graph-nav-btn {
+            background: #fff;
+            color: #000;
+            border-color: #000;
+            min-width: 35px;
+        }
+
+        .graph-nav-btn:hover {
+            background: #f5f5f5;
+            border-color: #000;
+            transform: translateY(-1px);
+        }
+
+        .graph-nav-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Parameter Button Colors */
+        .parameter-group-btn {
+            background: #e8f4fd;
+            color: #0a234b;
+            border-color: #3c73c7;
+        }
+
+        .parameter-group-btn:hover {
+            background: #c7d9f7;
+            border-color: #2a5a9a;
+            transform: translateY(-1px);
+        }
+
+        .parameter-select-all-btn {
+            background: #d5e8d4;
+            color: #0a234b;
+            border-color: #82b366;
+        }
+
+        .parameter-select-all-btn:hover {
+            background: #b1d4b0;
+            border-color: #6a9a5a;
+            transform: translateY(-1px);
+        }
+
+        .parameter-deselect-all-btn {
+            background: #f8cecc;
+            color: #0a234b;
+            border-color: #b85450;
+        }
+
+        .parameter-deselect-all-btn:hover {
+            background: #f4a5a2;
+            border-color: #9d4643;
+            transform: translateY(-1px);
+        }
+
+        .parameter-btn {
+            background: #f2f2f2;
+            color: #0a234b;
+            border-color: #8b8b8b;
+        }
+
+        .parameter-btn:hover {
+            background: #e4e4e4;
+            border-color: #6b6b6b;
+            transform: translateY(-1px);
+        }
     </style>
 </head>
 
@@ -407,17 +946,16 @@
                 <div class="header-row">
                     <button class="tab-btn">Equipment History</button>
                     <div class="field">
-                        <div class="label">현재 시간</div>
                         <div class="value" id="current-time">-</div>
                     </div>
-                    <div class="field">
-                        <div class="label">Recipe Name:</div>
-                        <div class="value" id="recipe-name-main">O_P_IH_HD02</div>
+                    <div class="field status-ready">
+                        <div class="label">Equip. Status</div>
+                        <div class="value">READY</div>
                     </div>
-                    <div class="field">
-                        <div class="input-row">
-                            <input type="date" id="date-from" value="2025-11-05">
-                        </div>
+                    <div class="field recipe-select">
+                        <select id="recipe-select">
+                            <option value="전체">전체</option>
+                        </select>
                     </div>
                 </div>
                 <div class="table-shell">
@@ -425,19 +963,18 @@
                         <table class="history-table" id="history-table">
                             <thead>
                                 <tr>
-                                    <th>NO</th>
-                                    <th>OccurDate</th>
-                                    <th>AlarmID</th>
-                                    <th>Level</th>
-                                    <th>PMCMode</th>
-                                    <th>RecipeName</th>
-                                    <th>AlarmName</th>
+                                    <th>No.</th>
+                                    <th>PJOB_ID</th>
+                                    <th>ProcessRecipe</th>
+                                    <th>ProcessStartTime</th>
+                                    <th>ProcessEndTime</th>
+                                    <th>EndStatus</th>
                                 </tr>
                             </thead>
                             <tbody></tbody>
                         </table>
                     </div>
-                    <div class="table-footer" id="table-foot">AlarmNum: 0</div>
+                    <div class="table-footer" id="table-foot">Total: 0</div>
                 </div>
             </div>
             <div class="side-panel">
@@ -460,40 +997,22 @@
         <div class="modal-content">
             <div class="modal-section">
                 <div class="modal-header">
-                    <div class="modal-tab-btn">Recipe Information</div>
+                    <div class="modal-tab-btn">Trace Logging</div>
                     <div class="modal-field" id="modal-time">-</div>
                     <div class="modal-field" id="modal-recipe">Recipe Name: -</div>
                     <button class="modal-back" id="modal-close" aria-label="닫기">↩</button>
                 </div>
                 <div class="mini-wrap">
-                    <table class="mini-table" id="recipe-table">
+                    <table class="mini-table" id="trace-table">
                         <thead>
                             <tr>
-                                <th>NO</th>
-                                <th>항목</th>
-                                <th>값</th>
-                                <th>비고</th>
+                                <th>NO.</th>
+                                <th>FileName</th>
+                                <th>EditDateTime</th>
+                                <th>RecipeName</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <tr>
-                                <td>1</td>
-                                <td></td>
-                                <td></td>
-                                <td></td>
-                            </tr>
-                            <tr>
-                                <td>2</td>
-                                <td></td>
-                                <td></td>
-                                <td></td>
-                            </tr>
-                            <tr>
-                                <td>3</td>
-                                <td></td>
-                                <td></td>
-                                <td></td>
-                            </tr>
                         </tbody>
                     </table>
                 </div>
@@ -504,31 +1023,13 @@
                     <table class="mini-table" id="alarm-table">
                         <thead>
                             <tr>
-                                <th>NO</th>
+                                <th>NO.</th>
                                 <th>AlarmID</th>
                                 <th>Level</th>
                                 <th>설명</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <tr>
-                                <td>1</td>
-                                <td></td>
-                                <td></td>
-                                <td></td>
-                            </tr>
-                            <tr>
-                                <td>2</td>
-                                <td></td>
-                                <td></td>
-                                <td></td>
-                            </tr>
-                            <tr>
-                                <td>3</td>
-                                <td></td>
-                                <td></td>
-                                <td></td>
-                            </tr>
                         </tbody>
                     </table>
                 </div>
@@ -536,179 +1037,273 @@
         </div>
     </div>
 
+    <!-- Numeric Table Modal -->
+    <div class="numeric-modal-overlay" id="numeric-modal">
+        <div class="numeric-modal-content">
+            <div class="numeric-modal-header">
+                <div class="numeric-info-box">
+                    <span class="label">Numeric Table</span>
+                </div>
+                <div class="numeric-info-box-wrapper">
+                    <span class="label">FileName:</span>
+                    <div class="numeric-info-box">
+                        <span id="numeric-file-name">-</span>
+                    </div>
+                </div>
+                <div class="numeric-info-box-wrapper">
+                    <span class="label">StartTime:</span>
+                    <div class="numeric-info-box">
+                        <span id="numeric-start-time">-</span>
+                    </div>
+                </div>
+                <div class="numeric-info-box-wrapper">
+                    <span class="label">EndTime:</span>
+                    <div class="numeric-info-box">
+                        <span id="numeric-end-time">-</span>
+                    </div>
+                </div>
+                <div class="numeric-control-buttons">
+                    <div class="numeric-page-info" id="numeric-page-info">1 / 1</div>
+                    <div class="numeric-page-input-container">
+                        <input type="number" id="numeric-page-input" min="1" value="1" class="numeric-page-input">
+                        <span class="numeric-page-total" id="numeric-page-total">/ 1</span>
+                    </div>
+                    <button class="numeric-btn" id="numeric-prev-btn">&lt;</button>
+                    <button class="numeric-btn" id="numeric-next-btn">&gt;</button>
+                    <button class="numeric-btn graph" id="numeric-graph-btn">Graph</button>
+                </div>
+                <button class="modal-back" id="numeric-modal-close" aria-label="닫기">↩</button>
+            </div>
+            <div class="numeric-modal-body">
+                <div class="numeric-table-container">
+                    <table class="numeric-table" id="numeric-table">
+                        <tbody id="numeric-table-body">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Graph Modal -->
+    <div class="numeric-modal-overlay" id="graph-modal">
+        <div class="numeric-modal-content">
+            <div class="numeric-modal-header">
+                <div class="numeric-info-box-wrapper">
+                    <span class="label">FileName:</span>
+                    <div class="numeric-info-box">
+                        <span id="graph-file-name">-</span>
+                    </div>
+                </div>
+                <div class="numeric-info-box-wrapper">
+                    <span class="label">StartTime:</span>
+                    <div class="numeric-info-box">
+                        <span id="graph-start-time">-</span>
+                    </div>
+                </div>
+                <div class="numeric-info-box-wrapper">
+                    <span class="label">EndTime:</span>
+                    <div class="numeric-info-box">
+                        <span id="graph-end-time">-</span>
+                    </div>
+                </div>
+                <div class="graph-control-buttons">
+                    <button class="graph-zoom-btn" id="graph-zoom-in" title="Zoom In">Zoom In</button>
+                    <button class="graph-zoom-btn" id="graph-zoom-out" title="Zoom Out">Zoom Out</button>
+                    <button class="graph-nav-btn" id="graph-prev" title="이전">&lt;</button>
+                    <button class="graph-nav-btn" id="graph-next" title="다음">&gt;</button>
+                </div>
+                <button class="modal-back" id="graph-modal-close" aria-label="닫기">↩</button>
+            </div>
+            <div class="graph-modal-body">
+                <div class="graph-chart-container">
+                    <div id="graph-chart" style="width: 100%; height: 100%;"></div>
+                </div>
+                <div class="graph-parameter-panel">
+                    <div class="parameter-group" data-group="Temp">
+                        <div class="parameter-group-header">
+                            <button class="parameter-group-btn">Temp</button>
+                            <button class="parameter-select-all-btn">전체선택</button>
+                            <button class="parameter-deselect-all-btn">전체해제</button>
+                        </div>
+                        <div class="parameter-list" style="display: none;"></div>
+                    </div>
+                    <div class="parameter-group" data-group="Power">
+                        <div class="parameter-group-header">
+                            <button class="parameter-group-btn">Power</button>
+                            <button class="parameter-select-all-btn">전체선택</button>
+                            <button class="parameter-deselect-all-btn">전체해제</button>
+                        </div>
+                        <div class="parameter-list" style="display: none;"></div>
+                    </div>
+                    <div class="parameter-group" data-group="MFC">
+                        <div class="parameter-group-header">
+                            <button class="parameter-group-btn">MFC</button>
+                            <button class="parameter-select-all-btn">전체선택</button>
+                            <button class="parameter-deselect-all-btn">전체해제</button>
+                        </div>
+                        <div class="parameter-list" style="display: none;"></div>
+                    </div>
+                    <div class="parameter-group" data-group="Press">
+                        <div class="parameter-group-header">
+                            <button class="parameter-group-btn">Press</button>
+                            <button class="parameter-select-all-btn">전체선택</button>
+                            <button class="parameter-deselect-all-btn">전체해제</button>
+                        </div>
+                        <div class="parameter-list" style="display: none;"></div>
+                    </div>
+                    <div class="parameter-group" data-group="Aux">
+                        <div class="parameter-group-header">
+                            <button class="parameter-group-btn">Aux</button>
+                            <button class="parameter-select-all-btn">전체선택</button>
+                            <button class="parameter-deselect-all-btn">전체해제</button>
+                        </div>
+                        <div class="parameter-list" style="display: none;"></div>
+                    </div>
+                    <div class="parameter-group" data-group="OnOff">
+                        <div class="parameter-group-header">
+                            <button class="parameter-group-btn">OnOff</button>
+                            <button class="parameter-select-all-btn">전체선택</button>
+                            <button class="parameter-deselect-all-btn">전체해제</button>
+                        </div>
+                        <div class="parameter-list" style="display: none;"></div>
+                    </div>
+                    <div class="parameter-group" data-group="O2">
+                        <div class="parameter-group-header">
+                            <button class="parameter-group-btn">O2</button>
+                            <button class="parameter-select-all-btn">전체선택</button>
+                            <button class="parameter-deselect-all-btn">전체해제</button>
+                        </div>
+                        <div class="parameter-list" style="display: none;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
-        const rows = [
-            { occur: '11/26/2025 09:26:12', recipe: 'O_P_IH_HD02' },
-            { occur: '11/26/2025 09:26:07', recipe: 'O_P_IH_HD02' },
-            { occur: '11/26/2025 09:23:11', recipe: 'O_P_IH_HD02' },
-            { occur: '11/26/2025 09:23:01', recipe: 'O_P_IH_HD02' },
-            { occur: '11/26/2025 09:19:53', recipe: 'O_P_IH_HD02' },
-            { occur: '11/26/2025 09:15:44', recipe: 'O_P_IH_HD02' },
-            { occur: '11/26/2025 09:10:12', recipe: 'O_P_IH_HD02' },
-            { occur: '11/26/2025 09:03:31', recipe: 'O_P_IH_HD02' },
-            { occur: '11/26/2025 08:55:02', recipe: 'O_P_IH_HD02' },
-            { occur: '11/26/2025 08:47:13', recipe: 'O_P_IH_HD02' },
-            { occur: '11/26/2025 08:41:55', recipe: 'O_P_IH_HD02' },
-            { occur: '11/26/2025 08:32:44', recipe: 'O_P_IH_HD02' },
-            { occur: '11/26/2025 08:26:18', recipe: 'O_P_IH_HD02' },
-            { occur: '11/26/2025 08:19:10', recipe: 'O_P_IH_HD02' },
-            { occur: '11/26/2025 08:10:42', recipe: 'O_P_IH_HD02' },
-            { occur: '11/26/2025 08:05:22', recipe: 'O_P_IH_HD02' },
-            { occur: '11/26/2025 07:58:11', recipe: 'O_P_IH_HD02' },
-            { occur: '11/26/2025 07:50:45', recipe: 'O_P_IH_HD02' },
-            { occur: '11/26/2025 07:42:33', recipe: 'O_P_IH_HD02' },
-            { occur: '11/26/2025 07:38:12', recipe: 'O_P_IH_HD02' },
-            { occur: '11/26/2025 07:30:01', recipe: 'O_P_IH_HD02' },
-            { occur: '11/26/2025 07:22:16', recipe: 'O_P_IH_HD02' },
-            { occur: '11/26/2025 07:15:44', recipe: 'O_P_IH_HD02' },
-            { occur: '11/26/2025 07:10:18', recipe: 'O_P_IH_HD02' },
-            { occur: '11/26/2025 07:02:55', recipe: 'O_P_IH_HD02' },
-            { occur: '11/26/2025 06:55:22', recipe: 'O_P_IH_HD02' },
-            { occur: '11/26/2025 06:48:05', recipe: 'O_P_IH_HD02' },
-            { occur: '11/26/2025 06:40:30', recipe: 'O_P_IH_HD02' },
-            { occur: '11/26/2025 06:33:18', recipe: 'O_P_IH_HD02' },
-            { occur: '11/26/2025 06:25:44', recipe: 'O_P_IH_HD02' }
-        ];
-
-        const sampleDetails = [
-            {
-                alarmId: 'A-1501',
-                level: 'WARN',
-                pmcMode: 'AUTO',
-                alarmName: 'Zone1 온도 상한 초과',
-                recipeInfo: [
-                    { label: 'Lot ID', value: 'LOT-24-11-01', remark: '증착 4/25' },
-                    { label: 'Operator', value: 'KIM', remark: '자동 진행' },
-                    { label: 'Chamber', value: 'IH-01', remark: '온도 튜닝 필요' },
-                    { label: 'Process Time', value: '38m 12s', remark: 'Step 7에서 상승' }
-                ],
-                alarmHistory: [
-                    { id: 'A-1501', level: 'WARN', desc: 'Zone1 히터 온도 5°C 초과' },
-                    { id: 'A-1088', level: 'INFO', desc: 'Purge 완료 보고' },
-                    { id: 'A-1205', level: 'WARN', desc: 'MFC7 유량 편차 감지' }
-                ]
-            },
-            {
-                alarmId: 'A-2107',
-                level: 'CRIT',
-                pmcMode: 'MAN',
-                alarmName: 'Chamber Pressure Drop',
-                recipeInfo: [
-                    { label: 'Lot ID', value: 'LOT-24-11-02', remark: '압력 저하' },
-                    { label: 'Operator', value: 'LEE', remark: '수동 개입' },
-                    { label: 'Chamber', value: 'IH-01', remark: 'Valve 체크' },
-                    { label: 'Process Time', value: '41m 04s', remark: 'Step 5에서 정지' }
-                ],
-                alarmHistory: [
-                    { id: 'A-2107', level: 'CRIT', desc: '챔버 압력 15 mTorr 미만' },
-                    { id: 'A-0990', level: 'INFO', desc: '배기 밸브 수동 개방' },
-                    { id: 'A-1875', level: 'WARN', desc: '스테이지 냉각 지연' }
-                ]
-            },
-            {
-                alarmId: 'A-3305',
-                level: 'INFO',
-                pmcMode: 'AUTO',
-                alarmName: 'Recipe Complete With Notes',
-                recipeInfo: [
-                    { label: 'Lot ID', value: 'LOT-24-11-03', remark: '기록 확인' },
-                    { label: 'Operator', value: 'PARK', remark: '점검 모드' },
-                    { label: 'Chamber', value: 'IH-02', remark: '정상' },
-                    { label: 'Process Time', value: '35m 49s', remark: '메모 남김' }
-                ],
-                alarmHistory: [
-                    { id: 'A-3305', level: 'INFO', desc: '레시피 정상 완료' },
-                    { id: 'A-1450', level: 'WARN', desc: '전달 온도 기준 상한 근접' },
-                    { id: 'A-0762', level: 'INFO', desc: '후처리 건조 완료' }
-                ]
-            }
-        ];
-
-        rows.forEach((row, idx) => Object.assign(row, sampleDetails[idx % sampleDetails.length]));
-
-        let selectedIndex = 4;
+        let rows = [];
+        let allRows = [];
+        let selectedIndex = 0;
         let sortOrder = 'desc'; // 'desc' 최신순, 'asc' 과거순
 
-        function parseOccur(str) {
-            if (!str) return new Date(NaN);
-            // 11/26/2025 09:26:12 -> ISO
-            const [mdy, time] = str.split(' ');
-            if (!mdy || !time) return new Date(NaN);
-            const [m, d, y] = mdy.split('/');
-            return new Date(`${y}-${m}-${d}T${time}`);
+        // ProcessRecipe 목록 로드
+        async function loadRecipes() {
+            try {
+                const response = await fetch('/api/equipment_history/recipes');
+                const recipes = await response.json();
+                const select = document.getElementById('recipe-select');
+                select.innerHTML = recipes.map(recipe => 
+                    `<option value="${recipe}">${recipe}</option>`
+                ).join('');
+            } catch (error) {
+                console.error('레시피 목록 로드 실패:', error);
+            }
         }
 
-        function formatOccurYmd(str) {
-            const date = parseOccur(str);
-            if (Number.isNaN(date.getTime())) return str || '-';
-            const pad = (n) => String(n).padStart(2, '0');
-            return `${date.getFullYear()}/${pad(date.getMonth() + 1)}/${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+        // equipment_history 데이터 로드
+        async function loadEquipmentHistory(processRecipe = null) {
+            try {
+                const url = processRecipe && processRecipe !== '전체' 
+                    ? `/api/equipment_history?process_recipe=${encodeURIComponent(processRecipe)}`
+                    : '/api/equipment_history';
+                const response = await fetch(url);
+                const data = await response.json();
+                allRows = data;
+                rows = data;
+                renderTable();
+            } catch (error) {
+                console.error('데이터 로드 실패:', error);
+                rows = [];
+                allRows = [];
+                renderTable();
+            }
         }
 
-        function renderRecipeInfo(recipeInfo) {
-            const tbody = document.querySelector('#recipe-table tbody');
+        async function renderTraceLogging(pjobId, recipeName) {
+            const tbody = document.querySelector('#trace-table tbody');
             if (!tbody) return;
-            const list = (recipeInfo && recipeInfo.length) ? recipeInfo : [{
-                label: '정보 없음',
-                value: '-',
-                remark: '표시할 데이터가 없습니다.'
-            }];
-            tbody.innerHTML = list.map((item, idx) => `
-                <tr>
-                    <td>${idx + 1}</td>
-                    <td>${item.label}</td>
-                    <td>${item.value}</td>
-                    <td>${item.remark || ''}</td>
-                </tr>
-            `).join('');
+            
+            try {
+                const response = await fetch(`/api/csv_files?pjob_id=${encodeURIComponent(pjobId)}`);
+                const csvFiles = await response.json();
+                
+                if (csvFiles.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">CSV 파일이 없습니다.</td></tr>';
+                    return;
+                }
+                
+                tbody.innerHTML = csvFiles.map((file, idx) => `
+                    <tr style="cursor: pointer;" onclick="openNumericModal('${pjobId}', '${file.file_name || ''}')">
+                        <td>${idx + 1}</td>
+                        <td>${file.file_name || ''}</td>
+                        <td>${file.edit_datetime || ''}</td>
+                        <td>${recipeName || file.recipe_name || ''}</td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('CSV 파일 정보 로드 실패:', error);
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">데이터를 불러올 수 없습니다.</td></tr>';
+            }
         }
 
-        function renderAlarmHistory(alarmHistory) {
+        function renderAlarmHistory(row) {
             const tbody = document.querySelector('#alarm-table tbody');
             if (!tbody) return;
-            const list = (alarmHistory && alarmHistory.length) ? alarmHistory : [{
-                id: '-',
-                level: '-',
-                desc: '표시할 알람 내역이 없습니다.'
-            }];
-            tbody.innerHTML = list.map((item, idx) => `
+            tbody.innerHTML = `
                 <tr>
-                    <td>${idx + 1}</td>
-                    <td>${item.id}</td>
-                    <td>${item.level}</td>
-                    <td>${item.desc}</td>
+                    <td>1</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>표시할 알람 내역이 없습니다.</td>
                 </tr>
-            `).join('');
+            `;
         }
 
         function renderTable() {
+            // 정렬
             if (sortOrder === 'desc') {
-                rows.sort((a, b) => parseOccur(b.occur) - parseOccur(a.occur));
+                rows.sort((a, b) => {
+                    const dateA = new Date(a.process_start_time);
+                    const dateB = new Date(b.process_start_time);
+                    return dateB - dateA;
+                });
             } else {
-                rows.sort((a, b) => parseOccur(a.occur) - parseOccur(b.occur));
+                rows.sort((a, b) => {
+                    const dateA = new Date(a.process_start_time);
+                    const dateB = new Date(b.process_start_time);
+                    return dateA - dateB;
+                });
             }
+            
             const tbody = document.querySelector('#history-table tbody');
             tbody.innerHTML = '';
+            
+            if (rows.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">데이터가 없습니다.</td></tr>';
+                document.getElementById('table-foot').textContent = `Total: 0`;
+                return;
+            }
+            
             rows.forEach((row, idx) => {
                 const tr = document.createElement('tr');
                 tr.dataset.index = idx;
                 if (idx === selectedIndex) tr.classList.add('selected');
                 tr.innerHTML = `
-                    <td>${idx + 1}</td>
-                    <td>${row.occur}</td>
-                    <td>${row.alarmId || ''}</td>
-                    <td>${row.level || ''}</td>
-                    <td>${row.pmcMode || ''}</td>
-                    <td>${row.recipe}</td>
-                    <td>${row.alarmName || ''}</td>
+                    <td>${row.no || idx + 1}</td>
+                    <td>${row.pjob_id || ''}</td>
+                    <td>${row.process_recipe || ''}</td>
+                    <td>${row.process_start_time || ''}</td>
+                    <td>${row.process_end_time || ''}</td>
+                    <td>${row.end_status || ''}</td>
                 `;
                 tr.addEventListener('click', () => {
                     selectedIndex = idx;
-                    openModal(row, idx + 1);
+                    openModal(row, row.no || idx + 1);
                 });
                 tbody.appendChild(tr);
             });
-            document.getElementById('table-foot').textContent = `AlarmNum: ${rows.length}`;
+            document.getElementById('table-foot').textContent = `Total: ${rows.length}`;
             scrollToSelected();
         }
 
@@ -718,7 +1313,10 @@
         }
 
         document.addEventListener('DOMContentLoaded', () => {
-            renderTable();
+            // 초기화
+            loadRecipes().then(() => {
+                loadEquipmentHistory();
+            });
 
             const tickClock = () => {
                 const now = new Date();
@@ -729,6 +1327,13 @@
             };
             tickClock();
             setInterval(tickClock, 1000);
+
+            // Recipe 선택 변경 이벤트
+            document.getElementById('recipe-select').addEventListener('change', (e) => {
+                const selectedRecipe = e.target.value;
+                loadEquipmentHistory(selectedRecipe);
+                selectedIndex = 0;
+            });
 
             document.querySelectorAll('.side-panel .ghost-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
@@ -742,7 +1347,7 @@
                         selectedIndex = 0;
                     }
                     if (action === 'top') selectedIndex = 0;
-                    if (action === 'bottom') selectedIndex = rows.length - 1;
+                    if (action === 'bottom') selectedIndex = Math.max(0, rows.length - 1);
                     if (action === 'next' && selectedIndex < rows.length - 1) selectedIndex++;
                     if (action === 'prev' && selectedIndex > 0) selectedIndex--;
                     renderTable();
@@ -758,22 +1363,732 @@
             modalEl?.addEventListener('click', (e) => {
                 if (e.target === modalEl) closeModal();
             });
+
+            // Numeric Modal 이벤트 리스너
+            const numericModalEl = document.getElementById('numeric-modal');
+            document.getElementById('numeric-modal-close')?.addEventListener('click', closeNumericModal);
+            numericModalEl?.addEventListener('click', (e) => {
+                if (e.target === numericModalEl) closeNumericModal();
+            });
+            
+            // Graph 버튼 이벤트 리스너
+            // 버튼이 동적으로 생성될 수 있으므로 이벤트 위임 사용
+            document.body.addEventListener('click', function(e) {
+                const target = e.target;
+                if (target && (target.id === 'numeric-graph-btn' || target.closest('#numeric-graph-btn'))) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('Graph 버튼 클릭됨, numericTableData:', numericTableData);
+                    if (numericTableData) {
+                        if (typeof openGraphModal === 'function') {
+                            openGraphModal();
+                        } else {
+                            console.error('openGraphModal 함수가 정의되지 않았습니다.');
+                        }
+                    } else {
+                        alert('CSV 데이터를 먼저 로드해주세요.');
+                    }
+                }
+            });
+
+            // Graph Modal 이벤트 리스너
+            const graphModalEl = document.getElementById('graph-modal');
+            document.getElementById('graph-modal-close')?.addEventListener('click', closeGraphModal);
+            graphModalEl?.addEventListener('click', (e) => {
+                if (e.target === graphModalEl) closeGraphModal();
+            });
+
+            // Graph Zoom 및 Navigation 버튼 이벤트
+            document.getElementById('graph-zoom-in')?.addEventListener('click', () => {
+                zoomGraphChart(true);
+            });
+            document.getElementById('graph-zoom-out')?.addEventListener('click', () => {
+                zoomGraphChart(false);
+            });
+            document.getElementById('graph-prev')?.addEventListener('click', () => {
+                navigateGraphChart('prev');
+            });
+            document.getElementById('graph-next')?.addEventListener('click', () => {
+                navigateGraphChart('next');
+            });
+
+            // Graph Zoom 및 Navigation 버튼 이벤트
+            document.getElementById('graph-zoom-in')?.addEventListener('click', () => {
+                zoomGraphChart(true);
+            });
+            document.getElementById('graph-zoom-out')?.addEventListener('click', () => {
+                zoomGraphChart(false);
+            });
+            document.getElementById('graph-prev')?.addEventListener('click', () => {
+                navigateGraphChart('prev');
+            });
+            document.getElementById('graph-next')?.addEventListener('click', () => {
+                navigateGraphChart('next');
+            });
+
+            // 페이지네이션 버튼 이벤트
+            document.getElementById('numeric-prev-btn')?.addEventListener('click', () => {
+                if (numericCurrentPage > 0) {
+                    numericCurrentPage--;
+                    renderNumericTable(numericCurrentPage);
+                }
+            });
+
+            document.getElementById('numeric-next-btn')?.addEventListener('click', () => {
+                if (numericTableData && numericTableData.data) {
+                    const totalPages = Math.ceil(numericTableData.data.length / numericItemsPerPage);
+                    if (numericCurrentPage < totalPages - 1) {
+                        numericCurrentPage++;
+                        renderNumericTable(numericCurrentPage);
+                    }
+                }
+            });
+
+            // 페이지 입력 필드 이벤트
+            const pageInput = document.getElementById('numeric-page-input');
+            if (pageInput) {
+                pageInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        const pageNum = parseInt(pageInput.value);
+                        if (numericTableData && numericTableData.data) {
+                            const totalPages = Math.ceil(numericTableData.data.length / numericItemsPerPage);
+                        if (pageNum >= 1 && pageNum <= totalPages) {
+                            numericCurrentPage = pageNum - 1;
+                            renderNumericTable(numericCurrentPage);
+                        } else {
+                            alert(`페이지 번호는 1부터 ${totalPages}까지 입력할 수 있습니다.`);
+                            pageInput.value = numericCurrentPage + 1;
+                        }
+                        }
+                    }
+                });
+
+                pageInput.addEventListener('blur', () => {
+                    const pageNum = parseInt(pageInput.value);
+                    if (numericTableData && numericTableData.data) {
+                        const totalPages = Math.ceil(numericTableData.data.length / numericItemsPerPage);
+                        if (pageNum >= 1 && pageNum <= totalPages) {
+                            numericCurrentPage = pageNum - 1;
+                            renderNumericTable(numericCurrentPage);
+                        } else {
+                            pageInput.value = numericCurrentPage + 1;
+                        }
+                    }
+                });
+            }
         });
 
-        function openModal(row, no) {
+        async function openModal(row, no) {
             const modalEl = document.getElementById('detail-modal');
             if (!modalEl) return;
             const timeEl = document.getElementById('modal-time');
             const recipeEl = document.getElementById('modal-recipe');
-            if (timeEl) timeEl.textContent = formatOccurYmd(row.occur);
-            if (recipeEl) recipeEl.textContent = `Recipe Name: ${row.recipe || '-'}`;
-            renderRecipeInfo(row.recipeInfo);
-            renderAlarmHistory(row.alarmHistory);
+            if (timeEl) timeEl.textContent = row.process_start_time || '-';
+            if (recipeEl) recipeEl.textContent = `Recipe Name: ${row.process_recipe || '-'}`;
+            
+            // Trace Logging 테이블에 CSV 파일 정보 표시
+            await renderTraceLogging(row.pjob_id, row.process_recipe);
+            renderAlarmHistory(row);
             modalEl.style.display = 'flex';
         }
 
         function closeModal() {
             const modalEl = document.getElementById('detail-modal');
+            if (modalEl) modalEl.style.display = 'none';
+        }
+
+        // Numeric Table Modal 함수들
+        let numericTableData = null;
+        let numericCurrentPage = 0;
+        const numericItemsPerPage = 20;
+
+        function renderNumericTable(page = 0) {
+            if (!numericTableData || numericTableData.data.length === 0) {
+                return;
+            }
+
+            const tbody = document.getElementById('numeric-table-body');
+            const startIdx = page * numericItemsPerPage;
+            const endIdx = Math.min(startIdx + numericItemsPerPage, numericTableData.data.length);
+            const pageData = numericTableData.data.slice(startIdx, endIdx);
+
+            if (pageData.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="100%" style="text-align:center;">데이터가 없습니다.</td></tr>';
+                return;
+            }
+
+            // 고정 칼럼 행들 먼저 추가
+            const fixedRows = [
+                { name: 'No.', values: pageData.map(row => row.no || '') },
+                { name: 'Step Name', values: pageData.map(row => row.step_name || '') },
+                { name: 'Date', values: pageData.map(row => row.date || '') },
+                { name: 'Time', values: pageData.map(row => row.time || '') }
+            ];
+            
+            // numeric 칼럼 행들
+            const numericRows = numericTableData.headers.map((header, headerIdx) => {
+                const values = pageData.map(row => {
+                    if (headerIdx < row.numeric_data.length) {
+                        return row.numeric_data[headerIdx];
+                    }
+                    return '';
+                });
+                return { name: header, values: values };
+            });
+            
+            // 모든 행 결합
+            const allRows = [...fixedRows, ...numericRows];
+            
+            tbody.innerHTML = allRows.map((row, rowIdx) => `
+                <tr>
+                    <td>${row.name}</td>
+                    ${row.values.map(val => `<td>${val || ''}</td>`).join('')}
+                </tr>
+            `).join('');
+            
+            // 첫 4줄의 각 셀에 top 위치 동적 설정 (DOM 렌더링 후)
+            setTimeout(() => {
+                const firstFourRows = tbody.querySelectorAll('tr:nth-child(1), tr:nth-child(2), tr:nth-child(3), tr:nth-child(4)');
+                let cumulativeTop = 0;
+                firstFourRows.forEach((row, idx) => {
+                    if (idx > 0) {
+                        const prevRow = firstFourRows[idx - 1];
+                        cumulativeTop += prevRow.offsetHeight;
+                    }
+                    const cells = row.querySelectorAll('td');
+                    cells.forEach(cell => {
+                        cell.style.top = `${cumulativeTop}px`;
+                    });
+                });
+            }, 0);
+
+            // 페이지네이션 버튼 상태 업데이트
+            const totalPages = Math.ceil(numericTableData.data.length / numericItemsPerPage);
+            const prevBtn = document.getElementById('numeric-prev-btn');
+            const nextBtn = document.getElementById('numeric-next-btn');
+            const pageInfo = document.getElementById('numeric-page-info');
+            const pageInput = document.getElementById('numeric-page-input');
+            const pageTotal = document.getElementById('numeric-page-total');
+            
+            // 총 페이지 수 표시
+            if (pageInfo) {
+                pageInfo.textContent = `${page + 1} / ${totalPages}`;
+            }
+            
+            if (pageInput) {
+                pageInput.value = page + 1;
+                pageInput.max = totalPages;
+            }
+            
+            if (pageTotal) {
+                pageTotal.textContent = `/ ${totalPages}`;
+            }
+            
+            if (prevBtn) {
+                prevBtn.disabled = (page === 0);
+                prevBtn.style.opacity = (page === 0) ? '0.5' : '1';
+                prevBtn.style.cursor = (page === 0) ? 'not-allowed' : 'pointer';
+            }
+            
+            if (nextBtn) {
+                nextBtn.disabled = (page >= totalPages - 1);
+                nextBtn.style.opacity = (page >= totalPages - 1) ? '0.5' : '1';
+                nextBtn.style.cursor = (page >= totalPages - 1) ? 'not-allowed' : 'pointer';
+            }
+        }
+
+        async function openNumericModal(pjobId, fileName) {
+            const modalEl = document.getElementById('numeric-modal');
+            if (!modalEl) return;
+            
+            try {
+                const response = await fetch(`/api/csv_data?pjob_id=${encodeURIComponent(pjobId)}&file_name=${encodeURIComponent(fileName)}`);
+                const data = await response.json();
+                
+                if (data.error) {
+                    alert(data.error);
+                    return;
+                }
+                
+                // 전체 데이터 저장
+                numericTableData = data;
+                numericTableData.fileName = fileName; // 파일명 저장
+                numericCurrentPage = 0;
+                console.log('numericTableData 설정됨:', numericTableData);
+                
+                // 파일명 및 시작/종료 시간 표시
+                document.getElementById('numeric-file-name').textContent = fileName || '-';
+                document.getElementById('numeric-start-time').textContent = data.start_time || '-';
+                document.getElementById('numeric-end-time').textContent = data.end_time || '-';
+                
+                // 첫 페이지 렌더링
+                renderNumericTable(0);
+                
+                // Graph 버튼 이벤트 리스너 재등록 (모달이 열린 후)
+                setTimeout(() => {
+                    const graphBtn = document.getElementById('numeric-graph-btn');
+                    if (graphBtn) {
+                        // 기존 이벤트 리스너 제거 후 재등록
+                        const newGraphBtn = graphBtn.cloneNode(true);
+                        graphBtn.parentNode.replaceChild(newGraphBtn, graphBtn);
+                        newGraphBtn.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            console.log('Graph 버튼 직접 클릭됨, numericTableData:', numericTableData);
+                            if (numericTableData) {
+                                if (typeof openGraphModal === 'function') {
+                                    openGraphModal();
+                                } else {
+                                    console.error('openGraphModal 함수가 정의되지 않았습니다.');
+                                    alert('Graph 기능을 사용할 수 없습니다.');
+                                }
+                            } else {
+                                alert('CSV 데이터를 먼저 로드해주세요.');
+                            }
+                        });
+                    }
+                }, 100);
+                
+                modalEl.style.display = 'flex';
+            } catch (error) {
+                console.error('CSV 데이터 로드 실패:', error);
+                alert('CSV 데이터를 불러올 수 없습니다.');
+            }
+        }
+
+        function closeNumericModal() {
+            const modalEl = document.getElementById('numeric-modal');
+            if (modalEl) modalEl.style.display = 'none';
+        }
+
+        // Graph Modal 함수들
+        const parameterGroups = {
+            'Temp': ['TempAct_U', 'TempAct_CU', 'TempAct_C', 'TempAct_CL', 'TempAct_L', 'TempSet_U', 'TempSet_CU', 'TempSet_C', 'TempSet_CL', 'TempSet_L', 'HeaterTC_U', 'HeaterTC_CU', 'HeaterTC_C', 'HeaterTC_CL', 'HeaterTC_L', 'CascadeTC_U', 'CascadeTC_CU', 'CascadeTC_C', 'CascadeTC_CL', 'CascadeTC_L', 'TempAct_HT.U', 'TempAct_HT.CU', 'TempAct_HT.C', 'TempAct_HT.CL', 'TempAct_HT.L', 'TempAct_PR.U', 'TempAct_PR.CU', 'TempAct_PR.C', 'TempAct_PR.CL', 'TempAct_PR.L', 'TempTarg_HT.U', 'TempTarg_HT.CU', 'TempTarg_HT.C', 'TempTarg_HT.CL', 'TempTarg_HT.L', 'TempTarg_PR.U', 'TempTarg_PR.CU', 'TempTarg_PR.C', 'TempTarg_PR.CL', 'TempTarg_PR.L'],
+            'Power': ['Power_HT.U', 'Power_HT.CU', 'Power_HT.C', 'Power_HT.CL', 'Power_HT.L'],
+            'MFC': ['MFCMon_N2-1', 'MFCMon_N2-2', 'MFCMon_N2-3', 'MFCMon_N2-4', 'MFCMon_DCS', 'MFCMon_NH3', 'MFCMon_F2', 'MFCMon_N2-R', 'MFCMon_DCSMFM_7', 'MFCMon_NH3MFM_8', 'MFCMon_F2MFM_9', 'MFCMon_NOMFM_11', 'MFCMon_MFC51 N2', 'MFCMon_F.PWR', 'MFCMon_L.POS', 'MFCMon_P.POS', 'MFCRcpSet_N2-1', 'MFCRcpSet_N2-3', 'MFCRcpSet_N2-4', 'MFCRcpSet_DCS', 'MFCRcpSet_NH3', 'MFCRcpSet_F2', 'MFCSet_MFC51 N2', 'MFCRamp_N2-1', 'MFCRamp_N2-3', 'MFCRamp_N2-4', 'MFCRamp_DCS', 'MFCRamp_NH3', 'MFCRamp_F.PWR', 'MFCRamp_L.POS', 'MFCRamp_P.POS', 'MFCInput_N2-1', 'MFCInput_N2-3', 'MFCInput_N2-4', 'MFCInput_DCS', 'MFCInput_NH3', 'MFCInput_F2', 'MFCInput_F.PWR', 'MFCInput_L.POS', 'MFCInput_P.POS'],
+            'Press': ['PressAct', 'PressSet', 'VG13', 'VG11', 'VG12', 'SlowVacRate', 'APCValveMon', 'APCValveSet', 'LeakChkStartPress', 'LeakCheckPressMon', 'LeakQuantity'],
+            'Aux': ['AUXMon_MS1', 'AUXMon_MS321', 'AUXMon_MS2', 'AUXMon_MS3', 'AUXMon_MS5', 'AUXMon_MS8', 'AUXMon_MS9', 'AUXMon_VG21', 'AUXMon_VG14', 'AUXMon_VG12', 'AUXMon_VG11', 'AUXMon_VG13', 'AUXMon_M.WAT', 'AUXMon_FS101', 'AUXMon_FS102', 'AUXMon_FS104', 'AUXMon_FS106', 'AUXMon_FS111', 'AUXMon_FS105', 'AUXMon_G.PS1', 'AUXMon_G.PS2', 'AUXMon_G.PS3', 'AUXMon_G.PS4', 'AUXMon_G.PS5', 'AUXMon_G.PS6', 'AUXMon_G.PS13', 'AUXMon_G.PS14', 'AUXMon_G.PS15', 'AUXMon_G.PS16', 'AUXMon_Vpp', 'AUXMon_Vdc', 'AUXMon_R.PWR', 'AUXMon_DCS_IN', 'AUXMon_IGS_DCS', 'AUXMon_DCS1_PIP', 'AUXMon_PURGE-1', 'AUXMon_DCS_TANK', 'AUXMon_REC-1', 'AUXMon_REC-2-1', 'AUXMon_REC-2-2', 'AUXMon_IGS_N2-1', 'AUXMon_SEALCAP', 'AUXMon_RAXIS', 'AUXMon_APC_RING', 'AUXMon_APC_OUT', 'AUXMon_PORT', 'AUXMon_JH1', 'AUXMon_JH2', 'AUXMon_JH3', 'AUXMon_JH4', 'AUXMon_JH5', 'AUXMon_JH6', 'AUXMon_JH7', 'AUXMon_JH8', 'AUXMon_JH9', 'AUXMon_JH10', 'AUXMon_JH11', 'AUXMon_JH12', 'AUXMon_JH13'],
+            'OnOff': ['ValveAct_1', 'ValveAct_2', 'ValveAct_3', 'ValveAct_4', 'ValveAct_5', 'ValveAct_8', 'ValveAct_9', 'ValveAct_11', 'ValveAct_12', 'ValveAct_13', 'ValveAct_14', 'ValveAct_15', 'ValveAct_16', 'ValveAct_26', 'ValveAct_27', 'ValveAct_28', 'ValveAct_29', 'ValveAct_30', 'ValveAct_60', 'ValveAct_63', 'ValveAct_73', 'ValveAct_75', 'ValveAct_76', 'ValveAct_77', 'ValveAct_80', 'ValveAct_81', 'ValveAct_86', 'ValveAct_87', 'ValveAct_88', 'ValveAct_89', 'ValveAct_90', 'ValveAct_91', 'ValveAct_95', 'ValveCtrl_60', 'ValveSet_60'],
+            'O2': ['O2DensityLAMon', 'O2DensityFOUP1Mon', 'O2DensityFOUP2Mon']
+        };
+
+        let graphChart = null;
+        let selectedParameters = new Set();
+        let graphTableData = null;
+        let graphZoomLevel = 1.0;
+        let graphDataWindow = { start: 0, end: 100 };
+
+        function initGraphParameterButtons() {
+            Object.keys(parameterGroups).forEach(groupName => {
+                const groupEl = document.querySelector(`.parameter-group[data-group="${groupName}"]`);
+                if (!groupEl) return;
+
+                const listEl = groupEl.querySelector('.parameter-list');
+                const params = parameterGroups[groupName];
+                
+                listEl.innerHTML = params.map(param => `
+                    <button class="parameter-btn" data-param="${param}">${param}</button>
+                `).join('');
+
+                // 그룹 버튼 클릭 이벤트
+                const groupBtn = groupEl.querySelector('.parameter-group-btn');
+                groupBtn.addEventListener('click', () => {
+                    const isVisible = listEl.style.display !== 'none';
+                    listEl.style.display = isVisible ? 'none' : 'grid';
+                });
+
+                // 전체선택 버튼
+                const selectAllBtn = groupEl.querySelector('.parameter-select-all-btn');
+                selectAllBtn.addEventListener('click', () => {
+                    params.forEach(param => {
+                        selectedParameters.add(param);
+                        const btn = listEl.querySelector(`[data-param="${param}"]`);
+                        if (btn) btn.classList.add('active');
+                    });
+                    updateGraphChart();
+                });
+
+                // 전체해제 버튼
+                const deselectAllBtn = groupEl.querySelector('.parameter-deselect-all-btn');
+                deselectAllBtn.addEventListener('click', () => {
+                    params.forEach(param => {
+                        selectedParameters.delete(param);
+                        const btn = listEl.querySelector(`[data-param="${param}"]`);
+                        if (btn) btn.classList.remove('active');
+                    });
+                    updateGraphChart();
+                });
+
+                // 파라미터 버튼 클릭 이벤트
+                listEl.querySelectorAll('.parameter-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const param = btn.dataset.param;
+                        if (selectedParameters.has(param)) {
+                            selectedParameters.delete(param);
+                            btn.classList.remove('active');
+                        } else {
+                            selectedParameters.add(param);
+                            btn.classList.add('active');
+                        }
+                        updateGraphChart();
+                    });
+                });
+            });
+        }
+
+        function initGraphChart() {
+            const chartEl = document.getElementById('graph-chart');
+            if (!chartEl) return;
+            
+            graphChart = echarts.init(chartEl);
+            
+            const option = {
+                tooltip: {
+                    trigger: 'axis'
+                },
+                legend: {
+                    data: [],
+                    type: 'scroll',
+                    orient: 'vertical',
+                    right: 10,
+                    top: 60
+                },
+                grid: {
+                    left: '3%',
+                    right: '15%',
+                    bottom: '3%',
+                    containLabel: true
+                },
+                dataZoom: [
+                    {
+                        type: 'inside',
+                        start: 0,
+                        end: 100
+                    }
+                ],
+                xAxis: {
+                    type: 'category',
+                    boundaryGap: false,
+                    data: []
+                },
+                yAxis: {
+                    type: 'value'
+                },
+                series: []
+            };
+            
+            graphChart.setOption(option);
+            
+            // dataZoom 이벤트 리스너
+            graphChart.on('dataZoom', (params) => {
+                if (params.batch) {
+                    const zoomParam = params.batch[0];
+                    graphDataWindow.start = zoomParam.start || 0;
+                    graphDataWindow.end = zoomParam.end || 100;
+                } else {
+                    graphDataWindow.start = params.start || 0;
+                    graphDataWindow.end = params.end || 100;
+                }
+            });
+        }
+
+        function zoomGraphChart(zoomIn) {
+            if (!graphChart || !graphTableData) return;
+            
+            const zoomFactor = zoomIn ? 0.8 : 1.25;
+            const currentStart = graphDataWindow.start;
+            const currentEnd = graphDataWindow.end;
+            const currentRange = currentEnd - currentStart;
+            const center = currentStart + currentRange / 2;
+            const newRange = currentRange * zoomFactor;
+            const newStart = Math.max(0, center - newRange / 2);
+            const newEnd = Math.min(100, center + newRange / 2);
+            
+            graphDataWindow.start = newStart;
+            graphDataWindow.end = newEnd;
+            
+            graphChart.dispatchAction({
+                type: 'dataZoom',
+                start: newStart,
+                end: newEnd
+            });
+        }
+
+        function navigateGraphChart(direction) {
+            if (!graphChart || !graphTableData) return;
+            
+            const step = 10; // 10%씩 이동
+            const currentStart = graphDataWindow.start;
+            const currentEnd = graphDataWindow.end;
+            const currentRange = currentEnd - currentStart;
+            
+            let newStart, newEnd;
+            if (direction === 'prev') {
+                newStart = Math.max(0, currentStart - step);
+                newEnd = newStart + currentRange;
+                if (newEnd > 100) {
+                    newEnd = 100;
+                    newStart = 100 - currentRange;
+                }
+            } else {
+                newEnd = Math.min(100, currentEnd + step);
+                newStart = newEnd - currentRange;
+                if (newStart < 0) {
+                    newStart = 0;
+                    newEnd = currentRange;
+                }
+            }
+            
+            graphDataWindow.start = newStart;
+            graphDataWindow.end = newEnd;
+            
+            graphChart.dispatchAction({
+                type: 'dataZoom',
+                start: newStart,
+                end: newEnd
+            });
+        }
+
+        function zoomGraphChart(zoomIn) {
+            if (!graphChart || !graphTableData) return;
+            
+            const zoomFactor = zoomIn ? 0.8 : 1.25;
+            const currentStart = graphDataWindow.start;
+            const currentEnd = graphDataWindow.end;
+            const currentRange = currentEnd - currentStart;
+            const center = currentStart + currentRange / 2;
+            const newRange = currentRange * zoomFactor;
+            const newStart = Math.max(0, center - newRange / 2);
+            const newEnd = Math.min(100, center + newRange / 2);
+            
+            graphDataWindow.start = newStart;
+            graphDataWindow.end = newEnd;
+            
+            graphChart.dispatchAction({
+                type: 'dataZoom',
+                start: newStart,
+                end: newEnd
+            });
+        }
+
+        function navigateGraphChart(direction) {
+            if (!graphChart || !graphTableData) return;
+            
+            const step = 10; // 10%씩 이동
+            const currentStart = graphDataWindow.start;
+            const currentEnd = graphDataWindow.end;
+            const currentRange = currentEnd - currentStart;
+            
+            let newStart, newEnd;
+            if (direction === 'prev') {
+                newStart = Math.max(0, currentStart - step);
+                newEnd = newStart + currentRange;
+                if (newEnd > 100) {
+                    newEnd = 100;
+                    newStart = 100 - currentRange;
+                }
+            } else {
+                newEnd = Math.min(100, currentEnd + step);
+                newStart = newEnd - currentRange;
+                if (newStart < 0) {
+                    newStart = 0;
+                    newEnd = currentRange;
+                }
+            }
+            
+            graphDataWindow.start = newStart;
+            graphDataWindow.end = newEnd;
+            
+            graphChart.dispatchAction({
+                type: 'dataZoom',
+                start: newStart,
+                end: newEnd
+            });
+        }
+
+        function updateGraphChart() {
+            if (!graphChart || !graphTableData) return;
+
+            const timeData = [];
+            const series = [];
+
+            // 전체 데이터 사용 (페이지네이션 무시)
+            const allData = graphTableData.data;
+
+            if (!allData || allData.length === 0) {
+                console.warn('차트 데이터가 없습니다.');
+                return;
+            }
+
+            // 시간 데이터 생성
+            allData.forEach(row => {
+                const timeStr = `${row.date} ${row.time}`;
+                timeData.push(timeStr);
+            });
+
+            // 선택된 파라미터별로 시리즈 생성
+            selectedParameters.forEach(param => {
+                const paramIndex = graphTableData.headers.indexOf(param);
+                if (paramIndex === -1) return;
+
+                const values = allData.map(row => {
+                    if (paramIndex < row.numeric_data.length) {
+                        const val = parseFloat(row.numeric_data[paramIndex]);
+                        return isNaN(val) ? null : val;
+                    }
+                    return null;
+                });
+
+                series.push({
+                    name: param,
+                    type: 'line',
+                    data: values,
+                    smooth: true
+                });
+            });
+
+            // 전체 옵션을 포함하여 업데이트
+            const option = {
+                tooltip: {
+                    trigger: 'axis'
+                },
+                legend: {
+                    data: Array.from(selectedParameters),
+                    type: 'scroll',
+                    orient: 'vertical',
+                    right: 10,
+                    top: 60
+                },
+                grid: {
+                    left: '3%',
+                    right: '15%',
+                    bottom: '3%',
+                    containLabel: true
+                },
+                xAxis: {
+                    type: 'category',
+                    boundaryGap: false,
+                    data: timeData
+                },
+                yAxis: {
+                    type: 'value'
+                },
+                series: series,
+                dataZoom: [
+                    {
+                        type: 'inside',
+                        start: graphDataWindow.start,
+                        end: graphDataWindow.end
+                    }
+                ]
+            };
+
+            // 선택된 파라미터가 없을 때도 빈 차트로 업데이트되도록 notMerge: true 사용
+            graphChart.setOption(option, { notMerge: true });
+        }
+
+        function openGraphModal() {
+            console.log('openGraphModal 호출됨, numericTableData:', numericTableData);
+            if (!numericTableData) {
+                alert('CSV 데이터를 먼저 로드해주세요.');
+                return;
+            }
+
+            const modalEl = document.getElementById('graph-modal');
+            if (!modalEl) {
+                console.error('graph-modal 요소를 찾을 수 없습니다.');
+                return;
+            }
+
+            graphTableData = numericTableData;
+            
+            // 파일명 및 시작/종료 시간 표시
+            document.getElementById('graph-file-name').textContent = numericTableData.fileName || '-';
+            document.getElementById('graph-start-time').textContent = numericTableData.start_time || '-';
+            document.getElementById('graph-end-time').textContent = numericTableData.end_time || '-';
+
+            // 파라미터 버튼 초기화
+            initGraphParameterButtons();
+
+            // 차트 초기화
+            if (!graphChart) {
+                initGraphChart();
+            }
+            
+            // 줌 상태 초기화
+            graphZoomLevel = 1.0;
+            graphDataWindow = { start: 0, end: 100 };
+            
+            // 차트 리사이즈 (모달이 열린 후)
+            setTimeout(() => {
+                if (graphChart) {
+                    graphChart.resize();
+                    // 빈 차트로 초기화 (전체 옵션 포함)
+                    graphChart.setOption({
+                        tooltip: {
+                            trigger: 'axis'
+                        },
+                        legend: {
+                            data: [],
+                            type: 'scroll',
+                            orient: 'vertical',
+                            right: 10,
+                            top: 60
+                        },
+                        grid: {
+                            left: '3%',
+                            right: '15%',
+                            bottom: '3%',
+                            containLabel: true
+                        },
+                        xAxis: {
+                            type: 'category',
+                            boundaryGap: false,
+                            data: []
+                        },
+                        yAxis: {
+                            type: 'value'
+                        },
+                        series: [],
+                        dataZoom: [
+                            {
+                                type: 'inside',
+                                start: 0,
+                                end: 100
+                            },
+                            {
+                                type: 'slider',
+                                start: 0,
+                                end: 100,
+                                height: 20,
+                                bottom: 10
+                            }
+                        ]
+                    }, true);
+                }
+            }, 100);
+            
+            // 창 크기 변경 시 차트 리사이즈
+            const resizeHandler = () => {
+                if (graphChart && modalEl.style.display === 'flex') {
+                    graphChart.resize();
+                }
+            };
+            window.removeEventListener('resize', resizeHandler);
+            window.addEventListener('resize', resizeHandler);
+
+            // 선택된 파라미터 초기화
+            selectedParameters.clear();
+            document.querySelectorAll('.parameter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            modalEl.style.display = 'flex';
+        }
+
+        function closeGraphModal() {
+            const modalEl = document.getElementById('graph-modal');
             if (modalEl) modalEl.style.display = 'none';
         }
     </script>

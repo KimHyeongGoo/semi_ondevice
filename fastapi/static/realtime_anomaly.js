@@ -1,6 +1,7 @@
-const processCharts = {};
-const recentCharts = {};
+const mainCharts = {};
 const chartBoxesMap = {};
+let selectedTimeRange = 5; // 기본값 5분 (분 단위)
+let chartHoldEnabled = false; // 차트 업데이트 중지 여부
 const logEntryElements = new Map();
 let processStart = null;
 let processEnd = null;
@@ -22,7 +23,8 @@ const storedWarning = typeof localStorage !== 'undefined' ? localStorage.getItem
 if (storedWarning !== null) warningEnabled = storedWarning === 'true';
 let deviceStatus = { status: 'RUN', lastTick: null };
 const displayParam = (name) => {
-    const m = String(name || '').match(/^MFC\\d+[_ ]?(.*)$/i);
+    // MFC1_N2-1 -> N2-1, MFC7_DCS -> DCS 등으로 변환
+    const m = String(name || '').match(/^MFC\d+[_-](.+)$/i);
     return m && m[1] ? m[1] : name;
 };
 function applyDisplayLabels() {
@@ -31,8 +33,7 @@ function applyDisplayLabels() {
         const labelEl = row.querySelector('.param-label');
         if (labelEl) labelEl.textContent = displayParam(param);
         row.querySelectorAll('.expand-btn').forEach(btn => {
-            const kind = btn.dataset.kind === 'recent' ? '최근 1분' : '최근 5분';
-            btn.setAttribute('aria-label', `${displayParam(param)} ${kind} 차트 확대`);
+            btn.setAttribute('aria-label', `${displayParam(param)} 차트 확대`);
         });
     });
 }
@@ -58,19 +59,6 @@ const partsCatalog = {
     },
     byViolation: {
         1: {
-            title: 'MFC 부품 정보',
-            image: { src: '/static/img/MFC.png', alt: 'MFC', caption: 'MFC' },
-            usage: '전구체(Precursor)와 반응체(Reactant) 가스뿐만 아니라 퍼지(Purge) 가스의 질량 유량을 정확한 비율과 양으로 챔버에 공급하여 박막의 두께와 균일성을 직접 제어합니다.',
-            feature: '빠른 응답 속도와 매우 높은 유량 제어 정확도 및 반복성을 가지며, 특히 고순도 공정 가스의 오염을 방지하기 위해 내부식성 재료와 금속 씰(Metal Seal) 구조를 주로 사용합니다.',
-            principle: '주로 열식(Thermal) 센서를 사용하여 흐르는 가스에 가한 열량 변화를 측정하여 질량 유량을 계산하고, 이 신호를 바탕으로 내장된 제어 밸브(Control Valve)를 구동하여 설정된 유량을 일정하게 유지합니다.',
-            vendors: [
-                { no: 1, name: 'MKP', biz: '230-87-00261', link: 'https://www.mkpsemi.com/products/prod-catalog', contact: 'TEL: 031-613-3359' },
-                { no: 2, name: 'MRC', biz: '193-86-00631', link: 'http://www.mfc-mrc.com/product', contact: 'TEL: 031-348-0855' },
-                { no: 3, name: 'HORIBA', biz: '192-81-15730', link: 'https://www.horiba.com/int/semiconductor/products/mass-flow-controller-and-module/', contact: 'TEL: 031-8025-6500' },
-                { no: 4, name: 'Brooks Instrument', biz: '135-81-95781', link: 'https://www.brooksinstrument.com/en/markets/semiconductor-manufacturing', contact: 'TEL: 031-708-2521' }
-            ]
-        },
-        2: {
             title: 'Baratron Gauge 부품 정보',
             image: { src: '/static/img/Baratron%20Gauge.png', alt: 'Baratron Gauge', caption: 'Baratron Gauge' },
             usage: 'ALD 공정 챔버 내부의 초정밀 진공 압력을 실시간으로 측정하여, 압력 자동 제어(APC) 시스템과 연동해 전구체 도징 및 반응 조건을 일정하게 유지하는 핵심 센서 역할을 수행합니다.',
@@ -81,6 +69,19 @@ const partsCatalog = {
                 { no: 2, name: '브이시스', biz: '142-81-44975', link: 'http://www.vsys.co.kr/V2/02_product/product_01_1.php', contact: 'TEL: 031-8067-7750' },
                 { no: 3, name: 'ZEUS', biz: '229-81-05323', link: 'https://www.globalzeus.com/kr/sub/products/list.asp?p_cate=1312', contact: 'TEL: 031-5187-1774' },
                 { no: 4, name: '다이나믹세미텍', biz: '565-88-00577', link: 'https://www.dynamicsemi.co.kr/?act=shop.goods_list&GC=GD0301', contact: 'TEL: 054-437-2062' }
+            ]
+        },
+        2: {
+            title: 'MFC 부품 정보',
+            image: { src: '/static/img/MFC.png', alt: 'MFC', caption: 'MFC' },
+            usage: '전구체(Precursor)와 반응체(Reactant) 가스뿐만 아니라 퍼지(Purge) 가스의 질량 유량을 정확한 비율과 양으로 챔버에 공급하여 박막의 두께와 균일성을 직접 제어합니다.',
+            feature: '빠른 응답 속도와 매우 높은 유량 제어 정확도 및 반복성을 가지며, 특히 고순도 공정 가스의 오염을 방지하기 위해 내부식성 재료와 금속 씰(Metal Seal) 구조를 주로 사용합니다.',
+            principle: '주로 열식(Thermal) 센서를 사용하여 흐르는 가스에 가한 열량 변화를 측정하여 질량 유량을 계산하고, 이 신호를 바탕으로 내장된 제어 밸브(Control Valve)를 구동하여 설정된 유량을 일정하게 유지합니다.',
+            vendors: [
+                { no: 1, name: 'MKP', biz: '230-87-00261', link: 'https://www.mkpsemi.com/products/prod-catalog', contact: 'TEL: 031-613-3359' },
+                { no: 2, name: 'MRC', biz: '193-86-00631', link: 'http://www.mfc-mrc.com/product', contact: 'TEL: 031-348-0855' },
+                { no: 3, name: 'HORIBA', biz: '192-81-15730', link: 'https://www.horiba.com/int/semiconductor/products/mass-flow-controller-and-module/', contact: 'TEL: 031-8025-6500' },
+                { no: 4, name: 'Brooks Instrument', biz: '135-81-95781', link: 'https://www.brooksinstrument.com/en/markets/semiconductor-manufacturing', contact: 'TEL: 031-708-2521' }
             ]
         },
         3: {
@@ -280,11 +281,9 @@ async function saveWarningSetting() {
 }
 
 const visibilityKey = 'chartVisibilityMode';
-let visibilityMode = localStorage.getItem(visibilityKey);
-if (!visibilityMode) {
-    visibilityMode = 'both';
-    localStorage.setItem(visibilityKey, visibilityMode);
-}
+// 새로고침 시 항상 '실제값만'으로 시작하도록 설정
+let visibilityMode = 'actual'; // 기본값을 '실제값만'으로 변경
+// localStorage에는 저장하지 않아서 매번 새로고침 시 기본값으로 시작
 const visibilityLabels = {
     both: '실제값 + 예측값',
     actual: '실제값만',
@@ -307,8 +306,7 @@ function setDatasetVisibility(chart, mode) {
 }
 
 function applyVisibilityAll() {
-    Object.values(processCharts).forEach(c => { setDatasetVisibility(c, visibilityMode); c.update(); });
-    Object.values(recentCharts).forEach(c => { setDatasetVisibility(c, visibilityMode); c.update(); });
+    Object.values(mainCharts).forEach(c => { setDatasetVisibility(c, visibilityMode); c.update(); });
 }
 
 const highlightPlugin = {
@@ -387,23 +385,40 @@ async function pollGeneratorStatus() {
 function createCharts() {
     const xAxis = {
         type: 'time',
-        time: { unit: 'second', tooltipFormat: 'HH:mm:ss', displayFormats: { second: 'HH:mm:ss', minute: 'HH:mm:ss' } },
+        time: { 
+            unit: 'second', 
+            tooltipFormat: 'HH:mm:ss', 
+            displayFormats: { 
+                second: 'HH:mm:ss', 
+                minute: 'HH:mm:ss' 
+            } 
+        },
         ticks: {
             source: 'data',
             autoSkip: true,
             maxRotation: 0,
             autoSkipPadding: 12,
-            callback: function (value) {
-                const label = this.getLabelForValue(value);
-                return formatTime(label);
+            callback: function (value, index, ticks) {
+                // 첫 번째 틱(왼쪽)은 표시하지 않음
+                if (index === 0) {
+                    return '';
+                }
+                const d = new Date(value);
+                if (Number.isNaN(d.getTime())) {
+                    return '';
+                }
+                // 간단한 시간 형식 (HH:mm:ss)
+                const hours = String(d.getHours()).padStart(2, '0');
+                const minutes = String(d.getMinutes()).padStart(2, '0');
+                const seconds = String(d.getSeconds()).padStart(2, '0');
+                return `${hours}:${minutes}:${seconds}`;
             }
         },
         adapters: { date: {} }
     };
     columns.forEach(col => {
         const id = safeId(col);
-        const pctx = document.getElementById(`proc-${id}`).getContext('2d');
-        const rctx = document.getElementById(`recent-${id}`).getContext('2d');
+        const ctx = document.getElementById(`main-${id}`).getContext('2d');
         const rowEl = document.querySelector(`.chart-row[data-param="${col}"]`);
         if (rowEl) {
             const boxes = Array.from(rowEl.querySelectorAll('.chart-box'));
@@ -412,7 +427,7 @@ function createCharts() {
                 box.addEventListener('click', () => handleChartClick(col));
             });
         }
-        processCharts[col] = new Chart(pctx, {
+        mainCharts[col] = new Chart(ctx, {
             type: 'line',
             data: {
                 datasets: [
@@ -424,28 +439,14 @@ function createCharts() {
                 animation: false,
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: { highlightRegion: { regions: [] } },
+                plugins: { 
+                    legend: { display: false },
+                    highlightRegion: { regions: [] } 
+                },
                 scales: { x: xAxis, y: {} }
             }
         });
-        recentCharts[col] = new Chart(rctx, {
-            type: 'line',
-            data: {
-                datasets: [
-                    { label: '예측값', borderColor: 'red', tension: 0.25, borderWidth: 3, pointRadius: 0, data: [] },
-                    { label: '실제값', borderColor: 'blue', tension: 0.25, borderWidth: 3, pointRadius: 0, data: [] }
-                ]
-            },
-            options: {
-                animation: false,
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { highlightRegion: { regions: [] } },
-                scales: { x: xAxis, y: {} }
-            }
-        });
-        setDatasetVisibility(processCharts[col], visibilityMode);
-        setDatasetVisibility(recentCharts[col], visibilityMode);
+        setDatasetVisibility(mainCharts[col], visibilityMode);
     });
     applyVisibilityAll();
     applyHighlightState();
@@ -714,21 +715,35 @@ function updateCharts(col, data) {
     const actual = data.actual.map(d => ({ ...d, x: parseTimestamp(d.x), y: d.y }));
     const predicted = data.predicted.map(d => ({ ...d, x: parseTimestamp(d.x), y: d.y }));
     considerActualStepInfo(actual);
-    const pChart = processCharts[col];
-    pChart.data.datasets[0].data = predicted;
-    pChart.data.datasets[1].data = actual;
-    const allTimestamps = actual.concat(predicted).map(d => new Date(d.x).getTime());
+    
+    const chart = mainCharts[col];
+    if (!chart) return;
+    
+    // 선택된 시간 범위에 따라 데이터 필터링
+    const now = Date.now();
+    const timeRangeMs = selectedTimeRange * 60 * 1000; // 분을 밀리초로 변환
+    const rangeStart = now - timeRangeMs;
+    
+    const filteredActual = actual.filter(d => new Date(d.x).getTime() >= rangeStart);
+    const filteredPredicted = predicted.filter(d => new Date(d.x).getTime() >= rangeStart);
+    
+    chart.data.datasets[0].data = filteredPredicted;
+    chart.data.datasets[1].data = filteredActual;
+    
+    const allTimestamps = filteredActual.concat(filteredPredicted).map(d => new Date(d.x).getTime());
     let xMin = null;
     let xMax = null;
     if (allTimestamps.length) {
         xMin = Math.min(...allTimestamps);
         xMax = Math.max(...allTimestamps);
-        pChart.options.scales.x.min = xMin;
-        pChart.options.scales.x.max = xMax;
+        chart.options.scales.x.min = xMin;
+        chart.options.scales.x.max = xMax;
     }
+    
     const regions = xMin !== null && xMax !== null ? getHighlightRegions(col, xMin, xMax) : [];
-    pChart.options.plugins.highlightRegion.regions = regions;
-    const allVals = actual.concat(predicted).map(d => d.y);
+    chart.options.plugins.highlightRegion.regions = regions;
+    
+    const allVals = filteredActual.concat(filteredPredicted).map(d => d.y);
     if (allVals.length) {
         const max = Math.max(...allVals);
         const min = Math.min(...allVals);
@@ -736,41 +751,12 @@ function updateCharts(col, data) {
         if (col.startsWith('Temp_Act')) pad = 100;
         else if (col.includes('VG11')) pad = 1;
         else if (col.includes('POS')) pad = 10;
-        pChart.options.scales.y.max = max + pad;
-        pChart.options.scales.y.min = min - pad;
+        chart.options.scales.y.max = max + pad;
+        chart.options.scales.y.min = min - pad;
     }
-    setDatasetVisibility(pChart, visibilityMode);
-    pChart.update();
-
-    const lastActual = actual.length ? new Date(actual[actual.length - 1].x).getTime() : 0;
-    const lastPred = predicted.length ? new Date(predicted[predicted.length - 1].x).getTime() : 0;
-    let recentEnd = Math.max(lastActual, lastPred);
-    if (!recentEnd) recentEnd = Date.now();
-    const recentStart = recentEnd - 60000;
-    const aRecent = actual.filter(d => new Date(d.x).getTime() >= recentStart);
-    const pRecent = predicted.filter(d => new Date(d.x).getTime() >= recentStart);
-    const rChart = recentCharts[col];
-    rChart.data.datasets[0].data = pRecent;
-    rChart.data.datasets[1].data = aRecent;
-    const reg2 = getHighlightRegions(col, recentStart, recentEnd);
-    rChart.options.plugins.highlightRegion.regions = reg2;
-    const recentTs = aRecent.concat(pRecent).map(d => new Date(d.x).getTime());
-    if (recentTs.length) {
-        rChart.options.scales.x.min = Math.min(...recentTs);
-        rChart.options.scales.x.max = Math.max(...recentTs);
-    }
-    const recentVals = aRecent.concat(pRecent).map(d => d.y);
-    if (recentVals.length) {
-        const max = Math.max(...recentVals);
-        const min = Math.min(...recentVals);
-        let pad = 3;
-        if (col.startsWith('Temp_Act')) pad = 100;
-        else if (col.includes('VG11')) pad = 1;
-        rChart.options.scales.y.max = max + pad;
-        rChart.options.scales.y.min = min - pad;
-    }
-    setDatasetVisibility(rChart, visibilityMode);
-    rChart.update();
+    
+    setDatasetVisibility(chart, visibilityMode);
+    chart.update();
 
     refreshModalIfNeeded(col);
 }
@@ -784,6 +770,8 @@ function cloneDatasets(chart) {
 
 function refreshModalIfNeeded(col) {
     if (!modalInfo || modalFrozen || modalInfo.param !== col) return;
+    // HOLD가 켜져있으면 모달 차트도 업데이트하지 않음
+    if (chartHoldEnabled) return;
     renderModalChart(modalInfo.param, modalInfo.kind, false);
 }
 
@@ -793,9 +781,16 @@ function renderModalChart(param, kind, showModal) {
     const container = document.getElementById('modal-echart');
     const fallbackCanvas = document.getElementById('modal-canvas');
     if (!modal || !title || !container || !fallbackCanvas) return;
-    const source = kind === 'recent' ? recentCharts[param] : processCharts[param];
+    const source = mainCharts[param];
     if (!source) return;
-    const datasets = cloneDatasets(source);
+    let datasets = cloneDatasets(source);
+    // visibilityMode에 따라 데이터셋 필터링
+    if (visibilityMode === 'actual') {
+        datasets = datasets.filter(ds => ds.label === '실제값');
+    } else if (visibilityMode === 'predicted') {
+        datasets = datasets.filter(ds => ds.label === '예측값');
+    }
+    // 'both'인 경우 모든 데이터셋 사용
     const regions = source.options?.plugins?.highlightRegion?.regions || [];
     const canUseEcharts = typeof echarts !== 'undefined';
 
@@ -827,7 +822,7 @@ function renderModalChart(param, kind, showModal) {
         });
         const option = {
             tooltip: { trigger: 'axis' },
-            legend: { top: 0 },
+            legend: { show: false },
             toolbox: {
                 feature: {
                     saveAsImage: {},
@@ -864,15 +859,20 @@ function renderModalChart(param, kind, showModal) {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: { display: true },
+                    legend: { display: false },
                     highlightRegion: { regions }
                 },
                 scales: { x: { type: 'time' }, y: { type: 'linear' } }
             }
         });
+        // 확대 차트도 visibilityMode에 따라 연동
+        if (modalChartFallback) {
+            setDatasetVisibility(modalChartFallback, visibilityMode);
+            modalChartFallback.update();
+        }
     }
     modalInfo = { param, kind };
-    title.textContent = `${displayParam(param)} (${kind === 'recent' ? '최근 1분' : '최근 5분'})`;
+    title.textContent = `${displayParam(param)} (최근 ${selectedTimeRange}분)`;
 }
 
 function openChartModal(param, kind) {
@@ -881,9 +881,14 @@ function openChartModal(param, kind) {
     const title = document.getElementById('modal-title');
     const container = document.getElementById('modal-echart');
     const fallbackCanvas = document.getElementById('modal-canvas');
+    const modalHoldToggle = document.getElementById('modal-chart-hold-toggle');
     if (!modal || !title || !container || !fallbackCanvas) return;
-    const source = kind === 'recent' ? recentCharts[param] : processCharts[param];
+    const source = mainCharts[param];
     if (!source) return;
+    // 모달 HOLD 토글을 메인 HOLD 토글과 동기화
+    if (modalHoldToggle) {
+        modalHoldToggle.checked = chartHoldEnabled;
+    }
     modal.style.display = 'flex'; // 먼저 열어 컨테이너 크기 확보
     renderModalChart(param, kind, true);
 }
@@ -1109,15 +1114,44 @@ function attachOrbitControls(canvas, camera, target, opts = {}) {
     const maxRadius = opts.maxRadius ?? 5000;
     let isRotating = false;
     let lastX = 0, lastY = 0;
-    let radius = camera.position.clone().sub(target).length();
-    const spherical = new THREE.Spherical().setFromVector3(camera.position.clone().sub(target));
+    // target을 Vector3 객체로 유지 (참조로 전달)
+    const targetVec = target instanceof THREE.Vector3 ? target : new THREE.Vector3().copy(target);
+    // 현재 카메라 위치를 기준으로 초기화
+    let radius = camera.position.clone().sub(targetVec).length();
+    let spherical = new THREE.Spherical().setFromVector3(camera.position.clone().sub(targetVec));
+    let enabled = true; // OrbitControls 활성화 상태
+    
+    const updateSpherical = () => {
+        radius = camera.position.clone().sub(targetVec).length();
+        spherical = new THREE.Spherical().setFromVector3(camera.position.clone().sub(targetVec));
+    };
+    
+    // 초기화 시 spherical 업데이트
+    updateSpherical();
+    
     const onPointerDown = (e) => {
-        if (e.button !== 0) return;
+        if (e.button !== 0 || !enabled) {
+            console.log('onPointerDown 무시:', { button: e.button, enabled });
+            return;
+        }
+        e.preventDefault();
+        e.stopPropagation();
+        if (e.pointerId !== undefined) {
+            try {
+                canvas.setPointerCapture(e.pointerId);
+            } catch (err) {
+                console.warn('setPointerCapture 실패:', err);
+            }
+        }
         isRotating = true;
         lastX = e.clientX; lastY = e.clientY;
+        // 드래그 시작 시 현재 위치 기준으로 spherical 업데이트
+        updateSpherical();
+        console.log('드래그 시작', { enabled, isRotating, cameraPos: camera.position, target: targetVec });
     };
     const onPointerMove = (e) => {
-        if (!isRotating) return;
+        if (!isRotating || !enabled) return;
+        e.preventDefault();
         const dx = e.clientX - lastX;
         const dy = e.clientY - lastY;
         lastX = e.clientX; lastY = e.clientY;
@@ -1126,35 +1160,118 @@ function attachOrbitControls(canvas, camera, target, opts = {}) {
         spherical.phi -= dy * ROT_SPEED;
         const EPS = 0.0001;
         spherical.phi = Math.max(EPS, Math.min(Math.PI - EPS, spherical.phi));
-        const vec = new THREE.Vector3().setFromSpherical(spherical).add(target);
+        const vec = new THREE.Vector3().setFromSpherical(spherical).add(targetVec);
         camera.position.copy(vec);
-        camera.lookAt(target);
+        camera.lookAt(targetVec);
     };
-    const onPointerUp = () => { isRotating = false; };
+    const onPointerUp = (e) => {
+        if (e.pointerId !== undefined) {
+            try {
+                canvas.releasePointerCapture(e.pointerId);
+            } catch (err) {
+                console.warn('releasePointerCapture 실패:', err);
+            }
+        }
+        isRotating = false; 
+    };
+    const onPointerCancel = (e) => {
+        if (e.pointerId !== undefined) {
+            try {
+                canvas.releasePointerCapture(e.pointerId);
+            } catch (err) {
+                console.warn('releasePointerCapture 실패:', err);
+            }
+        }
+        isRotating = false;
+    };
     const onWheel = (e) => {
+        if (!enabled) {
+            console.log('onWheel 무시:', { enabled });
+            return;
+        }
         e.preventDefault();
         e.stopPropagation();
+        // 줌 전에 현재 위치 기준으로 spherical 업데이트
+        updateSpherical();
         const delta = e.deltaY * 0.001;
         const zoomFactor = Math.exp(delta); // smoother zoom curve
         radius = Math.min(maxRadius, Math.max(minRadius, radius * zoomFactor));
         spherical.radius = radius;
-        const vec = new THREE.Vector3().setFromSpherical(spherical).add(target);
+        const vec = new THREE.Vector3().setFromSpherical(spherical).add(targetVec);
         camera.position.copy(vec);
-        camera.lookAt(target);
+        camera.lookAt(targetVec);
+        console.log('줌 실행', { enabled, radius });
     };
-    canvas.addEventListener('pointerdown', onPointerDown);
-    window.addEventListener('pointermove', onPointerMove);
-    window.addEventListener('pointerup', onPointerUp);
+    // 이벤트 리스너 등록
+    canvas.addEventListener('pointerdown', onPointerDown, { passive: false });
+    window.addEventListener('pointermove', onPointerMove, { passive: false });
+    window.addEventListener('pointerup', onPointerUp, { passive: false });
+    canvas.addEventListener('pointercancel', onPointerCancel, { passive: false });
     canvas.addEventListener('wheel', onWheel, { passive: false });
-    return () => {
-        canvas.removeEventListener('pointerdown', onPointerDown);
-        window.removeEventListener('pointermove', onPointerMove);
-        window.removeEventListener('pointerup', onPointerUp);
-        canvas.removeEventListener('wheel', onWheel);
+    
+    console.log('OrbitControls 이벤트 리스너 등록 완료', {
+        canvas: canvas,
+        hasPointerDown: true,
+        hasPointerMove: true,
+        hasWheel: true
+    });
+    
+    // 활성화/비활성화 함수 반환
+    const setEnabled = (value) => {
+        const oldValue = enabled;
+        enabled = value;
+        console.log('OrbitControls setEnabled:', { old: oldValue, new: value });
+        if (!value) {
+            isRotating = false; // 비활성화 시 회전 중지
+        } else {
+            // 활성화 시 현재 카메라 위치 기준으로 spherical 업데이트
+            updateSpherical();
+        }
+    };
+    
+    // 타겟 업데이트 함수
+    const updateTarget = (newTarget) => {
+        targetVec.copy(newTarget);
+        // 현재 카메라 위치를 기준으로 spherical과 radius 재계산
+        updateSpherical();
+    };
+    
+    return {
+        cleanup: () => {
+            canvas.removeEventListener('pointerdown', onPointerDown);
+            window.removeEventListener('pointermove', onPointerMove);
+            window.removeEventListener('pointerup', onPointerUp);
+            canvas.removeEventListener('pointercancel', onPointerCancel);
+            canvas.removeEventListener('wheel', onWheel);
+        },
+        setEnabled: setEnabled,
+        updateTarget: updateTarget
     };
 }
 
-async function createThreeViewer(container, modelUrl) {
+// 메쉬를 이름으로 찾는 함수
+function findMeshByName(root, name) {
+    let found = null;
+    root.traverse((child) => {
+        if (child.name === name && child instanceof THREE.Mesh) {
+            found = child;
+        }
+    });
+    return found;
+}
+
+// 모든 wafer-jig 메쉬 찾기 (xxTJIG01 패턴)
+function findWaferJigMeshes(root) {
+    const meshes = [];
+    root.traverse((child) => {
+        if (child.name && child.name.includes('xxTJIG01') && child instanceof THREE.Mesh) {
+            meshes.push(child);
+        }
+    });
+    return meshes;
+}
+
+async function createThreeViewer(container, modelUrl, entry = null) {
     if (!window.THREE || !container) {
         container.textContent = '3D 라이브러리를 불러오지 못했습니다.';
         return;
@@ -1194,6 +1311,23 @@ async function createThreeViewer(container, modelUrl) {
     let cleanup = null;
     const modelGroup = new THREE.Group();
     scene.add(modelGroup);
+    
+    // 애니메이션 관련 변수
+    let highlightMesh = null;
+    let highlightStartTime = 0;
+    let highlightConfig = null;
+    let targetMesh = null;
+    let originalMaterialState = null;
+    let cameraAnimationStartTime = 0;
+    let initialCameraPosition = null;
+    let initialCameraTarget = null;
+    let finalCameraPosition = null;
+    let finalCameraTarget = null;
+    let isCameraAnimating = false;
+    let orbitTarget = null; // OrbitControls의 타겟
+    let orbitControlsEnabled = true; // OrbitControls 활성화 여부
+    let orbitControls = null; // OrbitControls 객체 참조
+    
     try {
         const lower = (modelUrl || '').toLowerCase();
         let box = null;
@@ -1215,22 +1349,149 @@ async function createThreeViewer(container, modelUrl) {
             const { object, box: gltfBox } = await loadGltfModel(modelUrl);
             modelGroup.add(object);
             box = new THREE.Box3().setFromObject(modelGroup);
+            
+            // violation_type에 따라 애니메이션 설정
+            const violationType = Number(entry?.violation_type) || 0;
+            let meshName = null;
+            let meshColor = null;
+            let emissiveIntensityRange = [2.0, 4.0];
+            let yawOffset = 0;
+            
+            if (violationType === 1) {
+                // BG (Baratron Gauge)
+                meshName = 'bg';
+                meshColor = new THREE.Color(0.1, 0.3, 5.0); // 파란색
+                emissiveIntensityRange = [2.5, 5.0];
+                yawOffset = Math.PI * 160 / 180; // 약 160도
+            } else if (violationType === 2) {
+                // MFC
+                meshName = 'mfc';
+                meshColor = new THREE.Color(1.5, 0.05, 0.05); // 붉은색
+                emissiveIntensityRange = [2.0, 4.0];
+                yawOffset = Math.PI / 1.6; // 약 120도
+            } else if (violationType === 3) {
+                // wafer-jig (CKD)
+                meshName = 'xxTJIG01-FMS-4000-R00'; // 첫 번째 Jig 메쉬 이름
+                meshColor = new THREE.Color(0.8, 0.8, 0.0); // 노란색
+                emissiveIntensityRange = [2.0, 4.0];
+                yawOffset = Math.PI / 2; // 90도
+            } else if (violationType === 4) {
+                // CKD
+                meshName = 'rear_L001';
+                meshColor = new THREE.Color(0.0, 1.5, 0.0); // 초록색
+                emissiveIntensityRange = [2.0, 4.0];
+                yawOffset = Math.PI * 200 / 180; // 200도
+            }
+            
+            // 메쉬 찾기 및 하이라이트 설정
+            if (meshName) {
+                if (violationType === 3) {
+                    // wafer-jig는 여러 메쉬를 찾아야 함
+                    const waferJigMeshes = findWaferJigMeshes(object);
+                    if (waferJigMeshes.length > 0) {
+                        highlightMesh = waferJigMeshes[0];
+                        // 모든 wafer-jig 메쉬를 userData에 저장
+                        highlightMesh.userData.allWaferJigMeshes = waferJigMeshes;
+                    }
+                } else {
+                    highlightMesh = findMeshByName(object, meshName);
+                }
+                
+                if (highlightMesh) {
+                    highlightConfig = {
+                        color: meshColor,
+                        emissiveIntensityRange: emissiveIntensityRange,
+                        yawOffset: yawOffset
+                    };
+                    // 하이라이트 애니메이션은 카메라 애니메이션 완료 후 시작 (2.5초 후)
+                    highlightStartTime = performance.now() + 2500;
+                    
+                    // 원본 재질 상태 저장
+                    const materials = Array.isArray(highlightMesh.material) ? highlightMesh.material : [highlightMesh.material];
+                    originalMaterialState = materials.map((mat) => ({
+                        color: mat.color ? mat.color.clone() : null,
+                        emissive: mat.emissive ? mat.emissive.clone() : null,
+                        emissiveIntensity: mat.emissiveIntensity ?? 1,
+                    }));
+                    
+                    // 카메라 포커스 설정
+                    const meshBox = new THREE.Box3().setFromObject(highlightMesh);
+                    const meshSphere = meshBox.getBoundingSphere(new THREE.Sphere());
+                    if (meshSphere) {
+                        targetMesh = {
+                            center: meshSphere.center.clone(),
+                            radius: meshSphere.radius || 1
+                        };
+                    }
+                }
+            }
         } else {
             throw new Error('Unsupported model type');
         }
-        modelGroup.rotation.y = Math.PI; // 초기 뷰에서 앞면이 보이도록 180도 회전
+        // 초기 회전 제거 - 정면이 바로 보이도록
+        modelGroup.rotation.y = 0;
         size = box?.getSize(new THREE.Vector3()).length() || 100;
         target = box?.getCenter(new THREE.Vector3()) || new THREE.Vector3();
-        // 초기 시야를 정면-약간 위쪽에서 바라보도록 설정해 뒤집힌 느낌을 방지
-        const frontDistance = size * 1.1; // 초기 배치를 더 가깝게
-        camera.position.set(target.x, target.y + size * 0.12, target.z + frontDistance);
+        
+        // 초기 시야를 정면-약간 위쪽에서 바라보도록 설정 (항상 정면부터 시작)
+        const frontDistance = size * 1.1;
+        initialCameraPosition = new THREE.Vector3(target.x, target.y + size * 0.12, target.z + frontDistance);
+        initialCameraTarget = target.clone();
+        camera.position.copy(initialCameraPosition);
+        camera.lookAt(initialCameraTarget);
+        
+        // 타겟 메쉬가 있으면 최종 카메라 위치 계산 (애니메이션용)
+        if (targetMesh && highlightConfig) {
+            // violation_type == 3 (Magnetic Seal)인 경우 확대를 더 해줌
+            const violationType = Number(entry?.violation_type) || 0;
+            const focusDistance = violationType === 3 
+                ? targetMesh.radius * 1.8  // Magnetic Seal은 더 가깝게 (확대)
+                : targetMesh.radius * 2.5; // 나머지는 기본값
+            const spherical = new THREE.Spherical();
+            spherical.radius = focusDistance;
+            spherical.theta = highlightConfig.yawOffset || 0;
+            spherical.phi = Math.PI / 3; // 약 60도 위에서
+            finalCameraPosition = new THREE.Vector3().setFromSpherical(spherical).add(targetMesh.center);
+            finalCameraTarget = targetMesh.center.clone();
+            // 카메라 애니메이션 시작 (1초 후)
+            cameraAnimationStartTime = performance.now() + 1000; // 1초 후 시작
+            isCameraAnimating = true;
+            // 애니메이션 시작 전에 OrbitControls 비활성화
+            if (orbitControls) {
+                orbitControls.setEnabled(false);
+                orbitControlsEnabled = false;
+                console.log('OrbitControls 비활성화 (애니메이션 시작)');
+            }
+            target = targetMesh.center.clone();
+        } else {
+            finalCameraPosition = null;
+            finalCameraTarget = null;
+            isCameraAnimating = false;
+        }
+        
         camera.near = size / 200;
         camera.far = size * 20;
         camera.updateProjectionMatrix();
         camera.lookAt(target);
         const minRadius = Math.max(0.1, size * 0.01); // 더 깊게 확대 허용
         const maxRadius = size * 50;
-        cleanup = attachOrbitControls(renderer.domElement, camera, target.clone(), { minRadius, maxRadius });
+        orbitTarget = target.clone(); // OrbitControls 타겟 초기화
+        
+        // violation_type이 없거나 애니메이션이 없는 경우 즉시 OrbitControls 생성
+        if (!targetMesh || !highlightConfig) {
+            orbitControls = attachOrbitControls(renderer.domElement, camera, orbitTarget, { minRadius, maxRadius });
+            cleanup = orbitControls.cleanup;
+            orbitControlsEnabled = true;
+            orbitControls.setEnabled(true);
+            console.log('OrbitControls 초기화 완료 (애니메이션 없음)');
+        } else {
+            // 애니메이션이 있는 경우에도 초기 OrbitControls 생성 (애니메이션 시작 전까지 사용)
+            orbitControls = attachOrbitControls(renderer.domElement, camera, orbitTarget, { minRadius, maxRadius });
+            cleanup = orbitControls.cleanup;
+            orbitControlsEnabled = true;
+            orbitControls.setEnabled(true);
+            console.log('OrbitControls 초기화 완료 (애니메이션 대기)');
+        }
     } catch (err) {
         console.error('3D load failed', err);
         const msg = String(err?.message || '');
@@ -1247,6 +1508,124 @@ async function createThreeViewer(container, modelUrl) {
     }
 
     function animate() {
+        const currentTime = performance.now();
+        
+        // 카메라 애니메이션 (정면 → 이상위치로 이동)
+        if (isCameraAnimating && finalCameraPosition && finalCameraTarget) {
+            const elapsed = (currentTime - cameraAnimationStartTime) / 1000;
+            const duration = 1.5; // 1.5초 동안 이동
+            
+            // 애니메이션 중에는 OrbitControls 비활성화
+            if (orbitControls && orbitControlsEnabled) {
+                orbitControls.setEnabled(false);
+                orbitControlsEnabled = false;
+            }
+            
+            if (elapsed < duration && elapsed > 0) {
+                // 부드러운 이징 함수 (ease-in-out)
+                const t = elapsed / duration;
+                const eased = t < 0.5 
+                    ? 2 * t * t 
+                    : 1 - Math.pow(-2 * t + 2, 2) / 2;
+                
+                // 카메라 위치 보간
+                camera.position.lerpVectors(initialCameraPosition, finalCameraPosition, eased);
+                
+                // 카메라 타겟 보간
+                const currentTarget = new THREE.Vector3().lerpVectors(initialCameraTarget, finalCameraTarget, eased);
+                camera.lookAt(currentTarget);
+            } else if (elapsed >= duration) {
+                // 애니메이션 완료
+                camera.position.copy(finalCameraPosition);
+                camera.lookAt(finalCameraTarget);
+                isCameraAnimating = false;
+                // OrbitControls 타겟을 최종 타겟으로 업데이트
+                orbitTarget.copy(finalCameraTarget);
+                
+                // OrbitControls가 이미 있으면 타겟만 업데이트하고 활성화
+                if (orbitControls) {
+                    orbitControls.updateTarget(orbitTarget);
+                    orbitControlsEnabled = true;
+                    orbitControls.setEnabled(true);
+                    console.log('OrbitControls 타겟 업데이트 및 활성화 완료', {
+                        cameraPosition: camera.position,
+                        target: orbitTarget,
+                        enabled: orbitControlsEnabled
+                    });
+                } else {
+                    // OrbitControls가 없으면 새로 생성
+                    if (cleanup) {
+                        cleanup();
+                        console.log('기존 OrbitControls 정리 완료');
+                    }
+                    orbitControls = attachOrbitControls(renderer.domElement, camera, orbitTarget, { 
+                        minRadius: Math.max(0.1, size * 0.01), 
+                        maxRadius: size * 50 
+                    });
+                    cleanup = orbitControls.cleanup;
+                    orbitControlsEnabled = true;
+                    orbitControls.setEnabled(true);
+                    console.log('OrbitControls 새로 생성 및 활성화 완료', {
+                        cameraPosition: camera.position,
+                        target: orbitTarget,
+                        enabled: orbitControlsEnabled
+                    });
+                }
+            }
+        }
+        
+        // 하이라이트 애니메이션 (카메라 애니메이션 완료 후 시작)
+        if (highlightMesh && highlightConfig && originalMaterialState) {
+            const highlightElapsed = (currentTime - highlightStartTime) / 1000;
+            if (highlightElapsed > 0) {
+                const pulse = 0.5 + 0.5 * Math.sin(highlightElapsed * 4); // 0~1 사이 펄스
+                const materials = Array.isArray(highlightMesh.material) ? highlightMesh.material : [highlightMesh.material];
+                
+                materials.forEach((mat, idx) => {
+                    if (!mat) return;
+                    const orig = originalMaterialState[idx];
+                    if (!orig) return;
+                    
+                    // emissive 색상 설정
+                    if (mat.emissive) {
+                        mat.emissive.setRGB(
+                            highlightConfig.color.r,
+                            highlightConfig.color.g,
+                            highlightConfig.color.b
+                        );
+                    }
+                    
+                    // emissive 강도 애니메이션
+                    if (mat.emissiveIntensity !== undefined) {
+                        const [minI, maxI] = highlightConfig.emissiveIntensityRange;
+                        mat.emissiveIntensity = minI + pulse * (maxI - minI);
+                    }
+                });
+                
+                // wafer-jig의 경우 모든 메쉬에 적용
+                if (highlightMesh.userData && highlightMesh.userData.allWaferJigMeshes) {
+                    highlightMesh.userData.allWaferJigMeshes.forEach((jigMesh) => {
+                        if (jigMesh === highlightMesh) return; // 이미 처리됨
+                        const jigMaterials = Array.isArray(jigMesh.material) ? jigMesh.material : [jigMesh.material];
+                        jigMaterials.forEach((mat) => {
+                            if (!mat) return;
+                            if (mat.emissive) {
+                                mat.emissive.setRGB(
+                                    highlightConfig.color.r,
+                                    highlightConfig.color.g,
+                                    highlightConfig.color.b
+                                );
+                            }
+                            if (mat.emissiveIntensity !== undefined) {
+                                const [minI, maxI] = highlightConfig.emissiveIntensityRange;
+                                mat.emissiveIntensity = minI + pulse * (maxI - minI);
+                            }
+                        });
+                    });
+                }
+            }
+        }
+        
         renderer.render(scene, camera);
         threeViewer.rafId = requestAnimationFrame(animate);
     }
@@ -1273,8 +1652,16 @@ async function drawReportChart(entry, canvas, timeWindow) {
     if (!canvas) return;
     destroyReportChart();
     const ctx = canvas.getContext('2d');
-    canvas.style.height = '300px';
-    canvas.height = 300;
+    // 차트 높이를 창 크기에 맞춤
+    const chartContainer = canvas.closest('.report-cause-chart');
+    if (chartContainer) {
+        const containerHeight = chartContainer.clientHeight - 60; // 제목 등 여유 공간
+        canvas.style.height = Math.max(300, containerHeight) + 'px';
+        canvas.height = Math.max(300, containerHeight);
+    } else {
+        canvas.style.height = '300px';
+        canvas.height = 300;
+    }
     const centerRaw = entry.peak_time ?? entry.end ?? entry.start ?? Date.now();
     const center = toMillis(centerRaw) ?? Date.now();
     const windowMs = timeWindow?.windowMs ?? 15000; // 넉넉히 ±15초 범위
@@ -1282,6 +1669,24 @@ async function drawReportChart(entry, canvas, timeWindow) {
     const endMs = timeWindow?.endMs ?? (center + windowMs);
     const startIso = new Date(startMs).toISOString();
     const endIso = new Date(endMs).toISOString();
+    
+    // limits.yaml에서 상한값/하한값 가져오기
+    let limits = {};
+    try {
+        const limitsRes = await fetch('/api/limits');
+        if (limitsRes.ok) {
+            const limitsData = await limitsRes.json();
+            // API 응답 구조 확인: limits 키가 있으면 그것을 사용, 없으면 전체를 limits로 사용
+            limits = limitsData.limits || limitsData || {};
+            console.log('Loaded limits, total keys:', Object.keys(limits).length);
+            console.log('Sample limits keys:', Object.keys(limits).slice(0, 5));
+        } else {
+            console.error('Failed to load limits, status:', limitsRes.status);
+        }
+    } catch (err) {
+        console.error('failed to load limits', err);
+    }
+    
     let payload;
     try {
         const res = await fetch(`/api/event_chart?param=${encodeURIComponent(entry.param)}&start=${encodeURIComponent(startIso)}&end=${encodeURIComponent(endIso)}`);
@@ -1308,20 +1713,154 @@ async function drawReportChart(entry, canvas, timeWindow) {
     if (entry.start && entry.end) {
         regions.push({ start: entry.start, end: entry.end });
     }
-    if (!actual.length && !predicted.length) {
+    if (!actual.length) {
         replaceCanvasWithMessage(canvas, '해당 구간 데이터가 없습니다.');
         return;
     }
-    const values = actual.concat(predicted).map(d => d.y);
+    
+    // limits.yaml에서 상한값(UCU)과 하한값(LCL) 가져오기
+    let ucu = null;
+    let lcl = null;
+    
+    console.log('=== Limits Debug Start ===');
+    console.log('Entry param:', entry.param);
+    console.log('Entry step_id:', entry.step_id);
+    console.log('Limits object keys count:', Object.keys(limits).length);
+    
+    // 파라미터명으로 limits 찾기
+    let paramLimits = limits[entry.param];
+    console.log('Direct match for', entry.param, ':', paramLimits ? 'FOUND' : 'NOT FOUND');
+    
+    // 정확한 매칭이 안 되면 모든 키를 확인
+    if (!paramLimits) {
+        const paramKeys = Object.keys(limits);
+        console.log('Searching in', paramKeys.length, 'keys...');
+        
+        // 정확히 일치하는 키 찾기
+        for (const key of paramKeys) {
+            if (key === entry.param) {
+                paramLimits = limits[key];
+                console.log('Found exact match:', key);
+                break;
+            }
+        }
+        
+        // 여전히 못 찾았으면 유사한 것 찾기
+        if (!paramLimits) {
+            for (const key of paramKeys) {
+                const normalizedKey = key.replace(/[._-]/g, '');
+                const normalizedParam = entry.param.replace(/[._-]/g, '');
+                if (normalizedKey === normalizedParam) {
+                    paramLimits = limits[key];
+                    console.log('Found normalized match:', key, 'for param:', entry.param);
+                    break;
+                }
+            }
+        }
+    }
+    
+    if (paramLimits) {
+        console.log('ParamLimits found:', Object.keys(paramLimits));
+        
+        // step_id 처리
+        let stepId = 'all';
+        if (Array.isArray(entry.step_id) && entry.step_id.length > 0) {
+            stepId = String(entry.step_id[0]);
+        } else if (entry.step_id) {
+            stepId = String(entry.step_id);
+        }
+        
+        console.log('Using stepId:', stepId);
+        
+        // 해당 step_id의 limits 찾기, 없으면 'all' 사용
+        let stepLimits = paramLimits[stepId];
+        if (!stepLimits || Object.keys(stepLimits).length === 0) {
+            stepLimits = paramLimits['all'];
+            console.log('Using "all" limits instead of stepId:', stepId);
+        }
+        
+        console.log('StepLimits:', stepLimits);
+        
+        if (stepLimits) {
+            ucu = stepLimits.max;
+            lcl = stepLimits.min;
+            console.log('Extracted UCU:', ucu, 'LCL:', lcl);
+        } else {
+            console.warn('No stepLimits found for stepId:', stepId, 'or "all"');
+        }
+    } else {
+        console.error('NO PARAMLIMITS FOUND for:', entry.param);
+        console.log('Available param keys (first 20):', Object.keys(limits).slice(0, 20));
+        // N2 관련 키만 필터링해서 보기
+        const n2Keys = Object.keys(limits).filter(k => k.includes('N2'));
+        console.log('N2 related keys:', n2Keys);
+    }
+    
+    console.log('=== Limits Debug End ===');
+    console.log('Final UCU:', ucu, 'LCL:', lcl);
+    
+    // 실제값만 사용하여 Y축 범위 계산
+    const values = actual.map(d => d.y);
     const yMax = values.length ? Math.max(...values) : undefined;
     const yMin = values.length ? Math.min(...values) : undefined;
+    
+    // 상한값/하한값이 있으면 Y축 범위에 포함
+    let finalYMax = yMax;
+    let finalYMin = yMin;
+    if (ucu !== null && ucu !== undefined && Number.isFinite(Number(ucu))) {
+        finalYMax = finalYMax !== undefined ? Math.max(finalYMax, Number(ucu)) : Number(ucu);
+    }
+    if (lcl !== null && lcl !== undefined && Number.isFinite(Number(lcl))) {
+        finalYMin = finalYMin !== undefined ? Math.min(finalYMin, Number(lcl)) : Number(lcl);
+    }
+    
+    // 상한선/하한선 데이터 생성
+    const datasets = [
+        { label: '실제값', borderColor: 'blue', tension: 0.25, borderWidth: 3, pointRadius: 0, data: actual, hidden: false }
+    ];
+    
+    // 상한선(UCU) - 초록색
+    if (ucu !== null && ucu !== undefined && Number.isFinite(Number(ucu))) {
+        const ucuValue = Number(ucu);
+        const ucuLine = actual.map(d => ({ x: d.x, y: ucuValue }));
+        datasets.push({
+            label: 'UCU (상한값)',
+            borderColor: 'green',
+            borderWidth: 2,
+            borderDash: [5, 5],
+            pointRadius: 0,
+            data: ucuLine,
+            tension: 0
+        });
+        console.log('Added UCU line with value:', ucuValue);
+    } else {
+        console.warn('UCU not added - value:', ucu, 'isFinite:', ucu !== null && ucu !== undefined ? Number.isFinite(Number(ucu)) : false);
+    }
+    
+    // 하한선(LCL) - 주황색
+    if (lcl !== null && lcl !== undefined && Number.isFinite(Number(lcl))) {
+        const lclValue = Number(lcl);
+        const lclLine = actual.map(d => ({ x: d.x, y: lclValue }));
+        datasets.push({
+            label: 'LCL (하한값)',
+            borderColor: 'orange',
+            borderWidth: 2,
+            borderDash: [5, 5],
+            pointRadius: 0,
+            data: lclLine,
+            tension: 0
+        });
+        console.log('Added LCL line with value:', lclValue);
+    } else {
+        console.warn('LCL not added - value:', lcl, 'isFinite:', lcl !== null && lcl !== undefined ? Number.isFinite(Number(lcl)) : false);
+    }
+    
+    console.log('Total datasets to render:', datasets.length, 'datasets:', datasets.map(d => d.label));
+    
     reportChart = new Chart(ctx, {
         type: 'line',
         data: {
-            datasets: [
-                { label: '예측값', borderColor: 'red', tension: 0.25, borderWidth: 3, pointRadius: 0, data: predicted },
-                { label: '실제값', borderColor: 'blue', tension: 0.25, borderWidth: 3, pointRadius: 0, data: actual }
-            ]
+            datasets: datasets
         },
         options: {
             animation: false,
@@ -1336,13 +1875,31 @@ async function drawReportChart(entry, canvas, timeWindow) {
                     type: 'time',
                     min: parseTimestamp(startIso),
                     max: parseTimestamp(endIso),
-                    time: { unit: 'second', tooltipFormat: 'yyyy-MM-dd HH:mm:ss' },
-                    ticks: { autoSkip: true, maxRotation: 0 }
+                    time: { 
+                        unit: 'second', 
+                        tooltipFormat: 'yyyy-MM-dd HH:mm:ss',
+                        displayFormats: {
+                            second: 'HH:mm:ss',
+                            minute: 'HH:mm:ss'
+                        }
+                    },
+                    ticks: { 
+                        autoSkip: true, 
+                        maxRotation: 0,
+                        callback: function(value, index, ticks) {
+                            const d = new Date(value);
+                            if (Number.isNaN(d.getTime())) return '';
+                            const hours = String(d.getHours()).padStart(2, '0');
+                            const minutes = String(d.getMinutes()).padStart(2, '0');
+                            const seconds = String(d.getSeconds()).padStart(2, '0');
+                            return `${hours}:${minutes}:${seconds}`;
+                        }
+                    }
                 },
                 y: {
                     type: 'linear',
-                    suggestedMax: yMax !== undefined ? yMax + 0.5 : undefined,
-                    suggestedMin: yMin !== undefined ? yMin - 0.5 : undefined
+                    suggestedMax: finalYMax !== undefined ? finalYMax + 0.5 : undefined,
+                    suggestedMin: finalYMin !== undefined ? finalYMin - 0.5 : undefined
                 }
             }
         }
@@ -1360,19 +1917,18 @@ async function renderMfcCauseTab(entry) {
     const startMs = center - windowMs;
     const endMs = center + windowMs;
     const causeTexts = {
-        1: 'MFC Zero Point Drift 발생으로 인해 기준 유량이 정확히 설정되지 않아 실제 유량 편차 및 공정 불안정이 확인되었습니다.',
-        2: 'Baratron 게이지 이상으로 인한 공정 불안정(압력 오차/경보/읽힘 불가)이 확인되었습니다.',
+        1: 'Baratron 게이지 이상으로 인한 공정 불안정(압력 오차/경보/읽힘 불가)이 확인되었습니다.',
+        2: 'MFC Zero Point Drift 발생으로 인해 기준 유량이 정확히 설정되지 않아 실제 유량 편차 및 공정 불안정이 확인되었습니다.',
         3: '보트 엘리베이터 회전부의 Magnetic Seal(자기 유체 씰) 성능 저하로 인해 미세 누설 또는 챔버 내 압력 변동이 발생, 이로 인해 MFC 유량 제어가 불안정해지며 실제 유량 측정값에 편차가 발생한 것으로 판단됩니다.',
         4: 'VG12 측정값의 드리프트·응답 지연·오염으로 인해 챔버 내 실제 압력이 정확히 반영되지 않아 공정 불안정이 발생한 것으로 확인되었습니다. 실제 Gas 유량변화에 따른 현상이므로 전체 압력을 변화시킨 원인을 제거해야 합니다. 1) VG12 Gauge 상태 확인: Base 압력 변화 확인, Gas 유량 대비 Gauge 값 비교 점검 2) Gas유량의 변화: Gas유량의 변화를 점검함(MFC상태점검, Gas 압력센서 점검)'
     };
-    const label = entry?.param || 'MFC';
+    const label = displayParam(entry?.param || 'MFC');
     const causeText = causeTexts[vt] || '원인 정보가 없습니다.';
     body.innerHTML = `
         <div class="report-cause-layout">
             <div class="report-cause-chart">
                 <div class="report-cause-title">${label} 유량 추이 (±5초)</div>
                 <canvas id="report-cause-canvas" aria-label="${label} 이상 구간 차트"></canvas>
-                <div class="report-cause-time">조회 구간: ${formatTimelineTime(startMs)} ~ ${formatTimelineTime(endMs)}</div>
             </div>
             <div class="report-cause-text">
                 <div class="report-cause-badge">원인 진단</div>
@@ -1393,13 +1949,13 @@ function renderMfcActionTab(entry) {
     destroyReportChart();
     disposeThreeViewer();
     const fileMap = {
-        1: 'MFC.html',
-        2: 'Baratron_Guage.html',
+        1: 'Baratron_Guage.html',
+        2: 'MFC.html',
         3: 'Magnetic_Seal.html',
         4: 'CKD 대신 VG12로 부품변경.html'
     };
     const file = fileMap[Number(entry?.violation_type)] || 'MFC.html';
-    const label = entry?.param || 'MFC';
+    const label = displayParam(entry?.param || 'MFC');
     body.innerHTML = `
         <div class="report-action-block">
             <div style="font-weight:700; margin-bottom:6px;">조치 방법 (${label})</div>
@@ -1421,22 +1977,22 @@ function renderMfcDrawingTab(entry) {
     if (!body) return;
     destroyReportChart();
     disposeThreeViewer();
-    const label = entry?.param || 'MFC';
+    const label = displayParam(entry?.param || 'MFC');
     // 경량화된 GLB 사용 (STEP은 브라우저에서 바로 로드 불가)
-    const encoded = encodeURIComponent('ALD_5_ver8.glb');
+    const encoded = encodeURIComponent('ALD_light2.glb');
     const modelUrl = `/static/3D/${encoded}`;
     body.innerHTML = `
         <div class="report-3d-wrap">
             <div class="report-3d-header">
                 <span>도면 (3D)</span>
-                <span style="font-size:13px; color:#475569;">파일: ALD_5_ver8.glb</span>
+                <span style="font-size:13px; color:#475569;">파일: ALD_light2.glb</span>
             </div>
             <div class="report-3d-canvas" id="report-3d-container">로딩 중...</div>
             <div class="report-3d-note">마우스 드래그: 회전 · 스크롤: 줌 · 오른쪽 버튼: 이동 (대용량 파일은 로딩이 다소 지연될 수 있습니다)</div>
         </div>
     `;
     const container = document.getElementById('report-3d-container');
-    createThreeViewer(container, modelUrl);
+    createThreeViewer(container, modelUrl, entry);
 }
 
 function getPartsData(entry) {
@@ -1490,14 +2046,18 @@ function renderPartsTab(entry) {
         </div>
         <div class="parts-panel" data-sub="vendor" role="tabpanel">
             ${vendorRows ? `
-                <table class="parts-table">
-                    <thead>
-                        <tr><th>NO</th><th>업체명</th><th>사업자번호</th><th>제품상세정보</th><th>제품문의처</th></tr>
-                    </thead>
-                    <tbody>
-                        ${vendorRows}
-                    </tbody>
-                </table>
+                <div class="parts-table-wrapper">
+                    <div class="parts-table-container">
+                        <table class="parts-table">
+                            <thead>
+                                <tr><th>NO</th><th>업체명</th><th>사업자번호</th><th>제품상세정보</th><th>제품문의처</th></tr>
+                            </thead>
+                            <tbody>
+                                ${vendorRows}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             ` : '<div class="parts-note">등록된 판매 기업 정보가 없습니다.</div>'}
         </div>
     `;
@@ -1514,8 +2074,85 @@ function renderPartsTab(entry) {
             panels.forEach(panel => {
                 panel.classList.toggle('active', panel.dataset.sub === target);
             });
+            // 판매기업 탭이 활성화되면 테이블 높이 조정
+            if (target === 'vendor') {
+                setTimeout(() => adjustPartsTableHeight(), 100);
+            }
         });
     });
+    
+    // 판매기업 탭이 처음 렌더링될 때도 높이 조정
+    const vendorPanel = body.querySelector('.parts-panel[data-sub="vendor"]');
+    if (vendorPanel && vendorPanel.classList.contains('active')) {
+        setTimeout(() => adjustPartsTableHeight(), 100);
+    }
+}
+
+function adjustPartsTableHeight() {
+    const tableWrapper = document.querySelector('.parts-table-wrapper');
+    const table = document.querySelector('.parts-table');
+    const tbody = table?.querySelector('tbody');
+    if (!tableWrapper || !table || !tbody) return;
+    
+    // wrapper의 실제 사용 가능한 높이 계산
+    const wrapperHeight = tableWrapper.clientHeight;
+    
+    const thead = table.querySelector('thead');
+    const theadHeight = thead?.offsetHeight || 0;
+    const availableHeight = wrapperHeight - theadHeight;
+    const rowCount = tbody.querySelectorAll('tr').length;
+    
+    if (rowCount > 0 && availableHeight > 0) {
+        // 테이블 높이를 wrapper에 정확히 맞춤
+        table.style.height = wrapperHeight + 'px';
+        table.style.maxHeight = wrapperHeight + 'px';
+        
+        // 각 행의 높이를 균등하게 분배 (여유 공간 고려)
+        const rowHeight = Math.max(40, Math.floor(availableHeight / rowCount));
+        tbody.querySelectorAll('tr').forEach(tr => {
+            tr.style.height = rowHeight + 'px';
+        });
+        
+        // 테이블 너비가 컨테이너를 넘지 않도록
+        const containerWidth = tableWrapper.clientWidth;
+        table.style.width = '100%';
+        table.style.maxWidth = containerWidth + 'px';
+        table.style.boxSizing = 'border-box';
+        
+        // thead와 tbody의 칼럼 너비를 정확히 맞추기
+        if (thead) {
+            const theadCells = thead.querySelectorAll('th');
+            const firstRowCells = tbody.querySelector('tr')?.querySelectorAll('td');
+            if (theadCells.length === firstRowCells?.length && firstRowCells.length > 0) {
+                // 테이블의 실제 사용 가능한 너비 계산 (border 제외)
+                const tableStyle = window.getComputedStyle(table);
+                const tableBorder = parseFloat(tableStyle.borderLeftWidth || 0) + parseFloat(tableStyle.borderRightWidth || 0);
+                const availableWidth = containerWidth - tableBorder;
+                const columnCount = theadCells.length;
+                const columnWidth = Math.floor(availableWidth / columnCount);
+                
+                // 모든 thead와 tbody 셀의 너비를 동일하게 설정
+                theadCells.forEach((th, idx) => {
+                    th.style.width = columnWidth + 'px';
+                    th.style.minWidth = columnWidth + 'px';
+                    th.style.maxWidth = columnWidth + 'px';
+                    th.style.boxSizing = 'border-box';
+                });
+                
+                tbody.querySelectorAll('tr').forEach(tr => {
+                    const cells = tr.querySelectorAll('td');
+                    cells.forEach((td, idx) => {
+                        if (idx < columnCount) {
+                            td.style.width = columnWidth + 'px';
+                            td.style.minWidth = columnWidth + 'px';
+                            td.style.maxWidth = columnWidth + 'px';
+                            td.style.boxSizing = 'border-box';
+                        }
+                    });
+                });
+            }
+        }
+    }
 }
 
 function renderProcessTab() {
@@ -1571,6 +2208,7 @@ async function setActiveReportTab(tabKey) {
             renderMfcActionTab(currentReportEntry);
         } else if (tabKey === 'parts') {
             renderPartsTab(currentReportEntry);
+            setTimeout(() => adjustPartsTableHeight(), 200);
         } else if (tabKey === 'drawing') {
             if (mfcParams.has(currentReportEntry.param)) {
                 renderMfcDrawingTab(currentReportEntry);
@@ -1602,8 +2240,7 @@ function openReportModal(entry) {
     const summaryLines = [
         '이상 요약 (Summary)',
         `- 이상 감지 시간 : ${timeText}`,
-        `- 이상 유형 : ${logText}`,
-        `- 심각도 : ${severity.toUpperCase()}`
+        `- 이상 유형 : ${logText}`
     ];
     reportElements.reportSummary.textContent = summaryLines.join('\n');
     setActiveReportTab('cause');
@@ -1630,9 +2267,11 @@ async function fetchAbnormalLogs() {
 
 function fetchData() {
     if (!processStart) return;
+    if (chartHoldEnabled) return; // HOLD가 켜져있으면 업데이트 중지
     const now = new Date();
     const processStartTime = processStart ? new Date(processStart).getTime() : 0;
-    const windowStartMs = Math.max(processStartTime, now.getTime() - 300000); // 최근 5분
+    const timeRangeMs = selectedTimeRange * 60 * 1000; // 선택된 시간 범위를 밀리초로 변환
+    const windowStartMs = Math.max(processStartTime, now.getTime() - timeRangeMs);
     const windowEndMs = now.getTime();
     const startIso = new Date(windowStartMs).toISOString();
     const nowIso = new Date(windowEndMs).toISOString();
@@ -1656,8 +2295,7 @@ function checkProcess() {
                 processEnd = r.end;
                 logs = {}; loggedIds.clear();
                 updateLog();
-                Object.values(processCharts).forEach(c => { c.data.datasets.forEach(ds => ds.data = []); c.options.plugins.highlightRegion.regions = []; c.update(); });
-                Object.values(recentCharts).forEach(c => { c.data.datasets.forEach(ds => ds.data = []); c.options.plugins.highlightRegion.regions = []; c.update(); });
+                Object.values(mainCharts).forEach(c => { c.data.datasets.forEach(ds => ds.data = []); c.options.plugins.highlightRegion.regions = []; c.update(); });
             } else {
                 processEnd = r.end;
             }
@@ -1704,6 +2342,47 @@ window.addEventListener('DOMContentLoaded', () => {
             openChartModal(btn.dataset.param, btn.dataset.kind);
         });
     });
+
+    // 시간 범위 선택 이벤트 핸들러
+    const timeRangeSelect = document.getElementById('time-range-select');
+    if (timeRangeSelect) {
+        timeRangeSelect.addEventListener('change', (e) => {
+            selectedTimeRange = parseInt(e.target.value, 10);
+            // 차트 데이터 즉시 갱신 (HOLD가 꺼져있을 때만)
+            if (!chartHoldEnabled) {
+                fetchData();
+            }
+        });
+    }
+
+    // HOLD 토글 버튼 이벤트 핸들러
+    const chartHoldToggle = document.getElementById('chart-hold-toggle');
+    if (chartHoldToggle) {
+        chartHoldToggle.addEventListener('change', (e) => {
+            chartHoldEnabled = e.target.checked;
+        });
+    }
+
+    // 모달 HOLD 토글 버튼 이벤트 핸들러
+    const modalChartHoldToggle = document.getElementById('modal-chart-hold-toggle');
+    if (modalChartHoldToggle) {
+        modalChartHoldToggle.addEventListener('change', (e) => {
+            chartHoldEnabled = e.target.checked;
+            // 메인 HOLD 토글도 동기화
+            if (chartHoldToggle) {
+                chartHoldToggle.checked = e.target.checked;
+            }
+        });
+    }
+
+    // 메인 HOLD 토글 변경 시 모달 HOLD 토글도 동기화
+    if (chartHoldToggle) {
+        chartHoldToggle.addEventListener('change', (e) => {
+            if (modalChartHoldToggle) {
+                modalChartHoldToggle.checked = e.target.checked;
+            }
+        });
+    }
 
     const modal = document.getElementById('chart-modal');
     const closeBtn = document.getElementById('close-modal');
@@ -1769,4 +2448,5 @@ window.addEventListener('DOMContentLoaded', () => {
 window.addEventListener('resize', updateLogPanelHeight);
 window.addEventListener('resize', () => {
     if (modalChart) modalChart.resize();
+    adjustPartsTableHeight();
 });

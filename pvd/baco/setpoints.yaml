@@ -1,0 +1,65 @@
+columns:
+- Ion.Gauge.i
+- Baratron.Gauge.i
+- Ar.MFC.i
+sets:
+- id: 0
+  count: 12
+  mu:
+    Ion.Gauge.i: 0.00273
+    Baratron.Gauge.i: 3.95
+    Ar.MFC.i: 50.0
+  spread_absdev:
+    Ion.Gauge.i: 7.999999999999999e-05
+    Baratron.Gauge.i: 0.050000000000000044
+    Ar.MFC.i: 0.0
+- id: 1
+  count: 384
+  mu:
+    Ion.Gauge.i: 0.00398
+    Baratron.Gauge.i: 4.0
+    Ar.MFC.i: 80.0
+  spread_absdev:
+    Ion.Gauge.i: 0.00013999999999999993
+    Baratron.Gauge.i: 0.20000000000000018
+    Ar.MFC.i: 0.0
+- id: 2
+  count: 86
+  mu:
+    Ion.Gauge.i: 0.0048
+    Baratron.Gauge.i: 5.8
+    Ar.MFC.i: 100.0
+  spread_absdev:
+    Ion.Gauge.i: 8.000000000000021e-05
+    Baratron.Gauge.i: 0.5
+    Ar.MFC.i: 0.0
+- id: 3
+  count: 240
+  mu:
+    Ion.Gauge.i: 0.0053
+    Baratron.Gauge.i: 5.9
+    Ar.MFC.i: 120.0
+  spread_absdev:
+    Ion.Gauge.i: 4.0000000000000105e-05
+    Baratron.Gauge.i: 0.1999999999999993
+    Ar.MFC.i: 0.0
+- id: 4
+  count: 1
+  mu:
+    Ion.Gauge.i: 0.00704
+    Baratron.Gauge.i: 10.5
+    Ar.MFC.i: 200.0
+  spread_absdev:
+    Ion.Gauge.i: 0.0
+    Baratron.Gauge.i: 0.0
+    Ar.MFC.i: 0.0
+- id: 5
+  count: 17
+  mu:
+    Ion.Gauge.i: 0.00875
+    Baratron.Gauge.i: 13.9
+    Ar.MFC.i: 300.0
+  spread_absdev:
+    Ion.Gauge.i: 0.00013000000000000164
+    Baratron.Gauge.i: 0.0
+    Ar.MFC.i: 0.0

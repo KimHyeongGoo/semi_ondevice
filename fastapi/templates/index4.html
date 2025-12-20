@@ -101,14 +101,21 @@
             display: flex;
             flex-direction: column;
             gap: 12px;
+            min-width: 0;
         }
 
         .chart-header-row {
             display: flex;
-            gap: 12px;
+            gap: 4px;
             align-items: center;
-            padding-left: 120px;
+            padding-left: 80px;
             margin-bottom: -4px;
+        }
+
+        .time-range-selector {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
         }
 
         .chart-header {
@@ -142,23 +149,31 @@
 
         .chart-row {
             display: flex;
-            gap: 12px;
+            gap: 4px;
             align-items: center;
             position: relative;
+            width: 100%;
         }
 
         .param-label {
-            width: 120px;
+            width: 80px;
+            flex-shrink: 0;
             font-weight: bold;
+            font-size: 14px;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .chart-box {
-            flex: 1;
+            flex: 1 1 auto;
+            min-width: 0;
             background: #FFFFFF;
             border: 2px solid #a6a6a6;
             border-radius: 10px;
             padding: 8px;
-            height: 140px;
+            height: 280px;
             cursor: pointer;
             transition: background 0.2s ease, box-shadow 0.2s ease;
             position: relative;
@@ -240,6 +255,19 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 12px;
+        }
+
+        .hold-toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .modal-hold-toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-right: 12px;
         }
 
         #chart-modal #close-modal {
@@ -340,16 +368,23 @@
             border: 3px solid #1f4e79;
             border-radius: 8px;
             padding: 12px;
-            overflow-y: auto;
+            overflow: hidden;
             line-height: 1.5;
             background: #fff;
             display: flex;
             flex-direction: column;
+            box-sizing: border-box;
         }
 
         .report-body>* {
             flex: 0 0 auto;
             min-height: 0;
+        }
+
+        .report-body .report-cause-layout {
+            flex: 1 1 auto;
+            min-height: 0;
+            overflow: hidden;
         }
 
         .report-3d-wrap {
@@ -360,6 +395,7 @@
             display: flex;
             flex-direction: column;
             height: 100%;
+            overflow: hidden;
         }
 
         .report-3d-header {
@@ -378,6 +414,7 @@
             border: 1px solid #cbd5e1;
             border-radius: 8px;
             position: relative;
+            overflow: hidden;
         }
 
         .report-3d-note {
@@ -392,6 +429,7 @@
             gap: 12px;
             align-items: stretch;
             height: 100%;
+            min-height: 0;
         }
 
         .report-cause-chart,
@@ -400,6 +438,7 @@
             border: 1px solid #d0d7de;
             border-radius: 10px;
             padding: 12px;
+            box-sizing: border-box;
         }
 
         .report-cause-title {
@@ -410,26 +449,31 @@
 
         .report-cause-chart {
             height: 100%;
-            min-height: 320px;
-            overflow: hidden;
+            min-height: 0;
+            overflow: visible;
+            display: flex;
+            flex-direction: column;
         }
 
         .report-cause-chart canvas {
             width: 100%;
-            height: 100%;
+            flex: 1 1 auto;
+            min-height: 0;
+            margin-bottom: 4px;
         }
 
         .report-cause-text {
             height: 100%;
-            min-height: 320px;
+            min-height: 0;
             display: flex;
             flex-direction: column;
-            overflow: hidden;
+            overflow: visible;
         }
 
         .report-cause-lines {
-            overflow-y: auto;
+            overflow: visible;
             flex: 1 1 auto;
+            padding-bottom: 4px;
         }
 
         .report-cause-badge {
@@ -549,11 +593,14 @@
         .parts-panel {
             display: none;
             margin-top: 0;
-            flex: 0 0 auto;
+            flex: 1 1 auto;
+            min-height: 0;
+            overflow: hidden;
         }
 
         .parts-panel.active {
-            display: block;
+            display: flex;
+            flex-direction: column;
         }
 
         .parts-section {
@@ -565,6 +612,8 @@
             flex-direction: column;
             gap: 10px;
             height: 100%;
+            min-height: 0;
+            flex: 1 1 auto;
         }
 
         .parts-section-title {
@@ -638,24 +687,24 @@
         .parts-info-layout {
             display: flex;
             gap: 14px;
-            align-items: flex-start;
+            align-items: center;
             flex-wrap: nowrap;
             flex: 1 1 auto;
             min-height: 0;
-            height: auto;
+            height: 100%;
         }
 
         .parts-figure {
             flex: 1 1 45%;
-            max-width: 420px;
+            max-width: 300px;
             min-width: 280px;
             height: auto;
+            max-height: 100%;
             background: #fff;
             border: 1px solid #e5e7eb;
             border-radius: 10px;
             padding: 14px;
             text-align: center;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
             display: flex;
             flex-direction: column;
             justify-content: flex-start;
@@ -681,11 +730,12 @@
 
         .parts-text-cols {
             flex: 1 1 55%;
-            display: grid;
-            grid-template-columns: 1fr;
+            display: flex;
+            flex-direction: column;
             gap: 10px;
             min-height: 0;
-            align-self: flex-start;
+            align-self: stretch;
+            overflow-y: auto;
         }
 
         .parts-text-block {
@@ -694,7 +744,6 @@
             border-radius: 8px;
             padding: 12px 14px;
             line-height: 1.6;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
         }
 
         .parts-text-block .label {
@@ -704,14 +753,53 @@
             color: #0f172a;
         }
 
+        .parts-table-wrapper {
+            flex: 1 1 auto;
+            min-height: 0;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+        }
+
+        .parts-table-container {
+            flex: 1 1 auto;
+            min-height: 0;
+            overflow: hidden;
+            position: relative;
+            box-sizing: border-box;
+            width: 100%;
+        }
+
         .parts-table {
             width: 100%;
+            max-width: 100%;
             border-collapse: collapse;
             background: #fff;
             border: 1px solid #d0d7de;
             border-radius: 8px;
             overflow: hidden;
             font-size: 15px;
+            table-layout: fixed;
+            display: table;
+            box-sizing: border-box;
+        }
+
+        .parts-table thead {
+            display: table-header-group;
+        }
+
+        .parts-table tbody {
+            display: table-row-group;
+        }
+
+        .parts-table tbody tr {
+            display: table-row;
+        }
+
+        .parts-table tbody td {
+            vertical-align: middle;
+            padding: 14px 12px;
         }
 
         .parts-table th,
@@ -762,7 +850,7 @@
 
         /* 공정 단계 설명 레이아웃 */
         .process-layout {
-            align-items: stretch;
+            align-items: center;
             flex-wrap: nowrap;
             height: 100%;
         }
@@ -772,8 +860,18 @@
             max-width: none;
             width: auto;
             height: auto;
-            max-height: 420px;
-            align-self: flex-start;
+            max-height: 350px;
+            align-self: center;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+
+        .process-layout .parts-figure img {
+            max-width: 70%;
+            max-height: 70%;
+            width: auto;
+            height: auto;
+            object-fit: contain;
         }
 
         .process-layout .parts-text-cols {
@@ -1135,6 +1233,22 @@
             <span>STEP ID: <strong id="current-step-id">-</strong></span>
             <span>STEP NAME: <strong id="current-step-name">DEPO</strong></span>
             <span>데이터 출력: <button id="toggle-datasets"></button></span>
+            <span class="time-range-selector">
+                <label for="time-range-select" style="margin-right: 8px;">차트 표시 기간:</label>
+                <select id="time-range-select" style="padding: 4px 8px; border: 1px solid #1F4E79; border-radius: 4px; background: #fff; font-size: 14px;">
+                    <option value="1">1분</option>
+                    <option value="5" selected>5분</option>
+                    <option value="10">10분</option>
+                    <option value="30">30분</option>
+                </select>
+            </span>
+            <span class="hold-toggle">
+                <label for="chart-hold-toggle" style="margin-right: 8px; font-weight: 600;">HOLD</label>
+                <label class="switch">
+                    <input type="checkbox" id="chart-hold-toggle">
+                    <span class="slider"></span>
+                </label>
+            </span>
             <span class="warning-toggle">
                 경고 팝업
                 <label class="switch">
@@ -1154,22 +1268,16 @@
             <div id="charts-container">
                 <div class="chart-header-row">
                     <div style="width: 120px;"></div>
-                    <div class="chart-header">최근 5분 데이터</div>
-                    <div class="chart-header">최근 1분 데이터</div>
+                    <div class="chart-header">차트 데이터</div>
                 </div>
                 {% for col in columns %}
                 {% set safe = col.replace(' ', '_').replace('.', '_').replace('-', '_') %}
                 <div class="chart-row" data-param="{{ col }}">
                     <div class="param-label">{{ col }}</div>
-                    <div class="chart-box" data-type="process">
-                        <button class="expand-btn" data-param="{{ col }}" data-kind="process"
+                    <div class="chart-box" data-type="main">
+                        <button class="expand-btn" data-param="{{ col }}" data-kind="main"
                             aria-label="차트 확대"></button>
-                        <canvas id="proc-{{ safe }}"></canvas>
-                    </div>
-                    <div class="chart-box" data-type="recent">
-                        <button class="expand-btn" data-param="{{ col }}" data-kind="recent"
-                            aria-label="차트 확대"></button>
-                        <canvas id="recent-{{ safe }}"></canvas>
+                        <canvas id="main-{{ safe }}"></canvas>
                     </div>
                 </div>
                 {% endfor %}
@@ -1228,7 +1336,16 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <div id="modal-title" style="font-weight:bold; font-size:16px;"></div>
-                    <button id="close-modal">닫기</button>
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <span class="modal-hold-toggle">
+                            <label for="modal-chart-hold-toggle" style="margin-right: 8px; font-weight: 600;">HOLD</label>
+                            <label class="switch">
+                                <input type="checkbox" id="modal-chart-hold-toggle">
+                                <span class="slider"></span>
+                            </label>
+                        </span>
+                        <button id="close-modal">닫기</button>
+                    </div>
                 </div>
                 <div id="modal-echart"></div>
                 <canvas id="modal-canvas" style="display:none;" height="400"></canvas>
