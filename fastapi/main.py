@@ -569,15 +569,27 @@ async def api_process_range(time: str = Query(...)):
 
 @app.get("/api/trace_info")
 async def api_trace_info(limit: int = 10):
-    data = get_trace_info(limit)
-    ensure_heatmaps(data)
-    return JSONResponse(data)
+    try:
+        data = get_trace_info(limit)
+        ensure_heatmaps(data)
+        return JSONResponse(data)
+    except Exception as e:
+        print(f"[api_trace_info ERROR] {e}")
+        import traceback
+        traceback.print_exc()
+        return JSONResponse({"error": str(e)}, status_code=500)
 
 
 @app.get("/api/current_step")
 async def api_current_step():
-    data = get_current_step()
-    return JSONResponse(data)
+    try:
+        data = get_current_step()
+        return JSONResponse(data)
+    except Exception as e:
+        print(f"[api_current_step ERROR] {e}")
+        import traceback
+        traceback.print_exc()
+        return JSONResponse({"error": str(e)}, status_code=500)
 
 
 @app.get("/api/pvd/latest")
@@ -862,3 +874,417 @@ async def get_log_detail(time: str = Query(...), parameter: str = Query(...)):
     conn.close()
 
     return {"message": row[0] if row else "(메시지 없음)"}
+
+@app.post("/api/equipment/stop")
+async def stop_equipment():
+    """generate_data.py와 insert_real_time.py 프로세스 종료 - 강화된 버전"""
+    import subprocess
+    import signal
+    import time
+    import traceback
+    
+    try:
+        # 현재 실행 중인 프로세스 확인
+        generate_running_initial, insert_running_initial = check_processes_running()
+        
+        if not generate_running_initial and not insert_running_initial:
+            print("INFO: Both processes are already stopped.")
+            return JSONResponse({
+                "status": "already_stopped",
+                "message": "장비가 이미 DOWN되어 있습니다.",
+                "killed_count": 0
+            })
+        
+        killed_pids = []
+        script_names = ["generate_data.py", "insert_real_time.py"]
+        
+        # 방법 1: 즉시 SIGKILL로 강제 종료 (대기 시간 최소화)
+        for script_name in script_names:
+            # SIGKILL로 즉시 강제 종료
+            subprocess.run(
+                ["pkill", "-9", "-f", script_name],
+                capture_output=True,
+                text=True
+            )
+        
+        # 방법 2: pgrep으로 모든 PID 찾아서 프로세스 그룹과 자식 프로세스까지 종료
+        time.sleep(0.1)  # 최소 대기
+        for script_name in script_names:
+            result = subprocess.run(
+                ["pgrep", "-f", script_name],
+                capture_output=True,
+                text=True
+            )
+            if result.returncode == 0:
+                pids = [pid.strip() for pid in result.stdout.strip().split('\n') if pid.strip()]
+                for pid_str in pids:
+                    try:
+                        pid = int(pid_str)
+                        # 프로세스 그룹 ID 가져오기
+                        try:
+                            pgid = os.getpgid(pid)
+                            # 프로세스 그룹 전체에 SIGTERM 전송
+                            os.killpg(pgid, signal.SIGTERM)
+                            print(f"Sent SIGTERM to process group {pgid} (PID {pid} for {script_name})")
+                        except (ProcessLookupError, OSError):
+                            # 프로세스 그룹을 찾을 수 없으면 개별 프로세스만 종료
+                            try:
+                                os.kill(pid, signal.SIGTERM)
+                                print(f"Sent SIGTERM to {script_name} (PID {pid})")
+                            except ProcessLookupError:
+                                pass
+                        killed_pids.append((script_name, pid))
+                    except (ValueError, ProcessLookupError, OSError) as e:
+                        print(f"WARN: Could not kill PID {pid_str} for {script_name}: {e}")
+        
+        # 방법 3: 남은 프로세스 강제 종료 (SIGKILL) - 즉시 실행
+        for script_name in script_names:
+            result = subprocess.run(
+                ["pgrep", "-f", script_name],
+                capture_output=True,
+                text=True
+            )
+            if result.returncode == 0:
+                pids = [pid.strip() for pid in result.stdout.strip().split('\n') if pid.strip()]
+                for pid_str in pids:
+                    try:
+                        pid = int(pid_str)
+                        # 프로세스 그룹 ID 가져오기
+                        try:
+                            pgid = os.getpgid(pid)
+                            # 프로세스 그룹 전체에 SIGKILL 전송
+                            os.killpg(pgid, signal.SIGKILL)
+                            print(f"Force killed process group {pgid} (PID {pid} for {script_name})")
+                        except (ProcessLookupError, OSError):
+                            # 프로세스 그룹을 찾을 수 없으면 개별 프로세스만 종료
+                            try:
+                                os.kill(pid, signal.SIGKILL)
+                                print(f"Force killed {script_name} (PID {pid})")
+                            except ProcessLookupError:
+                                pass
+                        if (script_name, pid) not in killed_pids:
+                            killed_pids.append((script_name, pid))
+                    except (ValueError, ProcessLookupError, OSError) as e:
+                        print(f"WARN: Could not force kill PID {pid_str} for {script_name}: {e}")
+        
+        # 방법 4: pkill로 최종 확인 및 강제 종료
+        for script_name in script_names:
+            # 최종 강제 종료 시도
+            subprocess.run(
+                ["pkill", "-9", "-f", script_name],
+                capture_output=True,
+                text=True
+            )
+        
+        # 방법 5: ps와 awk를 사용하여 모든 관련 프로세스 찾아서 종료
+        for script_name in script_names:
+            # ps aux | grep script_name | grep -v grep | awk '{print $2}' | xargs kill -9
+            result = subprocess.run(
+                ["sh", "-c", f"ps aux | grep '{script_name}' | grep -v grep | awk '{{print $2}}' | xargs -r kill -9"],
+                capture_output=True,
+                text=True
+            )
+            if result.returncode == 0:
+                print(f"Killed remaining processes for {script_name} using ps/awk/kill")
+        
+        # 방법 6: 프로세스 트리 전체 종료 (pkill -P로 자식 프로세스까지 종료)
+        for script_name in script_names:
+            result = subprocess.run(
+                ["pgrep", "-f", script_name],
+                capture_output=True,
+                text=True
+            )
+            if result.returncode == 0:
+                pids = [pid.strip() for pid in result.stdout.strip().split('\n') if pid.strip()]
+                for pid_str in pids:
+                    try:
+                        pid = int(pid_str)
+                        # pkill로 프로세스와 모든 자식 프로세스 종료
+                        subprocess.run(
+                            ["pkill", "-9", "-P", pid_str],
+                            capture_output=True,
+                            text=True
+                        )
+                        # 부모 프로세스도 종료
+                        try:
+                            os.kill(pid, signal.SIGKILL)
+                        except ProcessLookupError:
+                            pass
+                    except (ValueError, ProcessLookupError, OSError):
+                        pass
+        
+        # 방법 7: 최종 강제 종료 (pkill -9 반복)
+        for _ in range(3):  # 3회 반복
+            for script_name in script_names:
+                subprocess.run(
+                    ["pkill", "-9", "-f", script_name],
+                    capture_output=True,
+                    text=True
+                )
+        
+        # 최종 확인 (최소 대기)
+        time.sleep(0.2)
+        generate_running_final, insert_running_final = check_processes_running()
+        
+        if not generate_running_final and not insert_running_final:
+            msg = f"장비가 DOWN되었습니다. (종료된 프로세스: {len(killed_pids)}개)" if killed_pids else "장비가 DOWN되었습니다."
+            print(f"SUCCESS: {msg}")
+            return JSONResponse({
+                "status": "stopped",
+                "message": msg,
+                "killed_count": len(killed_pids)
+            })
+        else:
+            remaining_scripts = []
+            if generate_running_final:
+                remaining_scripts.append("generate_data.py")
+            if insert_running_final:
+                remaining_scripts.append("insert_real_time.py")
+            msg = f"장비 DOWN 실패: {', '.join(remaining_scripts)}가(이) 여전히 실행 중입니다."
+            print(f"ERROR: {msg}")
+            return JSONResponse({
+                "status": "partial_stop_failure",
+                "message": msg,
+                "killed_count": len(killed_pids)
+            }, status_code=500)
+            
+    except Exception as e:
+        print(f"CRITICAL ERROR in stop_equipment: {e}")
+        traceback.print_exc()
+        return JSONResponse({"status": "error", "message": f"장비 DOWN 중 오류 발생: {str(e)}"}, status_code=500)
+
+def check_processes_running():
+    """프로세스 실행 상태 확인"""
+    import subprocess
+    generate_running = False
+    insert_running = False
+    
+    result = subprocess.run(
+        ["pgrep", "-f", "generate_data.py"],
+        capture_output=True,
+        text=True
+    )
+    if result.returncode == 0 and result.stdout.strip():
+        generate_running = True
+    
+    result = subprocess.run(
+        ["pgrep", "-f", "insert_real_time.py"],
+        capture_output=True,
+        text=True
+    )
+    if result.returncode == 0 and result.stdout.strip():
+        insert_running = True
+    
+    return generate_running, insert_running
+
+@app.get("/api/equipment/status")
+async def get_equipment_status():
+    """프로세스 실행 상태만 확인 (종료하지 않음)"""
+    generate_running, insert_running = check_processes_running()
+    return JSONResponse({
+        "generate_running": generate_running,
+        "insert_running": insert_running,
+        "status": "running" if (generate_running or insert_running) else "stopped"
+    })
+
+@app.post("/api/equipment/start")
+async def start_equipment():
+    """generate_data.py와 insert_real_time.py 프로세스 시작"""
+    import subprocess
+    
+    try:
+        # 프로세스가 이미 실행 중인지 확인
+        generate_running, insert_running = check_processes_running()
+        
+        if generate_running and insert_running:
+            return JSONResponse({
+                "status": "already_running", 
+                "message": "프로세스가 이미 실행 중입니다.",
+                "generate_running": True,
+                "insert_running": True
+            })
+        elif generate_running:
+            return JSONResponse({
+                "status": "partially_running",
+                "message": "generate_data.py는 이미 실행 중입니다. insert_real_time.py만 시작합니다.",
+                "generate_running": True,
+                "insert_running": False
+            })
+        elif insert_running:
+            return JSONResponse({
+                "status": "partially_running",
+                "message": "insert_real_time.py는 이미 실행 중입니다. generate_data.py만 시작합니다.",
+                "generate_running": False,
+                "insert_running": True
+            })
+        
+        # 절대 경로로 스크립트 실행
+        base_dir = Path(__file__).resolve().parents[1]
+        generate_script = base_dir / "generate_data.py"
+        insert_script = base_dir / "insert_real_time.py"
+        
+        started = []
+        
+        # generate_data.py 시작
+        if not generate_running:
+            subprocess.Popen(
+                ["python3", str(generate_script)],
+                cwd=str(base_dir),
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL
+            )
+            started.append("generate_data.py")
+        
+        # insert_real_time.py 시작
+        if not insert_running:
+            subprocess.Popen(
+                ["python3", str(insert_script)],
+                cwd=str(base_dir),
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL
+            )
+            started.append("insert_real_time.py")
+        
+        return JSONResponse({
+            "status": "started", 
+            "message": f"프로세스가 시작되었습니다. ({', '.join(started)})",
+            "started": started
+        })
+    except Exception as e:
+        return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
+
+@app.post("/api/telegram/notify")
+async def send_telegram_notification(request: Request):
+    """텔레그램 알림 전송"""
+    try:
+        import requests
+    except ImportError:
+        return JSONResponse({"status": "error", "message": "requests 모듈이 설치되지 않았습니다."}, status_code=500)
+    
+    try:
+        body = await request.json()
+        message = body.get("message", "")
+        reply_markup = body.get("reply_markup")
+        
+        if not message:
+            return JSONResponse({"status": "error", "message": "메시지가 없습니다."}, status_code=400)
+        
+        # 텔레그램 설정
+        TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "8426533458:AAFw6pNm5xGa7ponvmasrYs_i8AicT66tIg")
+        TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "-1003454160562")
+        TELEGRAM_ENABLED = os.getenv("TELEGRAM_ENABLED", "true").lower() == "true"
+        
+        if not TELEGRAM_ENABLED:
+            return JSONResponse({"status": "disabled", "message": "텔레그램 알림이 비활성화되어 있습니다."})
+        
+        url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+        payload = {
+            "chat_id": TELEGRAM_CHAT_ID,
+            "text": message,
+            "parse_mode": "HTML"
+        }
+        if reply_markup:
+            payload["reply_markup"] = json.dumps(reply_markup)
+        
+        response = requests.post(url, json=payload, timeout=5)
+        
+        if response.status_code == 200:
+            return JSONResponse({"status": "sent", "message": "텔레그램 메시지가 전송되었습니다."})
+        else:
+            return JSONResponse({"status": "error", "message": f"텔레그램 전송 실패: {response.status_code}"}, status_code=500)
+    except Exception as e:
+        return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
+
+@app.post("/api/telegram/webhook")
+async def telegram_webhook(request: Request):
+    """텔레그램 봇 웹훅 - callback_query 처리"""
+    try:
+        import requests
+    except ImportError:
+        return JSONResponse({"status": "error", "message": "requests 모듈이 설치되지 않았습니다."}, status_code=500)
+    
+    try:
+        body = await request.json()
+        print(f"[텔레그램 웹훅] 수신된 데이터: {body}")  # 디버깅용
+        
+        # callback_query가 최상위에 있는 경우 (웹훅 형식)
+        callback_query = body.get("callback_query")
+        
+        # message 안에 callback_query가 있는 경우도 처리
+        if not callback_query and "message" in body:
+            callback_query = body.get("message", {}).get("callback_query")
+        
+        if not callback_query:
+            print("[텔레그램 웹훅] callback_query가 없습니다.")
+            return JSONResponse({"status": "ok"})
+        
+        callback_data = callback_query.get("data")
+        message = callback_query.get("message", {})
+        chat_id = message.get("chat", {}).get("id")
+        message_id = message.get("message_id")
+        
+        print(f"[텔레그램 웹훅] callback_data: {callback_data}, chat_id: {chat_id}")
+        
+        TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "8426533458:AAFw6pNm5xGa7ponvmasrYs_i8AicT66tIg")
+        
+        # callback_query에 대한 응답 전송
+        answer_url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/answerCallbackQuery"
+        try:
+            requests.post(answer_url, json={
+                "callback_query_id": callback_query.get("id")
+            }, timeout=5)
+        except Exception as e:
+            print(f"[텔레그램 웹훅] answerCallbackQuery 실패: {e}")
+        
+        # 장비 DOWN 버튼 클릭 시
+        if callback_data == "equipment_down":
+            print("[텔레그램 웹훅] 장비 DOWN 버튼 클릭됨")
+            # 장비 중지 API 직접 호출 (동기 방식으로 즉시 실행)
+            try:
+                # stop_equipment 함수를 직접 호출
+                stop_result = await stop_equipment()
+                stop_data = json.loads(stop_result.body.decode())
+                
+                # 결과를 텔레그램으로 전송
+                status = stop_data.get("status", "unknown")
+                if status == "already_stopped":
+                    result_message = "⚠️ " + stop_data.get("message", "장비가 이미 DOWN되어 있습니다.")
+                elif status == "stopped":
+                    killed_count = stop_data.get("killed_count", 0)
+                    result_message = f"✅ 장비가 정지되었습니다.\n종료된 프로세스: {killed_count}개"
+                else:
+                    result_message = "❌ " + stop_data.get("message", "장비 중지 요청이 처리되었습니다.")
+                
+                send_url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+                requests.post(send_url, json={
+                    "chat_id": chat_id,
+                    "text": result_message,
+                    "parse_mode": "HTML"
+                }, timeout=5)
+                print(f"[텔레그램 웹훅] 장비 중지 완료: {result_message}")
+            except Exception as e:
+                import traceback
+                traceback.print_exc()
+                # 에러 발생 시 텔레그램으로 알림
+                send_url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+                requests.post(send_url, json={
+                    "chat_id": chat_id,
+                    "text": f"❌ 장비 중지 중 오류 발생: {str(e)}",
+                    "parse_mode": "HTML"
+                }, timeout=5)
+                print(f"[텔레그램 웹훅] 장비 중지 오류: {e}")
+        
+        # Cancel 버튼 클릭 시
+        elif callback_data == "equipment_cancel" or callback_data == "cancel_down":
+            send_url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+            requests.post(send_url, json={
+                "chat_id": chat_id,
+                "text": "✅ 장비 Down이 취소되었습니다.",
+                "parse_mode": "HTML"
+            }, timeout=5)
+        
+        return JSONResponse({"status": "ok"})
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return JSONResponse({"status": "error", "message": str(e)}, status_code=500)

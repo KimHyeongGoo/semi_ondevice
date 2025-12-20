@@ -1,5 +1,6 @@
 import time
 import os
+from pathlib import Path
 from watchdog.observers import Observer
 from watchdog.observers.polling import PollingObserver
 from watchdog.events import FileSystemEventHandler
@@ -11,8 +12,9 @@ from zoneinfo import ZoneInfo
 
 from insert_old_data import insert_missing_data
 
-
-realtime_path = "../realtimedata" # 감시할 디렉토리 경로
+# 절대 경로로 설정하여 어떤 경로에서 실행되어도 작동하도록 함
+BASE_DIR = Path(__file__).resolve().parent
+realtime_path = str(BASE_DIR.parent / 'realtimedata')  # 감시할 디렉토리 경로
 # 파일별로 마지막 읽은 위치 저장
 file_offsets = [0]
 # CSV 파일의 헤더 보관

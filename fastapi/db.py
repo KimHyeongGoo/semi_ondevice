@@ -222,6 +222,7 @@ def get_event_chart_data(param, start, end, step=10):
     table_name = param_table_map.get(param)
 
     try:
+        # <= 를 사용하여 to_ts까지 포함하도록 수정
         cur.execute(
             f"""
             SELECT DATE_TRUNC('second', "Timestamp") AS ts,
@@ -229,7 +230,7 @@ def get_event_chart_data(param, start, end, step=10):
                    "ProcessRecipeStepID",
                    "ProcessRecipeStepName"
             FROM "{raw_table}"
-            WHERE "Timestamp" BETWEEN %s::timestamp AND %s::timestamp
+            WHERE "Timestamp" >= %s::timestamp AND "Timestamp" <= %s::timestamp
             ORDER BY ts ASC
             """,
             (from_ts, to_ts),
@@ -249,7 +250,7 @@ def get_event_chart_data(param, start, end, step=10):
                 f"""
                 SELECT DATE_TRUNC('second', "Timestamp") AS ts, "{param_modified}"
                 FROM "{table_name}"
-                WHERE "PredictStep" = %s AND "Timestamp" BETWEEN %s::timestamp AND %s::timestamp
+                WHERE "PredictStep" = %s AND "Timestamp" >= %s::timestamp AND "Timestamp" <= %s::timestamp
                 ORDER BY ts ASC
                 """,
                 (step, from_ts, to_ts),
@@ -473,48 +474,59 @@ def get_recent_pvd_violence_logs(limit=10):
 
 def get_trace_info(limit=10):
     """Return recent rows from trace_info ordered by start_time descending."""
-    conn = psycopg2.connect(
-        dbname="postgres",
-        user="keti",
-        password="keti1234!",
-        host="localhost",
-        port=5432,
-    )
-    cur = conn.cursor()
+    conn = None
+    cur = None
+    try:
+        conn = psycopg2.connect(
+            dbname="postgres",
+            user="keti",
+            password="keti1234!",
+            host="localhost",
+            port=5432,
+        )
+        cur = conn.cursor()
 
-    thickness_cols = [f"thickness_{i+1}" for i in range(45)]
-    col_sql = ", ".join(thickness_cols)
+        thickness_cols = [f"thickness_{i+1}" for i in range(45)]
+        col_sql = ", ".join(thickness_cols)
 
-    # Assign row numbers by start_time (oldest -> newest)
-    query = f"""
-        SELECT row_num, start_time, end_time, {col_sql}
-        FROM (
-            SELECT *, ROW_NUMBER() OVER (ORDER BY start_time) AS row_num
-            FROM trace_info
-        ) t
-        ORDER BY start_time DESC
-        LIMIT %s
-    """
+        # Assign row numbers by start_time (oldest -> newest)
+        query = f"""
+            SELECT row_num, start_time, end_time, {col_sql}
+            FROM (
+                SELECT *, ROW_NUMBER() OVER (ORDER BY start_time) AS row_num
+                FROM trace_info
+            ) t
+            ORDER BY start_time DESC
+            LIMIT %s
+        """
 
-    cur.execute(query, (limit,))
-    rows = cur.fetchall()
+        cur.execute(query, (limit,))
+        rows = cur.fetchall()
 
-    result = []
-    for row in rows:
-        row_num = row[0]
-        start_time = row[1]
-        end_time = row[2]
-        thicknesses = list(row[3:])
-        result.append({
-            "row_num": int(row_num) if row_num is not None else None,
-            "start_time": start_time.strftime("%Y-%m-%d %H:%M:%S"),
-            "end_time": end_time.strftime("%Y-%m-%d %H:%M:%S"),
-            "thicknesses": [float(t) if t is not None else None for t in thicknesses],
-        })
+        result = []
+        for row in rows:
+            row_num = row[0]
+            start_time = row[1]
+            end_time = row[2]
+            thicknesses = list(row[3:])
+            result.append({
+                "row_num": int(row_num) if row_num is not None else None,
+                "start_time": start_time.strftime("%Y-%m-%d %H:%M:%S"),
+                "end_time": end_time.strftime("%Y-%m-%d %H:%M:%S"),
+                "thicknesses": [float(t) if t is not None else None for t in thicknesses],
+            })
 
-    cur.close()
-    conn.close()
-    return result
+        return result
+    except Exception as e:
+        print(f"[get_trace_info ERROR] {e}")
+        import traceback
+        traceback.print_exc()
+        raise
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
 
 def get_trace_pred_chart_data(param, start, end, step=10):
     """Return actual and predicted data from trace_pred_data table."""

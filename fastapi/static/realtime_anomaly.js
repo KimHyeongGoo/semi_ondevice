@@ -22,6 +22,10 @@ let settingsCache = {};
 const storedWarning = typeof localStorage !== 'undefined' ? localStorage.getItem(warningToggleKey) : null;
 if (storedWarning !== null) warningEnabled = storedWarning === 'true';
 let deviceStatus = { status: 'RUN', lastTick: null };
+let lastWarningTime = 0; // 마지막 경고 팝업이 뜬 시간 (밀리초)
+const WARNING_COOLDOWN_MS = 60 * 1000; // 1분 쿨다운
+let pageStartTime = Date.now(); // 페이지 로드 시간 (또는 장비 시작 시간)
+const STARTUP_GRACE_PERIOD_MS = 5 * 1000; // 시작 후 5초 그레이스 기간
 const displayParam = (name) => {
     // MFC1_N2-1 -> N2-1, MFC7_DCS -> DCS 등으로 변환
     const m = String(name || '').match(/^MFC\d+[_-](.+)$/i);
@@ -396,6 +400,7 @@ function createCharts() {
         ticks: {
             source: 'data',
             autoSkip: true,
+            maxTicksLimit: 5,
             maxRotation: 0,
             autoSkipPadding: 12,
             callback: function (value, index, ticks) {
@@ -536,7 +541,10 @@ function setServerLogs(list) {
 
     if (warningEnabled && !warningModalOpen && newEntries.length) {
         const first = newEntries[0];
+        console.log(`[경고 팝업 호출] 파라미터: ${first.param}, 새 항목 수: ${newEntries.length}`);
         openWarningModal(first.param, buildLogText(first.param, first.entry));
+    } else if (newEntries.length) {
+        console.log(`[경고 팝업 스킵] warningEnabled: ${warningEnabled}, warningModalOpen: ${warningModalOpen}, newEntries.length: ${newEntries.length}`);
     }
     if (lastServerLogEnd > lastSeenLogEnd) {
         lastSeenLogEnd = lastServerLogEnd;
@@ -719,23 +727,30 @@ function updateCharts(col, data) {
     const chart = mainCharts[col];
     if (!chart) return;
     
-    // 선택된 시간 범위에 따라 데이터 필터링
+    // fetchData에서 이미 시간 범위로 필터링된 데이터를 받았으므로
+    // 추가 필터링 없이 그대로 사용
+    chart.data.datasets[0].data = predicted;
+    chart.data.datasets[1].data = actual;
+    
+    // X축 범위 설정: 현재 시간까지 표시되도록
     const now = Date.now();
     const timeRangeMs = selectedTimeRange * 60 * 1000; // 분을 밀리초로 변환
-    const rangeStart = now - timeRangeMs;
-    
-    const filteredActual = actual.filter(d => new Date(d.x).getTime() >= rangeStart);
-    const filteredPredicted = predicted.filter(d => new Date(d.x).getTime() >= rangeStart);
-    
-    chart.data.datasets[0].data = filteredPredicted;
-    chart.data.datasets[1].data = filteredActual;
-    
-    const allTimestamps = filteredActual.concat(filteredPredicted).map(d => new Date(d.x).getTime());
+    const allTimestamps = actual.concat(predicted).map(d => new Date(d.x).getTime()).filter(ts => !isNaN(ts));
     let xMin = null;
     let xMax = null;
+    
     if (allTimestamps.length) {
         xMin = Math.min(...allTimestamps);
-        xMax = Math.max(...allTimestamps);
+        const dataMax = Math.max(...allTimestamps);
+        // xMax는 데이터의 최대값과 현재 시간 중 더 큰 값으로 설정
+        // 이렇게 하면 데이터가 현재 시간보다 이전이어도 차트가 현재 시간까지 표시됨
+        xMax = Math.max(dataMax, now);
+        chart.options.scales.x.min = xMin;
+        chart.options.scales.x.max = xMax;
+    } else {
+        // 데이터가 없어도 현재 시간 범위는 표시
+        xMin = now - timeRangeMs;
+        xMax = now;
         chart.options.scales.x.min = xMin;
         chart.options.scales.x.max = xMax;
     }
@@ -743,7 +758,7 @@ function updateCharts(col, data) {
     const regions = xMin !== null && xMax !== null ? getHighlightRegions(col, xMin, xMax) : [];
     chart.options.plugins.highlightRegion.regions = regions;
     
-    const allVals = filteredActual.concat(filteredPredicted).map(d => d.y);
+    const allVals = actual.concat(predicted).map(d => d.y);
     if (allVals.length) {
         const max = Math.max(...allVals);
         const min = Math.min(...allVals);
@@ -831,11 +846,13 @@ function renderModalChart(param, kind, showModal) {
                 }
             },
             grid: { left: 50, right: 20, top: 40, bottom: 50 },
-            xAxis: { type: 'time' },
+            xAxis: { 
+                type: 'time',
+                splitNumber: 5
+            },
             yAxis: { type: 'value', scale: true },
             dataZoom: [
-                { type: 'inside', xAxisIndex: 0 },
-                { type: 'slider', xAxisIndex: 0 }
+                { type: 'inside', xAxisIndex: 0 }
             ],
             series
         };
@@ -862,7 +879,15 @@ function renderModalChart(param, kind, showModal) {
                     legend: { display: false },
                     highlightRegion: { regions }
                 },
-                scales: { x: { type: 'time' }, y: { type: 'linear' } }
+                scales: { 
+                    x: { 
+                        type: 'time',
+                        ticks: {
+                            maxTicksLimit: 5
+                        }
+                    }, 
+                    y: { type: 'linear' } 
+                }
             }
         });
         // 확대 차트도 visibilityMode에 따라 연동
@@ -909,11 +934,38 @@ function closeChartModal() {
 }
 
 function openWarningModal(param, text) {
-    if (!warningEnabled) return;
-    if (!warningElements.warningModal || !warningElements.warningParam) return;
+    if (!warningEnabled) {
+        console.log(`[경고 팝업 스킵] 경고 기능이 비활성화되어 있습니다.`);
+        return;
+    }
+    if (!warningElements.warningModal || !warningElements.warningParam) {
+        console.log(`[경고 팝업 스킵] 경고 모달 요소를 찾을 수 없습니다.`);
+        return;
+    }
+    
+    const now = Date.now();
+    const timeSinceStartup = now - pageStartTime;
+    const timeSinceLastWarning = now - lastWarningTime;
+    
+    console.log(`[경고 팝업 체크] 파라미터: ${param}, 시작 후: ${Math.floor(timeSinceStartup / 1000)}초, 마지막 경고 후: ${Math.floor(timeSinceLastWarning / 1000)}초`);
+    
+    // 시작 후 5초 그레이스 기간 체크
+    if (timeSinceStartup < STARTUP_GRACE_PERIOD_MS) {
+        console.log(`[경고 팝업 스킵] 시작 후 ${Math.floor(timeSinceStartup / 1000)}초 (그레이스 기간 중)`);
+        return; // 시작 후 5초 이내면 팝업을 표시하지 않음
+    }
+    
+    // 1분 쿨다운 확인
+    if (timeSinceLastWarning < WARNING_COOLDOWN_MS) {
+        console.log(`[경고 팝업 스킵] 마지막 경고 후 ${Math.floor(timeSinceLastWarning / 1000)}초 (쿨다운 중)`);
+        return; // 쿨다운 중이면 팝업을 표시하지 않음
+    }
+    
+    console.log(`[경고 팝업 표시] 파라미터: ${param}`);
     warningElements.warningParam.textContent = text || `${displayParam(param)} 이상 감지`;
     warningElements.warningModal.classList.add('show');
     warningModalOpen = true;
+    lastWarningTime = now; // 경고 팝업이 뜬 시간 기록
 }
 
 function closeWarningModal() {
@@ -921,7 +973,28 @@ function closeWarningModal() {
     warningModalOpen = false;
 }
 
-function openConfirmModal() {
+async function openConfirmModal() {
+    // 먼저 프로세스 상태 확인
+    try {
+        const res = await fetch('/api/equipment/status', {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        const data = await res.json();
+        if (res.ok && data.status === 'stopped') {
+            // 이미 중지된 상태면 확인 모달을 열지 않고 바로 안내 메시지 표시
+            alert('⚠️ 프로세스가 이미 중지되어 있습니다.');
+            closeWarningModal();
+            // 텔레그램 알림 전송
+            await sendTelegramNotification('⚠️ 장비가 이미 중지되어 있습니다.\nDOWN 버튼이 클릭되었지만 실행 중인 프로세스가 없습니다.');
+            return;
+        }
+    } catch (e) {
+        console.error('Error checking equipment status:', e);
+        // 에러가 발생해도 확인 모달은 열도록 진행
+    }
+    
+    // 프로세스가 실행 중이면 확인 모달 열기
     closeWarningModal();
     if (warningElements.confirmModal) warningElements.confirmModal.classList.add('show');
 }
@@ -953,6 +1026,12 @@ async function loadHtml(path, cacheKey) {
     if (!res.ok) throw new Error('failed to fetch html');
     let text = await res.text();
     text = text.replace(/\.\.\/img\//g, '/static/img/'); // 이미지 경로 보정
+    // htmls 폴더 내의 images 경로를 절대 경로로 변경
+    const htmlsMatch = path.match(/\/static\/htmls\/([^\/]+)\/index\.html/);
+    if (htmlsMatch) {
+        const dir = htmlsMatch[1];
+        text = text.replace(/images\//g, `/static/htmls/${dir}/images/`);
+    }
     htmlCache.set(key, text);
     return text;
 }
@@ -1920,7 +1999,7 @@ async function renderMfcCauseTab(entry) {
         1: 'Baratron 게이지 이상으로 인한 공정 불안정(압력 오차/경보/읽힘 불가)이 확인되었습니다.',
         2: 'MFC Zero Point Drift 발생으로 인해 기준 유량이 정확히 설정되지 않아 실제 유량 편차 및 공정 불안정이 확인되었습니다.',
         3: '보트 엘리베이터 회전부의 Magnetic Seal(자기 유체 씰) 성능 저하로 인해 미세 누설 또는 챔버 내 압력 변동이 발생, 이로 인해 MFC 유량 제어가 불안정해지며 실제 유량 측정값에 편차가 발생한 것으로 판단됩니다.',
-        4: 'VG12 측정값의 드리프트·응답 지연·오염으로 인해 챔버 내 실제 압력이 정확히 반영되지 않아 공정 불안정이 발생한 것으로 확인되었습니다. 실제 Gas 유량변화에 따른 현상이므로 전체 압력을 변화시킨 원인을 제거해야 합니다. 1) VG12 Gauge 상태 확인: Base 압력 변화 확인, Gas 유량 대비 Gauge 값 비교 점검 2) Gas유량의 변화: Gas유량의 변화를 점검함(MFC상태점검, Gas 압력센서 점검)'
+        4: 'CKD 밸브 내부의 솔레노이드 코일 또는 밸브 스템(Stem) 구동부에 미세한 이물질 또는 잔류물이 침적되거나, 코일 자체의 열화로 인해 밸브의 정확한 개폐(On/Off) 동작이 지연 또는 불안정해진 것으로 판단됩니다.'
     };
     const label = displayParam(entry?.param || 'MFC');
     const causeText = causeTexts[vt] || '원인 정보가 없습니다.';
@@ -1948,13 +2027,13 @@ function renderMfcActionTab(entry) {
     if (!body) return;
     destroyReportChart();
     disposeThreeViewer();
-    const fileMap = {
-        1: 'Baratron_Guage.html',
-        2: 'MFC.html',
-        3: 'Magnetic_Seal.html',
-        4: 'CKD 대신 VG12로 부품변경.html'
+    const dirMap = {
+        1: '1_baratron_gauge',
+        2: '2_mfc',
+        3: '3_magnetic_seal',
+        4: '4_ckd'
     };
-    const file = fileMap[Number(entry?.violation_type)] || 'MFC.html';
+    const dir = dirMap[Number(entry?.violation_type)] || '2_mfc';
     const label = displayParam(entry?.param || 'MFC');
     body.innerHTML = `
         <div class="report-action-block">
@@ -1963,8 +2042,8 @@ function renderMfcActionTab(entry) {
         </div>
     `;
     const container = document.getElementById('mfc-md-container');
-    const encoded = encodeURIComponent(file);
-    loadHtml(`/static/md/${encoded}`, `action-${file}`)
+    const htmlPath = `/static/htmls/${dir}/index.html`;
+    loadHtml(htmlPath, `action-${dir}`)
         .then(text => renderHtml(container, text))
         .catch(err => {
             console.error('failed to render html', err);
@@ -2419,6 +2498,7 @@ window.addEventListener('DOMContentLoaded', () => {
     if (warningElements.confirmYes) warningElements.confirmYes.addEventListener('click', () => {
         closeConfirmModal();
         closeWarningModal();
+        stopEquipment(); // 경고팝업창의 DOWN버튼 클릭 시 장비 중지
     });
     if (reportElements.reportClose) reportElements.reportClose.addEventListener('click', closeReportModal);
     if (reportElements.reportModal) {
@@ -2442,6 +2522,103 @@ window.addEventListener('DOMContentLoaded', () => {
             saveWarningSetting();
             if (!warningEnabled && warningModalOpen) closeWarningModal();
         });
+    }
+
+    // 장비 상태 RUN/DOWN 버튼 클릭 이벤트
+    const deviceRunBtn = document.getElementById('device-state-run');
+    const deviceDownBtn = document.getElementById('device-state-down');
+    
+    async function startEquipment() {
+        try {
+            const res = await fetch('/api/equipment/start', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const data = await res.json();
+            if (res.ok) {
+                if (data.status === 'already_running') {
+                    alert('⚠️ ' + data.message);
+                } else if (data.status === 'partially_running') {
+                    alert('⚠️ ' + data.message);
+                } else {
+                    const started = data.started || [];
+                    if (started.length > 0) {
+                        alert(`✅ 장비가 시작되었습니다.\n시작된 프로세스: ${started.join(', ')}`);
+                    } else {
+                        alert('✅ ' + data.message);
+                    }
+                }
+                // 장비 시작 시 시작 시간 업데이트 (2분 그레이스 기간 재설정)
+                if (data.status === 'started' || data.status === 'partially_running') {
+                    pageStartTime = Date.now();
+                    console.log('[장비 시작] 그레이스 기간 재설정됨');
+                }
+                // 상태 업데이트
+                pollGeneratorStatus();
+            } else {
+                alert('❌ 오류: ' + (data.message || '프로세스 시작 실패'));
+            }
+        } catch (e) {
+            console.error('Start equipment error:', e);
+            alert('❌ 오류: ' + e.message);
+        }
+    }
+
+    async function stopEquipment() {
+        try {
+            const res = await fetch('/api/equipment/stop', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const data = await res.json();
+            if (res.ok) {
+                if (data.status === 'already_stopped') {
+                    alert('⚠️ ' + data.message);
+                } else {
+                    const killedCount = data.killed_count || 0;
+                    if (killedCount > 0) {
+                        alert(`✅ 장비가 정지되었습니다.\n종료된 프로세스: ${killedCount}개`);
+                    } else {
+                        alert('✅ ' + (data.message || '프로세스가 종료되었습니다.'));
+                    }
+                }
+                // 상태 업데이트
+                pollGeneratorStatus();
+            } else {
+                alert('❌ 오류: ' + (data.message || '프로세스 종료 실패'));
+            }
+        } catch (e) {
+            console.error('Stop equipment error:', e);
+            alert('❌ 오류: ' + e.message);
+        }
+    }
+
+    if (deviceRunBtn) {
+        deviceRunBtn.style.cursor = 'pointer';
+        deviceRunBtn.addEventListener('click', startEquipment);
+    }
+    if (deviceDownBtn) {
+        deviceDownBtn.style.cursor = 'pointer';
+        deviceDownBtn.addEventListener('click', () => {
+            // 장비상태의 DOWN버튼 클릭 시 확인 메시지 표시
+            if (confirm('장비를 Down 하시겠습니까?\n\n⚠️ 주의: 장비 Down은 즉시 실행되며 되돌릴 수 없습니다.')) {
+                stopEquipment();
+            }
+        });
+    }
+
+    async function sendTelegramNotification(message) {
+        try {
+            // 텔레그램 알림을 위한 API 호출 (백엔드에서 처리)
+            await fetch('/api/telegram/notify', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: message })
+            });
+        } catch (e) {
+            console.error('Telegram notification error:', e);
+            // 텔레그램 전송 실패는 무시 (사용자에게는 알리지 않음)
+        }
     }
 });
 
