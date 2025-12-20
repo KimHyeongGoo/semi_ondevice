@@ -1031,6 +1031,25 @@ async function loadHtml(path, cacheKey) {
     if (htmlsMatch) {
         const dir = htmlsMatch[1];
         text = text.replace(/images\//g, `/static/htmls/${dir}/images/`);
+        // CSS 파일 경로 변환 (href="파일명.css")
+        text = text.replace(/href=(['"])([^'"]+\.css)\1/g, (match, quote, filename) => {
+            // 이미 절대 경로인 경우는 제외
+            if (filename.startsWith('/') || filename.startsWith('http')) return match;
+            return `href=${quote}/static/htmls/${dir}/${filename}${quote}`;
+        });
+        // 상대 경로 이미지 파일들을 절대 경로로 변환
+        // url('파일명.png') 또는 url("파일명.png") 패턴 처리 (단, url(#...) 같은 패턴 ID는 제외)
+        text = text.replace(/url\((['"]?)([^'")#]+\.(png|jpg|jpeg|gif|svg))\1\)/g, (match, quote, filename) => {
+            // 이미 절대 경로인 경우는 제외
+            if (filename.startsWith('/') || filename.startsWith('http')) return match;
+            return `url(${quote}/static/htmls/${dir}/${filename}${quote})`;
+        });
+        // xlink:href="파일명.png" 또는 xlink:href='파일명.png' 패턴 처리
+        text = text.replace(/xlink:href=(['"])([^'"]+\.(png|jpg|jpeg|gif|svg))\1/g, (match, quote, filename) => {
+            // 이미 절대 경로인 경우는 제외
+            if (filename.startsWith('/') || filename.startsWith('http')) return match;
+            return `xlink:href=${quote}/static/htmls/${dir}/${filename}${quote}`;
+        });
     }
     htmlCache.set(key, text);
     return text;
@@ -1039,6 +1058,24 @@ async function loadHtml(path, cacheKey) {
 function renderHtml(htmlContainer, htmlText) {
     if (!htmlContainer) return;
     htmlContainer.innerHTML = htmlText;
+    // HTML 내용 중앙 정렬을 위한 스타일 추가
+    const style = document.createElement('style');
+    style.textContent = `
+        #mfc-md-container p {
+            text-align: center;
+            margin: 8px 0;
+        }
+        #mfc-md-container img {
+            display: block;
+            margin: 10px auto;
+            max-width: 100%;
+            height: auto;
+        }
+    `;
+    if (!document.head.querySelector('style[data-action-center]')) {
+        style.setAttribute('data-action-center', 'true');
+        document.head.appendChild(style);
+    }
 }
 
 function loadScriptOnce(src) {
@@ -2038,7 +2075,7 @@ function renderMfcActionTab(entry) {
     body.innerHTML = `
         <div class="report-action-block">
             <div style="font-weight:700; margin-bottom:6px;">조치 방법 (${label})</div>
-            <div class="report-markdown" id="mfc-md-container">불러오는 중...</div>
+            <div class="report-markdown" id="mfc-md-container" style="text-align: center; max-width: 100%; margin: 0 auto;">불러오는 중...</div>
         </div>
     `;
     const container = document.getElementById('mfc-md-container');
