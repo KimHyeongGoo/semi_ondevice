@@ -504,7 +504,12 @@ async def get_alarm_history(
         cur.close()
         conn.close()
     
-    return JSONResponse(result)
+    # 캐시 방지 헤더 추가
+    response = JSONResponse(result)
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
 
 @app.get("/api/csv_data")
 async def get_csv_data(pjob_id: str = Query(...), file_name: str = Query(...)):

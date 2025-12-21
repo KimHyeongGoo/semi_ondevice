@@ -515,7 +515,6 @@ function normalizeLogEntry(item) {
             predicted_value: parsed.predicted_value ?? null,
             peak_time: toMillis(parsed.peak_time),
             violation_type: parsed.violation_type ?? item.violation_type ?? null,
-            violation_type: parsed.violation_type ?? item.violation_type ?? null,
         },
     };
 }
@@ -2025,7 +2024,10 @@ async function drawReportChart(entry, canvas, timeWindow) {
 async function renderMfcCauseTab(entry) {
     const body = reportElements.reportBody;
     if (!body) return;
-    const vt = Number(entry?.violation_type);
+    console.log('renderMfcCauseTab - entry:', entry);
+    console.log('renderMfcCauseTab - entry.violation_type:', entry?.violation_type, '타입:', typeof entry?.violation_type);
+    const vt = Number(entry?.violation_type) || 0;
+    console.log('renderMfcCauseTab - 변환된 vt:', vt);
     const headline = buildCauseHeadline(entry);
     const centerRaw = entry.peak_time ?? entry.end ?? entry.start ?? Date.now();
     const center = toMillis(centerRaw) ?? Date.now();
@@ -2064,13 +2066,18 @@ function renderMfcActionTab(entry) {
     if (!body) return;
     destroyReportChart();
     disposeThreeViewer();
+    console.log('renderMfcActionTab - entry:', entry);
+    console.log('renderMfcActionTab - entry.violation_type:', entry?.violation_type, '타입:', typeof entry?.violation_type);
     const dirMap = {
         1: '1_baratron_gauge',
         2: '2_mfc',
         3: '3_magnetic_seal',
         4: '4_ckd'
     };
-    const dir = dirMap[Number(entry?.violation_type)] || '2_mfc';
+    const vt = Number(entry?.violation_type) || 0;
+    console.log('renderMfcActionTab - 변환된 vt:', vt);
+    const dir = dirMap[vt] || '2_mfc';
+    console.log('renderMfcActionTab - 선택된 디렉토리:', dir);
     const label = displayParam(entry?.param || 'MFC');
     body.innerHTML = `
         <div class="report-action-block">
@@ -2112,8 +2119,15 @@ function renderMfcDrawingTab(entry) {
 }
 
 function getPartsData(entry) {
-    const vt = Number(entry?.violation_type);
-    if (partsCatalog.byViolation[vt]) return partsCatalog.byViolation[vt];
+    console.log('getPartsData - entry:', entry);
+    console.log('getPartsData - entry.violation_type:', entry?.violation_type, '타입:', typeof entry?.violation_type);
+    const vt = Number(entry?.violation_type) || 0;
+    console.log('getPartsData - 변환된 vt:', vt);
+    if (partsCatalog.byViolation[vt]) {
+        console.log('getPartsData - 선택된 부품 정보:', partsCatalog.byViolation[vt].title);
+        return partsCatalog.byViolation[vt];
+    }
+    console.log('getPartsData - 기본 부품 정보 사용');
     return partsCatalog.default;
 }
 
@@ -2346,8 +2360,129 @@ async function setActiveReportTab(tabKey) {
     }
 }
 
-function openReportModal(entry) {
+async function openReportModal(entry) {
     if (!reportElements.reportModal || !reportElements.reportSummary || !reportElements.reportBody) return;
+    
+    // DB에서 최신 violation_type 가져오기
+    try {
+        // entry의 start와 end를 사용하여 해당 기간의 이상 로그 조회
+        // 시간 범위를 넓히기 위해 ±5초 여유를 둠
+        const searchStart = entry.start ? entry.start - 5000 : null;
+        const searchEnd = entry.end ? entry.end + 5000 : null;
+        
+        if (searchStart && searchEnd) {
+            // 로컬 시간 형식으로 변환 (YYYY-MM-DD HH:MM:SS)
+            const formatLocalTime = (timestamp) => {
+                const d = new Date(timestamp);
+                const year = d.getFullYear();
+                const month = String(d.getMonth() + 1).padStart(2, '0');
+                const day = String(d.getDate()).padStart(2, '0');
+                const hours = String(d.getHours()).padStart(2, '0');
+                const minutes = String(d.getMinutes()).padStart(2, '0');
+                const seconds = String(d.getSeconds()).padStart(2, '0');
+                return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+            };
+            
+            const startTime = formatLocalTime(searchStart);
+            const endTime = formatLocalTime(searchEnd);
+            
+            console.log('리포트 모달 - 조회 시간 범위:', { startTime, endTime });
+            console.log('리포트 모달 - entry 시간:', { 
+                entryStart: formatLocalTime(entry.start), 
+                entryEnd: formatLocalTime(entry.end) 
+            });
+            
+            const timestamp = new Date().getTime(); // 캐시 방지용 타임스탬프
+            const res = await fetch(`/api/alarm_history?process_start_time=${encodeURIComponent(startTime)}&process_end_time=${encodeURIComponent(endTime)}&_t=${timestamp}`, {
+                cache: 'no-cache',
+                headers: {
+                    'Cache-Control': 'no-cache',
+                    'Pragma': 'no-cache'
+                }
+            });
+            
+            if (res.ok) {
+                const alarmData = await res.json();
+                console.log('리포트 모달 - DB에서 가져온 이상 로그:', alarmData);
+                console.log('리포트 모달 - 조회된 이상 로그 개수:', alarmData ? alarmData.length : 0);
+                
+                // 해당 파라미터와 시간이 일치하는 이상 로그 찾기
+                if (alarmData && alarmData.length > 0) {
+                    console.log('리포트 모달 - entry.param:', entry.param);
+                    
+                    // 파라미터가 일치하는 이상 로그 필터링
+                    const paramMatches = alarmData.filter(alarm => alarm.parameter === entry.param);
+                    console.log('리포트 모달 - 파라미터 일치하는 이상 로그:', paramMatches);
+                    
+                    if (paramMatches.length > 0) {
+                        // 가장 최근의 이상 로그 사용 (end_time 기준)
+                        const sorted = [...paramMatches].sort((a, b) => {
+                            const timeA = new Date(a.end_time || a.start_time || 0);
+                            const timeB = new Date(b.end_time || b.start_time || 0);
+                            return timeB - timeA;
+                        });
+                        
+                        // 시간 범위가 겹치는 이상 로그 찾기
+                        let matchedAlarm = sorted.find(alarm => {
+                            // 시간 문자열을 Date 객체로 변환
+                            const parseTime = (timeStr) => {
+                                if (!timeStr) return null;
+                                // "YYYY-MM-DD HH:MM:SS" 형식 파싱
+                                const [datePart, timePart] = timeStr.split(' ');
+                                if (!datePart || !timePart) return null;
+                                const [year, month, day] = datePart.split('-').map(Number);
+                                const [hours, minutes, seconds] = timePart.split(':').map(Number);
+                                return new Date(year, month - 1, day, hours, minutes, seconds);
+                            };
+                            
+                            const alarmStart = parseTime(alarm.start_time);
+                            const alarmEnd = parseTime(alarm.end_time);
+                            const entryStart = new Date(entry.start);
+                            const entryEnd = new Date(entry.end);
+                            
+                            if (!alarmStart || !alarmEnd) return false;
+                            
+                            // 시간 범위가 겹치는지 확인 (5초 여유)
+                            const overlap = alarmStart <= entryEnd + 5000 && alarmEnd >= entryStart - 5000;
+                            console.log('리포트 모달 - 시간 매칭 확인:', {
+                                alarm: { start: alarm.start_time, end: alarm.end_time },
+                                entry: { start: formatLocalTime(entry.start), end: formatLocalTime(entry.end) },
+                                overlap
+                            });
+                            return overlap;
+                        });
+                        
+                        // 시간 매칭이 없으면 가장 최근 것 사용
+                        if (!matchedAlarm && sorted.length > 0) {
+                            matchedAlarm = sorted[0];
+                            console.log('리포트 모달 - 시간 매칭 없음, 가장 최근 것 사용:', matchedAlarm);
+                        }
+                        
+                        if (matchedAlarm && matchedAlarm.violation_type !== null && matchedAlarm.violation_type !== undefined) {
+                            // DB에서 가져온 최신 violation_type으로 업데이트
+                            const oldVt = entry.violation_type;
+                            entry.violation_type = matchedAlarm.violation_type;
+                            console.log('리포트 모달 - violation_type 업데이트:', { 
+                                old: oldVt, 
+                                new: matchedAlarm.violation_type,
+                                alarm: matchedAlarm
+                            });
+                        } else {
+                            console.log('리포트 모달 - violation_type 업데이트 실패: matchedAlarm 없음');
+                        }
+                    } else {
+                        console.log('리포트 모달 - 파라미터 일치하는 이상 로그 없음');
+                    }
+                } else {
+                    console.log('리포트 모달 - 조회된 이상 로그 없음');
+                }
+            }
+        }
+    } catch (e) {
+        console.error('리포트 모달 - DB에서 violation_type 가져오기 실패:', e);
+        // 실패해도 기존 entry 사용
+    }
+    
     currentReportEntry = entry;
     const timeText = formatTimelineTime(entry.end);
     const diff = entry.diff != null ? Math.abs(entry.diff).toFixed(0) : '0';
@@ -2358,6 +2493,9 @@ function openReportModal(entry) {
         `- 이상 감지 시간 : ${timeText}`,
         `- 이상 유형 : ${logText}`
     ];
+    if (entry.violation_type !== null && entry.violation_type !== undefined) {
+        summaryLines.push(`- 위반 유형 : ${entry.violation_type}`);
+    }
     reportElements.reportSummary.textContent = summaryLines.join('\n');
     setActiveReportTab('cause');
     reportElements.reportModal.style.display = 'flex';

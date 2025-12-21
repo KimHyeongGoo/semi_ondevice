@@ -8,7 +8,7 @@
         body {
             font-family: Arial, sans-serif;
             margin: 0;
-            padding: 20px;
+            padding: 0;
             background-color: #F7FBFF;
             min-height: 100vh;
             display: flex;
@@ -22,11 +22,11 @@
             padding: 18px;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
             flex: 1;
-            height: calc(100vh - 40px);
+            height: 100vh;
             display: flex;
             flex-direction: column;
             gap: 12px;
-            transform-origin: top center;
+            transform-origin: top left;
         }
 
         .navbar {
@@ -346,6 +346,197 @@
             width: 100%;
             height: 100%;
         }
+
+        /* Parts Tab Styles - 부품확인탭 부품정보 이미지 */
+        .parts-info-layout {
+            display: flex;
+            gap: 14px;
+            align-items: flex-start;
+            flex-wrap: nowrap;
+            flex: 1 1 auto;
+            min-height: 0;
+            height: 100%;
+            overflow: visible;
+        }
+
+        .parts-section {
+            background: #f8fafc;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            height: 100%;
+            min-height: 0;
+            flex: 1 1 auto;
+            overflow: visible;
+        }
+
+        .parts-figure {
+            flex: 1 1 45%;
+            max-width: 300px;
+            min-width: 280px;
+            height: auto;
+            max-height: 250px;
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 14px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+            align-self: flex-start;
+            overflow: visible;
+            box-sizing: border-box;
+        }
+
+        .parts-figure img {
+            max-width: 100% !important;
+            max-height: 150px !important;
+            width: auto;
+            height: auto;
+            object-fit: contain;
+            border-radius: 6px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .parts-figure figcaption {
+            margin-top: 6px;
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .parts-text-cols {
+            flex: 1 1 55%;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            min-height: 0;
+            align-self: stretch;
+            overflow-y: auto;
+        }
+
+        .parts-text-block {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 12px 14px;
+            line-height: 1.6;
+        }
+
+        .parts-text-block .label {
+            display: inline-block;
+            font-weight: 700;
+            margin-bottom: 4px;
+            color: #0f172a;
+        }
+
+        /* 리포트 모달 스타일 */
+        #report-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.4);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+
+        #report-modal .report-content {
+            width: 80vw;
+            height: 80vh;
+            max-width: 1400px;
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #report-modal .report-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        #report-close {
+            background: transparent;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        .report-summary {
+            background: #F2F2F2;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 12px;
+            line-height: 1.5;
+            white-space: pre-line;
+        }
+
+        .report-tabs {
+            display: grid;
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+            gap: 6px;
+            margin-bottom: 10px;
+        }
+
+        .report-tab {
+            background: #DAE3F3;
+            border: 2px solid #DAE3F3;
+            border-radius: 6px;
+            padding: 8px;
+            text-align: center;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.15s ease, border-color 0.15s ease;
+        }
+
+        .report-tab:hover {
+            background: #B4C7E7;
+            border-color: #002060;
+        }
+
+        .report-tab.active {
+            background: #B4C7E7;
+            border-color: #002060;
+            border-width: 2px;
+        }
+
+        .report-body {
+            flex: 1;
+            min-height: 0;
+            border: 3px solid #1f4e79;
+            border-radius: 8px;
+            padding: 12px;
+            overflow: hidden;
+            line-height: 1.5;
+            background: #fff;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+        }
+
+        .parts-panel {
+            display: none;
+            margin-top: 0;
+            flex: 1 1 auto;
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        .parts-panel.active {
+            display: flex;
+            flex-direction: column;
+        }
     </style>
 </head>
 
@@ -388,6 +579,23 @@
                 <div id="heatmap-modal-table"></div>
             </div>
         </div>
+        <div id="report-modal">
+            <div class="report-content">
+                <div class="report-header">
+                    <div>이상 로그 REPORT</div>
+                    <button id="report-close">×</button>
+                </div>
+                <div class="report-summary" id="report-summary"></div>
+                <div class="report-tabs">
+                    <div class="report-tab" data-tab="cause">원인 진단</div>
+                    <div class="report-tab" data-tab="action">조치 방법</div>
+                    <div class="report-tab" data-tab="parts">부품 확인</div>
+                    <div class="report-tab" data-tab="drawing">도면(이상 위치)</div>
+                    <div class="report-tab" data-tab="process">공정 단계 설명</div>
+                </div>
+                <div class="report-body" id="report-body">내용이 없습니다.</div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -400,9 +608,9 @@
             function fitToViewport() {
                 if (!surface) return;
                 surface.style.transform = 'none';
-                surface.style.height = 'calc(100vh - 40px)';
+                surface.style.height = '100vh';
 
-                const available = window.innerHeight - PADDING_TOTAL;
+                const available = window.innerHeight;
                 const needed = surface.scrollHeight;
                 if (needed <= available) {
                     if (warning) warning.style.display = 'none';
@@ -412,7 +620,7 @@
                 const scale = Math.max(0.75, Math.min(1, available / needed));
                 surface.style.transform = `scale(${scale})`;
                 surface.style.height = `${available / scale}px`;
-                surface.style.width = `calc((100% - ${PADDING_TOTAL}px) / ${scale})`;
+                surface.style.width = `calc(100% / ${scale})`;
 
                 if (warning) warning.style.display = 'block';
             }
