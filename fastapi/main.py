@@ -440,6 +440,72 @@ async def get_csv_files(pjob_id: str = Query(...)):
     
     return JSONResponse(csv_files)
 
+@app.get("/api/alarm_history")
+async def get_alarm_history(
+    process_start_time: str = Query(...),
+    process_end_time: str = Query(...)
+):
+    """realtime_abnormal_log 테이블에서 ProcessStartTime과 ProcessEndTime 사이의 알람 이력 조회"""
+    # 서버 재시작을 위한 주석
+    conn = psycopg2.connect(
+        dbname="postgres",
+        user="keti",
+        password="keti1234!",
+        host="localhost",
+        port=5432
+    )
+    cur = conn.cursor()
+    
+    try:
+        ensure_realtime_abnormal_log_table(cur)
+        conn.commit()
+        
+        # 시간 문자열을 datetime으로 변환
+        try:
+            start_dt = datetime.strptime(process_start_time, "%Y-%m-%d %H:%M:%S")
+            end_dt = datetime.strptime(process_end_time, "%Y-%m-%d %H:%M:%S")
+        except ValueError:
+            # 다른 형식 시도
+            try:
+                start_dt = parser.parse(process_start_time)
+                end_dt = parser.parse(process_end_time)
+            except Exception:
+                return JSONResponse({"error": "Invalid timestamp format"}, status_code=400)
+        
+        # realtime_abnormal_log에서 start_time이 ProcessStartTime과 ProcessEndTime 사이에 있는 데이터 조회
+        query = """
+            SELECT parameter, start_time, end_time, avg_diff_percent, violation_type, message, duration_seconds
+            FROM realtime_abnormal_log
+            WHERE start_time >= %s AND start_time <= %s
+            ORDER BY start_time DESC
+        """
+        
+        cur.execute(query, (start_dt, end_dt))
+        rows = cur.fetchall()
+        
+        result = []
+        for idx, (param, start_ts, end_ts, diff_percent, violation_type, message, duration_seconds) in enumerate(rows, 1):
+            result.append({
+                "no": idx,
+                "parameter": param or "",
+                "start_time": start_ts.strftime("%Y-%m-%d %H:%M:%S") if start_ts else "",
+                "end_time": end_ts.strftime("%Y-%m-%d %H:%M:%S") if end_ts else "",
+                "diff_percent": round(diff_percent, 2) if diff_percent is not None else 0.0,
+                "violation_type": violation_type if violation_type is not None else 0,
+                "message": message or "",
+                "duration_seconds": duration_seconds if duration_seconds is not None else None
+            })
+    except Exception as e:
+        print(f"[get_alarm_history ERROR] {e}")
+        import traceback
+        traceback.print_exc()
+        result = []
+    finally:
+        cur.close()
+        conn.close()
+    
+    return JSONResponse(result)
+
 @app.get("/api/csv_data")
 async def get_csv_data(pjob_id: str = Query(...), file_name: str = Query(...)):
     """CSV 파일의 데이터를 읽어서 반환"""

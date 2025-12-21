@@ -4,7 +4,11 @@
 <head>
     <meta charset="UTF-8">
     <title>과거 공정 이력 검색 2</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
     <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+    <script src="/static/lib/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
         * {
             box-sizing: border-box;
@@ -208,6 +212,18 @@
             /* allow shrink so side panel stays beside */
         }
 
+        .month-display {
+            font-weight: 700;
+            font-size: 14px;
+            color: #000;
+            text-align: center;
+            padding: 8px;
+            background: #fff;
+            border: 1px solid #8b8b8b;
+            border-radius: 4px;
+            margin-bottom: 4px;
+        }
+
         .table-shell {
             background: #fff;
             border: 1px solid #b3b3b3;
@@ -282,10 +298,6 @@
             cursor: pointer;
         }
 
-        .history-table tr.selected {
-            outline: 2px solid #ff0000;
-            outline-offset: -2px;
-        }
 
         .table-footer {
             padding: 6px 2px 0;
@@ -334,8 +346,13 @@
             box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
         }
 
-        .ghost-btn:hover {
+        .ghost-btn:hover:not(:disabled) {
             background: #e4e4e4;
+        }
+
+        .ghost-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
 
         .ai-btn {
@@ -926,18 +943,631 @@
             border-color: #6b6b6b;
             transform: translateY(-1px);
         }
+
+        /* Report Modal Styles */
+        #report-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.4);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+
+        #report-modal .report-content {
+            width: 80vw;
+            height: 80vh;
+            max-width: 1400px;
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #report-modal .report-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        #report-close {
+            background: transparent;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        .report-summary {
+            background: #F2F2F2;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 12px;
+            line-height: 1.5;
+            white-space: pre-line;
+        }
+
+        .report-tabs {
+            display: grid;
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+            gap: 6px;
+            margin-bottom: 10px;
+        }
+
+        .report-tab {
+            background: #DAE3F3;
+            border: 2px solid #DAE3F3;
+            border-radius: 6px;
+            padding: 8px;
+            text-align: center;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.15s ease, border-color 0.15s ease;
+        }
+
+        .report-tab:hover {
+            background: #B4C7E7;
+            border-color: #002060;
+        }
+
+        .report-tab.active {
+            background: #B4C7E7;
+            border-color: #002060;
+            border-width: 2px;
+        }
+
+        .report-body {
+            flex: 1;
+            min-height: 0;
+            border: 3px solid #1f4e79;
+            border-radius: 8px;
+            padding: 12px;
+            overflow: hidden;
+            line-height: 1.5;
+            background: #fff;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+        }
+
+        .report-body>* {
+            flex: 0 0 auto;
+            min-height: 0;
+        }
+
+        .report-body .report-cause-layout {
+            flex: 1 1 auto;
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        .report-3d-wrap {
+            background: #f9fafb;
+            border: 1px solid #d0d7de;
+            border-radius: 10px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .report-3d-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+
+        .report-3d-canvas {
+            width: 100%;
+            flex: 1 1 auto;
+            min-height: 320px;
+            background: #e5e7eb;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .report-3d-note {
+            margin-top: 8px;
+            font-size: 13px;
+            color: #475569;
+        }
+
+        .report-cause-layout {
+            display: grid;
+            grid-template-columns: 1.35fr 1fr;
+            gap: 12px;
+            align-items: stretch;
+            height: 100%;
+            min-height: 0;
+        }
+
+        .report-cause-chart,
+        .report-cause-text {
+            background: #f9fafb;
+            border: 1px solid #d0d7de;
+            border-radius: 10px;
+            padding: 12px;
+            box-sizing: border-box;
+        }
+
+        .report-cause-title {
+            font-weight: 700;
+            margin-bottom: 6px;
+            color: #0f172a;
+        }
+
+        .report-cause-chart {
+            height: 100%;
+            min-height: 0;
+            overflow: visible;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .report-cause-chart canvas {
+            width: 100%;
+            flex: 1 1 auto;
+            min-height: 0;
+            margin-bottom: 4px;
+        }
+
+        .report-cause-text {
+            height: 100%;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+            overflow: visible;
+        }
+
+        .report-cause-lines {
+            overflow: visible;
+            flex: 1 1 auto;
+            padding-bottom: 4px;
+        }
+
+        .report-cause-badge {
+            display: inline-block;
+            background: #1f4e79;
+            color: #fff;
+            border-radius: 14px;
+            padding: 6px 12px;
+            font-size: 15px;
+            font-weight: 800;
+            margin-bottom: 8px;
+        }
+
+        .report-cause-lines p {
+            margin: 6px 0;
+        }
+
+        .report-action-block {
+            background: #f9fafb;
+            border: 1px solid #d0d7de;
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 12px;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .report-action-two-col {
+            display: grid;
+            grid-template-columns: 1.1fr 0.9fr;
+            gap: 12px;
+            align-items: start;
+            flex: 1 1 auto;
+        }
+
+        .report-markdown {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 10px 12px;
+            height: 100%;
+            min-height: 320px;
+            overflow-y: auto;
+        }
+
+        .report-markdown img {
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #d0d7de;
+            border-radius: 6px;
+        }
+
+        .report-action-text {
+            line-height: 1.6;
+        }
+
+        .report-action-images {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 10px;
+        }
+
+        .report-action-images.two-col {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .report-action-images.single {
+            grid-template-columns: 1fr;
+        }
+
+        .report-action-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .report-action-list strong {
+            color: #1f4e79;
+        }
+
+        .report-action-image {
+            border: 1px solid #d0d7de;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .report-action-image img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .mini-table tbody tr {
+            cursor: pointer;
+        }
+
+        .mini-table tbody tr:hover {
+            background: #e3edff;
+        }
+
+        /* Parts Tab Styles */
+        .parts-tablist {
+            display: inline-flex;
+            gap: 12px;
+            margin-bottom: 8px;
+            padding: 0 4px 4px;
+            border-bottom: 2px solid #d0d7de;
+            flex: 0 0 auto;
+        }
+
+        .parts-subtab {
+            background: transparent;
+            border: none;
+            padding: 8px 12px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            color: #1f2937;
+            height: 40px;
+            line-height: 24px;
+        }
+
+        .parts-subtab.active {
+            border-bottom-color: #1f4e79;
+            color: #1f4e79;
+        }
+
+        .parts-panel {
+            display: none;
+            margin-top: 0;
+            flex: 1 1 auto;
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        .parts-panel.active {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .parts-section {
+            background: #f8fafc;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            height: 100%;
+            min-height: 0;
+            flex: 1 1 auto;
+        }
+
+        .parts-section-title {
+            font-weight: 700;
+            font-size: 16px;
+            margin-bottom: 8px;
+            color: #0f172a;
+        }
+
+        .parts-kv-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .parts-kv {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 10px 12px;
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .parts-kv .label {
+            color: #475569;
+            font-weight: 600;
+        }
+
+        .parts-note {
+            margin-top: 6px;
+            color: #334155;
+            line-height: 1.5;
+        }
+
+        .parts-vendor-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 12px;
+        }
+
+        .parts-vendor-card {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+        }
+
+        .parts-vendor-name {
+            font-weight: 700;
+            font-size: 15px;
+            color: #0f172a;
+        }
+
+        .parts-vendor-contact {
+            color: #334155;
+            font-size: 14px;
+        }
+
+        .parts-vendor-note {
+            color: #475569;
+            font-size: 13px;
+        }
+
+        .parts-info-layout {
+            display: flex;
+            gap: 14px;
+            align-items: center;
+            flex-wrap: nowrap;
+            flex: 1 1 auto;
+            min-height: 0;
+            height: 100%;
+        }
+
+        .parts-figure {
+            flex: 1 1 45%;
+            max-width: 300px;
+            min-width: 280px;
+            height: auto;
+            max-height: 100%;
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 14px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+            align-self: flex-start;
+        }
+
+        .parts-figure img {
+            max-width: 100%;
+            max-height: 100%;
+            width: auto;
+            height: auto;
+            object-fit: contain;
+            border-radius: 6px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .parts-figure figcaption {
+            margin-top: 6px;
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .parts-text-cols {
+            flex: 1 1 55%;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            min-height: 0;
+            align-self: stretch;
+            overflow-y: auto;
+        }
+
+        .parts-text-block {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 12px 14px;
+            line-height: 1.6;
+        }
+
+        .parts-text-block .label {
+            display: inline-block;
+            font-weight: 700;
+            margin-bottom: 4px;
+            color: #0f172a;
+        }
+
+        .parts-table-wrapper {
+            flex: 1 1 auto;
+            min-height: 0;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+        }
+
+        .parts-table-container {
+            flex: 1 1 auto;
+            min-height: 0;
+            overflow: hidden;
+            position: relative;
+            box-sizing: border-box;
+            width: 100%;
+        }
+
+        .parts-table {
+            width: 100%;
+            max-width: 100%;
+            border-collapse: collapse;
+            background: #fff;
+            border: 1px solid #d0d7de;
+            border-radius: 8px;
+            overflow: hidden;
+            font-size: 15px;
+            table-layout: fixed;
+            display: table;
+            box-sizing: border-box;
+        }
+
+        .parts-table thead {
+            display: table-header-group;
+        }
+
+        .parts-table tbody {
+            display: table-row-group;
+        }
+
+        .parts-table tbody tr {
+            display: table-row;
+        }
+
+        .parts-table tbody td {
+            vertical-align: middle;
+            padding: 14px 12px;
+        }
+
+        .parts-table th,
+        .parts-table td {
+            border: 1px solid #c6cbd4;
+            padding: 10px 12px;
+        }
+
+        .parts-table thead {
+            background: #0b2c6a;
+            color: #fff;
+            font-weight: 700;
+            text-align: center;
+        }
+
+        .parts-table a {
+            color: #1f4e79;
+            text-decoration: underline;
+            word-break: break-all;
+        }
+
+        .parts-table tbody tr:nth-child(odd) {
+            background: #f8fafc;
+        }
+
+        .parts-table tbody tr:nth-child(even) {
+            background: #fff;
+        }
+
+        .parts-table tbody td {
+            text-align: center;
+            color: #1f2937;
+        }
+
+        .parts-table tbody td:first-child {
+            font-weight: 700;
+            width: 70px;
+        }
+
+        .parts-table tbody td:last-child {
+            color: #0f172a;
+        }
+
+        .parts-table th:not(:last-child),
+        .parts-table td:not(:last-child) {
+            border-right: 1px dotted #9ba5b5;
+        }
+
+        /* 공정 단계 설명 레이아웃 */
+        .process-layout {
+            align-items: center;
+            flex-wrap: nowrap;
+            height: 100%;
+        }
+
+        .process-layout .parts-figure {
+            flex: 1 1 0;
+            max-width: none;
+            width: auto;
+            height: auto;
+            max-height: 350px;
+            align-self: center;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+
+        .process-layout .parts-figure img {
+            max-width: 70%;
+            max-height: 70%;
+            width: auto;
+            height: auto;
+            object-fit: contain;
+        }
+
+        .process-layout .parts-text-cols {
+            flex: 1 1 0;
+            height: 100%;
+        }
+
+        @media (max-width: 1100px) {
+            .parts-info-layout {
+                flex-wrap: wrap;
+            }
+
+            .parts-figure,
+            .process-layout .parts-figure,
+            .parts-text-cols,
+            .process-layout .parts-text-cols {
+                flex: 1 1 100%;
+                max-width: none;
+            }
+        }
     </style>
 </head>
 
 <body>
-    <div class="navbar">
-        <a href="/index5.html" class="{% if active_tab == 'assistant' %}active{% endif %}">AI 어시스턴트</a>
-        <a href="/" class="{% if active_tab == 'index' %}active{% endif %}">실시간 파라미터 예측</a>
-        <a href="/index4.html" class="{% if active_tab == 'index4' %}active{% endif %}">실시간 이상감지</a>
-        <a href="/index3.html" class="{% if active_tab == 'index3' %}active{% endif %}">과거 공정 이력 검색</a>
-        <a href="/index6.html" class="{% if active_tab == 'index6' %}active{% endif %}">과거 공정 이력 검색 2</a>
-        <a href="/index2.html" class="{% if active_tab == 'index2' %}active{% endif %}">공정 결과 추론</a>
-    </div>
 
     <div class="window">
         <h2 class="page-title">과거 공정 이력 검색</h2>
@@ -980,6 +1610,7 @@
             <div class="side-panel">
                 <div class="panel-inner">
                     <div class="block-title">Table 설정</div>
+                    <div class="month-display" id="month-display">-</div>
                     <button class="ghost-btn" data-action="latest">최신순</button>
                     <button class="ghost-btn" data-action="oldest">과거순</button>
                     <button class="ghost-btn" data-action="next">Next</button>
@@ -1023,10 +1654,11 @@
                     <table class="mini-table" id="alarm-table">
                         <thead>
                             <tr>
-                                <th>NO.</th>
-                                <th>AlarmID</th>
-                                <th>Level</th>
-                                <th>설명</th>
+                                <th>No.</th>
+                                <th>Parameter</th>
+                                <th>StartTime</th>
+                                <th>EndTime</th>
+                                <th>Diff_percent</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -1082,6 +1714,25 @@
                     </table>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Report Modal -->
+    <div id="report-modal">
+        <div class="report-content">
+            <div class="report-header">
+                <div>이상 로그 REPORT</div>
+                <button id="report-close">×</button>
+            </div>
+            <div class="report-summary" id="report-summary"></div>
+            <div class="report-tabs">
+                <div class="report-tab" data-tab="cause">원인 진단</div>
+                <div class="report-tab" data-tab="action">조치 방법</div>
+                <div class="report-tab" data-tab="parts">부품 확인</div>
+                <div class="report-tab" data-tab="drawing">도면(이상 위치)</div>
+                <div class="report-tab" data-tab="process">공정 단계 설명</div>
+            </div>
+            <div class="report-body" id="report-body">내용이 없습니다.</div>
         </div>
     </div>
 
@@ -1186,6 +1837,7 @@
         let allRows = [];
         let selectedIndex = 0;
         let sortOrder = 'desc'; // 'desc' 최신순, 'asc' 과거순
+        let currentMonth = new Date().getFullYear() * 12 + new Date().getMonth(); // 현재 월 (YYYY * 12 + MM)
 
         // ProcessRecipe 목록 로드
         async function loadRecipes() {
@@ -1210,14 +1862,107 @@
                 const response = await fetch(url);
                 const data = await response.json();
                 allRows = data;
-                rows = data;
-                renderTable();
+                filterByMonth();
             } catch (error) {
                 console.error('데이터 로드 실패:', error);
                 rows = [];
                 allRows = [];
-                renderTable();
+                filterByMonth();
             }
+        }
+
+        // 월별 필터링 함수
+        function filterByMonth() {
+            if (allRows.length === 0) {
+                rows = [];
+                renderTable();
+                updateMonthDisplay();
+                return;
+            }
+
+            const year = Math.floor(currentMonth / 12);
+            const month = currentMonth % 12;
+
+            rows = allRows.filter(row => {
+                if (!row.process_start_time) return false;
+                const date = new Date(row.process_start_time);
+                return date.getFullYear() === year && date.getMonth() === month;
+            });
+
+            selectedIndex = 0;
+            renderTable();
+            updateMonthDisplay();
+            updateMonthButtons();
+        }
+
+        // 월 표시 업데이트
+        function updateMonthDisplay() {
+            const year = Math.floor(currentMonth / 12);
+            const month = currentMonth % 12;
+            const monthNames = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'];
+            const displayEl = document.getElementById('month-display');
+            if (displayEl) {
+                displayEl.textContent = `${year}년 ${monthNames[month]}`;
+            }
+        }
+
+        // 월 네비게이션 버튼 상태 업데이트
+        function updateMonthButtons() {
+            if (allRows.length === 0) {
+                return;
+            }
+
+            // 데이터에서 최소/최대 월 찾기
+            const dates = allRows
+                .map(row => row.process_start_time ? new Date(row.process_start_time) : null)
+                .filter(date => date !== null);
+
+            if (dates.length === 0) {
+                return;
+            }
+
+            const minDate = new Date(Math.min(...dates));
+            const maxDate = new Date(Math.max(...dates));
+            const minMonth = minDate.getFullYear() * 12 + minDate.getMonth();
+            const maxMonth = maxDate.getFullYear() * 12 + maxDate.getMonth();
+
+            // Next/Prev 버튼 비활성화 처리
+            const nextBtn = document.querySelector('.side-panel .ghost-btn[data-action="next"]');
+            const prevBtn = document.querySelector('.side-panel .ghost-btn[data-action="prev"]');
+            
+            if (nextBtn) {
+                nextBtn.disabled = currentMonth >= maxMonth;
+                if (currentMonth >= maxMonth) {
+                    nextBtn.style.opacity = '0.5';
+                    nextBtn.style.cursor = 'not-allowed';
+                } else {
+                    nextBtn.style.opacity = '1';
+                    nextBtn.style.cursor = 'pointer';
+                }
+            }
+            
+            if (prevBtn) {
+                prevBtn.disabled = currentMonth <= minMonth;
+                if (currentMonth <= minMonth) {
+                    prevBtn.style.opacity = '0.5';
+                    prevBtn.style.cursor = 'not-allowed';
+                } else {
+                    prevBtn.style.opacity = '1';
+                    prevBtn.style.cursor = 'pointer';
+                }
+            }
+        }
+
+        // 다음 달로 이동
+        function goToNextMonth() {
+            currentMonth++;
+            filterByMonth();
+        }
+
+        // 이전 달로 이동
+        function goToPrevMonth() {
+            currentMonth--;
+            filterByMonth();
         }
 
         async function renderTraceLogging(pjobId, recipeName) {
@@ -1247,17 +1992,84 @@
             }
         }
 
-        function renderAlarmHistory(row) {
+        async function renderAlarmHistory(row) {
             const tbody = document.querySelector('#alarm-table tbody');
             if (!tbody) return;
-            tbody.innerHTML = `
-                <tr>
-                    <td>1</td>
-                    <td>-</td>
-                    <td>-</td>
-                    <td>표시할 알람 내역이 없습니다.</td>
-                </tr>
-            `;
+            
+            // 로딩 표시
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">로딩 중...</td></tr>';
+            
+            try {
+                const processStartTime = row.process_start_time || '';
+                const processEndTime = row.process_end_time || '';
+                
+                if (!processStartTime || !processEndTime) {
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">시작 시간 또는 종료 시간이 없습니다.</td></tr>';
+                    return;
+                }
+                
+                const response = await fetch(
+                    `/api/alarm_history?process_start_time=${encodeURIComponent(processStartTime)}&process_end_time=${encodeURIComponent(processEndTime)}`
+                );
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const alarmData = await response.json();
+                
+                // 응답이 배열인지 확인
+                if (!Array.isArray(alarmData)) {
+                    if (alarmData.error) {
+                        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">오류: ${alarmData.error}</td></tr>`;
+                        return;
+                    }
+                    console.error('예상치 못한 응답 형식:', alarmData);
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">데이터 형식 오류</td></tr>';
+                    return;
+                }
+                
+                if (alarmData.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">표시할 알람 내역이 없습니다.</td></tr>';
+                    return;
+                }
+                
+                // 현재 알람 데이터 저장
+                currentAlarmData = alarmData;
+                
+                // violation_type 확인 및 로깅
+                console.log('Alarm data sample:', alarmData[0]);
+                alarmData.forEach((alarm, idx) => {
+                    console.log(`Alarm ${idx}:`, {
+                        parameter: alarm.parameter,
+                        violation_type: alarm.violation_type,
+                        diff_percent: alarm.diff_percent
+                    });
+                });
+                
+                tbody.innerHTML = alarmData.map((alarm, idx) => `
+                    <tr data-alarm-index="${idx}" style="cursor: pointer;">
+                        <td>${alarm.no || idx + 1}</td>
+                        <td>${alarm.parameter || ''}</td>
+                        <td>${alarm.start_time || ''}</td>
+                        <td>${alarm.end_time || ''}</td>
+                        <td>${alarm.diff_percent !== undefined ? alarm.diff_percent : ''}</td>
+                    </tr>
+                `).join('');
+                
+                // 클릭 이벤트 추가
+                tbody.querySelectorAll('tr[data-alarm-index]').forEach((tr, idx) => {
+                    tr.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('Alarm row clicked:', alarmData[idx]);
+                        openAlarmReport(alarmData[idx]);
+                    });
+                });
+            } catch (error) {
+                console.error('알람 이력 로드 실패:', error);
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">데이터를 불러올 수 없습니다.</td></tr>';
+            }
         }
 
         function renderTable() {
@@ -1288,7 +2100,6 @@
             rows.forEach((row, idx) => {
                 const tr = document.createElement('tr');
                 tr.dataset.index = idx;
-                if (idx === selectedIndex) tr.classList.add('selected');
                 tr.innerHTML = `
                     <td>${row.no || idx + 1}</td>
                     <td>${row.pjob_id || ''}</td>
@@ -1312,8 +2123,417 @@
             if (target) target.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
 
+        // Alarm Report 모달 열기 (전역 스코프에 노출)
+        window.openAlarmReport = function openAlarmReport(alarm) {
+            if (!alarm) {
+                console.error('openAlarmReport: alarm data is missing');
+                return;
+            }
+            
+            console.log('openAlarmReport called with:', alarm);
+            
+            // realtime_anomaly.js의 함수들을 사용하기 위해 entry 형식으로 변환
+            const startTime = alarm.start_time ? new Date(alarm.start_time).getTime() : Date.now();
+            const endTime = alarm.end_time ? new Date(alarm.end_time).getTime() : Date.now();
+            
+            // violation_type 확인 및 로깅
+            // API 응답에서 violation_type이 없을 수 있으므로 기본값 설정
+            let violationType = 0;
+            if (alarm.violation_type != null && alarm.violation_type !== undefined) {
+                violationType = parseInt(alarm.violation_type);
+            } else if (alarm.parameter) {
+                // violation_type이 없으면 parameter를 기반으로 추정
+                // MFC 관련 파라미터는 기본적으로 2 (MFC)
+                if (alarm.parameter.includes('MFC')) {
+                    violationType = 2;
+                } else if (alarm.parameter.includes('Press') || alarm.parameter.includes('Baratron')) {
+                    violationType = 1;
+                }
+            }
+            console.log('Alarm violation_type:', alarm.violation_type, '-> parsed:', violationType);
+            
+            // actual_value와 predicted_value 계산
+            // diff_percent를 기반으로 실제값과 예측값 추정
+            let actualValue = null;
+            let predictedValue = 100; // 기준값
+            if (alarm.diff_percent != null) {
+                const diff = parseFloat(alarm.diff_percent);
+                // diff가 양수면 actual > predicted
+                actualValue = predictedValue + diff;
+            }
+            
+            const entry = {
+                param: alarm.parameter || '',
+                start: startTime,
+                end: endTime,
+                diff: alarm.diff_percent != null ? parseFloat(alarm.diff_percent) : 0,
+                actual_value: actualValue,
+                predicted_value: predictedValue,
+                peak_time: endTime, // end_time을 peak_time으로 사용
+                step_id: alarm.step_id || [],
+                step_name: alarm.step_name || [],
+                violation_type: violationType,
+                message: alarm.message || '',
+                duration_seconds: alarm.duration_seconds || null
+            };
+            
+            console.log('Converted entry:', entry);
+            console.log('Entry violation_type:', entry.violation_type, 'Entry diff:', entry.diff);
+            
+            console.log('Converted entry:', entry);
+            
+            // reportElements 초기화 확인 및 설정
+            const reportModalEl = document.getElementById('report-modal');
+            const reportCloseEl = document.getElementById('report-close');
+            const reportSummaryEl = document.getElementById('report-summary');
+            const reportBodyEl = document.getElementById('report-body');
+            
+            if (!reportModalEl || !reportSummaryEl || !reportBodyEl) {
+                console.error('Report modal elements not found');
+                alert('리포트 모달 요소를 찾을 수 없습니다.');
+                return;
+            }
+            
+            // reportElements 강제 초기화 및 모달 열기
+            const openReportWithInit = () => {
+                // currentReportEntry 설정 (전역 변수)
+                if (typeof window !== 'undefined') {
+                    window.currentReportEntry = entry;
+                }
+                
+                // reportElements 강제 초기화 (realtime_anomaly.js가 사용하는 전역 변수)
+                // realtime_anomaly.js는 let reportElements = {}로 선언되어 있으므로
+                // 직접 접근이 어려우므로, openReportModal을 수정하거나 직접 모달 열기
+                
+                // 직접 모달 열기 (항상 이 방법 사용)
+                openReportDirectly();
+            };
+            
+            // 직접 모달 열기 함수
+            const openReportDirectly = () => {
+                // realtime_anomaly.js의 전역 변수에 직접 접근하기 어려우므로
+                // openReportModal 함수를 직접 호출하되, reportElements를 강제로 설정
+                
+                // reportElements 초기화 함수
+                // realtime_anomaly.js의 전역 변수에 직접 접근하기 위해
+                // 스크립트를 통해 간접적으로 설정
+                const initReportElements = () => {
+                    // realtime_anomaly.js의 전역 변수는 let으로 선언되어 있어 직접 접근 불가
+                    // 하지만 함수 내에서 사용되므로, 함수를 호출하기 전에
+                    // 전역 스코프에서 접근 가능하도록 설정해야 함
+                    
+                    // 방법 1: eval을 사용하여 전역 스코프에 직접 설정 (보안상 권장하지 않음)
+                    // 방법 2: realtime_anomaly.js의 함수들이 window 객체를 통해 접근하도록 수정
+                    // 방법 3: 직접 렌더링 함수 호출
+                    
+                    // window 객체에 설정 (일부 함수가 참조할 수 있도록)
+                    if (typeof window !== 'undefined') {
+                        window.reportElements = {
+                            reportModal: reportModalEl,
+                            reportClose: reportCloseEl,
+                            reportSummary: reportSummaryEl,
+                            reportBody: reportBodyEl
+                        };
+                        window.currentReportEntry = entry;
+                    }
+                    
+                    // realtime_anomaly.js의 전역 변수에 직접 설정 시도
+                    // eval을 사용하여 전역 스코프에 접근 (최후의 수단)
+                    try {
+                        // 전역 스코프에서 reportElements 찾기
+                        const globalScope = (function() { return this; })();
+                        if (globalScope && typeof globalScope.reportElements !== 'undefined') {
+                            globalScope.reportElements.reportModal = reportModalEl;
+                            globalScope.reportElements.reportClose = reportCloseEl;
+                            globalScope.reportElements.reportSummary = reportSummaryEl;
+                            globalScope.reportElements.reportBody = reportBodyEl;
+                        }
+                        if (globalScope && typeof globalScope.currentReportEntry !== 'undefined') {
+                            globalScope.currentReportEntry = entry;
+                        }
+                    } catch (e) {
+                        console.warn('Could not set global reportElements directly:', e);
+                    }
+                };
+                
+                initReportElements();
+                
+                const timeText = typeof formatTimelineTime === 'function' 
+                    ? formatTimelineTime(entry.end) 
+                    : formatAlarmTime(alarm.end_time || alarm.start_time);
+                const diff = alarm.diff_percent != null ? Math.abs(alarm.diff_percent).toFixed(0) : '0';
+                const logText = typeof buildLogText === 'function'
+                    ? buildLogText(entry.param, entry)
+                    : `${alarm.parameter || '-'} 유량 편차 ${diff}% 감지`;
+                const summaryLines = [
+                    '이상 요약 (Summary)',
+                    `- 이상 감지 시간 : ${timeText}`,
+                    `- 이상 유형 : ${logText}`
+                ];
+                reportSummaryEl.textContent = summaryLines.join('\n');
+                reportModalEl.style.display = 'flex';
+                
+                // 닫기 버튼 이벤트 연결
+                if (reportCloseEl) {
+                    // 기존 이벤트 제거 후 재등록
+                    const newCloseBtn = reportCloseEl.cloneNode(true);
+                    reportCloseEl.parentNode.replaceChild(newCloseBtn, reportCloseEl);
+                    
+                    newCloseBtn.addEventListener('click', () => {
+                        reportModalEl.style.display = 'none';
+                        if (typeof destroyReportChart === 'function') {
+                            destroyReportChart();
+                        }
+                        if (typeof disposeThreeViewer === 'function') {
+                            disposeThreeViewer();
+                        }
+                        if (typeof window !== 'undefined') {
+                            window.currentReportEntry = null;
+                        }
+                    });
+                }
+                
+                // 모달 배경 클릭 시 닫기
+                reportModalEl.addEventListener('click', (e) => {
+                    if (e.target === reportModalEl) {
+                        reportModalEl.style.display = 'none';
+                        if (typeof destroyReportChart === 'function') {
+                            destroyReportChart();
+                        }
+                        if (typeof disposeThreeViewer === 'function') {
+                            disposeThreeViewer();
+                        }
+                    }
+                });
+                
+                // 탭 클릭 이벤트 연결
+                const tabs = document.querySelectorAll('.report-tab');
+                tabs.forEach(tab => {
+                    // 기존 이벤트 리스너 제거 후 재등록
+                    const newTab = tab.cloneNode(true);
+                    tab.parentNode.replaceChild(newTab, tab);
+                    
+                    newTab.addEventListener('click', () => {
+                        const tabKey = newTab.dataset.tab;
+                        console.log('Tab clicked:', tabKey);
+                        // 모든 탭에서 active 제거
+                        document.querySelectorAll('.report-tab').forEach(t => t.classList.remove('active'));
+                        // 클릭한 탭에 active 추가
+                        newTab.classList.add('active');
+                        
+                        // reportElements와 currentReportEntry 확인
+                        initReportElements();
+                        if (typeof window !== 'undefined') {
+                            window.currentReportEntry = entry;
+                        }
+                        
+                        // reportElements와 currentReportEntry 재초기화
+                        initReportElements();
+                        
+                        // setActiveReportTab 호출 전에 전역 변수 설정
+                        // realtime_anomaly.js의 전역 변수는 let으로 선언되어 있어 직접 접근 불가
+                        // 하지만 함수 내에서 사용되므로, 함수 호출 전에 전역 스코프에서 설정 시도
+                        initReportElements();
+                        
+                        // setActiveReportTab 호출
+                        if (typeof setActiveReportTab === 'function') {
+                            console.log('Calling setActiveReportTab with:', tabKey);
+                            // realtime_anomaly.js의 전역 변수를 사용하도록 보장
+                            try {
+                                // 전역 스코프에서 reportElements와 currentReportEntry 설정 시도
+                                // eval을 사용하여 전역 스코프에 접근
+                                const script = document.createElement('script');
+                                script.textContent = `
+                                    if (typeof reportElements !== 'undefined') {
+                                        reportElements.reportModal = document.getElementById('report-modal');
+                                        reportElements.reportClose = document.getElementById('report-close');
+                                        reportElements.reportSummary = document.getElementById('report-summary');
+                                        reportElements.reportBody = document.getElementById('report-body');
+                                    }
+                                    if (typeof currentReportEntry !== 'undefined') {
+                                        currentReportEntry = ${JSON.stringify(entry)};
+                                    }
+                                `;
+                                document.head.appendChild(script);
+                                document.head.removeChild(script);
+                                
+                                setActiveReportTab(tabKey);
+                            } catch (e) {
+                                console.error('Error in setActiveReportTab:', e);
+                                // fallback: 직접 렌더링 시도
+                                renderTabContentDirectly(tabKey, entry);
+                            }
+                        } else {
+                            console.warn('setActiveReportTab function not found');
+                            renderTabContentDirectly(tabKey, entry);
+                        }
+                    });
+                });
+                
+                // 첫 번째 탭 활성화 및 내용 렌더링
+                const firstTab = document.querySelector('.report-tab[data-tab="cause"]');
+                if (firstTab) {
+                    firstTab.classList.add('active');
+                }
+                
+                // 원인 진단 탭 렌더링 시도
+                setTimeout(() => {
+                    initReportElements();
+                    
+                    // 전역 변수 설정을 위한 스크립트 실행
+                    try {
+                        const script = document.createElement('script');
+                        script.textContent = `
+                            if (typeof reportElements !== 'undefined') {
+                                reportElements.reportModal = document.getElementById('report-modal');
+                                reportElements.reportClose = document.getElementById('report-close');
+                                reportElements.reportSummary = document.getElementById('report-summary');
+                                reportElements.reportBody = document.getElementById('report-body');
+                            }
+                            if (typeof currentReportEntry !== 'undefined') {
+                                currentReportEntry = ${JSON.stringify(entry)};
+                            }
+                        `;
+                        document.head.appendChild(script);
+                        document.head.removeChild(script);
+                    } catch (e) {
+                        console.warn('Could not set global variables via script:', e);
+                    }
+                    
+                    if (typeof setActiveReportTab === 'function') {
+                        try {
+                            setActiveReportTab('cause');
+                        } catch (e) {
+                            console.error('Error rendering cause tab:', e);
+                            renderTabContentDirectly('cause', entry);
+                        }
+                    } else {
+                        renderTabContentDirectly('cause', entry);
+                    }
+                }, 100);
+            };
+            
+            // 탭 내용 직접 렌더링 함수 (fallback)
+            const renderTabContentDirectly = async (tabKey, entry) => {
+                console.log('Rendering tab content directly:', tabKey, entry);
+                const body = reportBodyEl;
+                if (!body) {
+                    console.error('reportBodyEl is null');
+                    return;
+                }
+                
+                // realtime_anomaly.js의 전역 변수 설정 시도
+                initReportElements();
+                
+                // realtime_anomaly.js의 함수들을 직접 호출 시도
+                try {
+                    if (tabKey === 'cause' && typeof renderMfcCauseTab === 'function') {
+                        console.log('Calling renderMfcCauseTab');
+                        await renderMfcCauseTab(entry);
+                    } else if (tabKey === 'action' && typeof renderMfcActionTab === 'function') {
+                        console.log('Calling renderMfcActionTab');
+                        renderMfcActionTab(entry);
+                    } else if (tabKey === 'parts' && typeof renderPartsTab === 'function') {
+                        console.log('Calling renderPartsTab');
+                        // reportElements와 currentReportEntry 설정
+                        if (typeof window !== 'undefined') {
+                            window.currentReportEntry = entry;
+                        }
+                        renderPartsTab(entry);
+                        // 판매기업 탭 클릭 이벤트가 제대로 연결되도록 재확인
+                        setTimeout(() => {
+                            const partsTabs = body.querySelectorAll('.parts-subtab');
+                            const partsPanels = body.querySelectorAll('.parts-panel');
+                            if (partsTabs.length > 0 && partsPanels.length > 0) {
+                                partsTabs.forEach(btn => {
+                                    // 기존 이벤트 제거 후 재등록
+                                    const newBtn = btn.cloneNode(true);
+                                    btn.parentNode.replaceChild(newBtn, btn);
+                                    
+                                    newBtn.addEventListener('click', () => {
+                                        const target = newBtn.dataset.sub;
+                                        partsTabs.forEach(b => {
+                                            const isActive = b === newBtn;
+                                            b.classList.toggle('active', isActive);
+                                            b.setAttribute('aria-selected', isActive ? 'true' : 'false');
+                                        });
+                                        partsPanels.forEach(panel => {
+                                            panel.classList.toggle('active', panel.dataset.sub === target);
+                                        });
+                                        // 판매기업 탭이 활성화되면 테이블 높이 조정
+                                        if (target === 'vendor') {
+                                            setTimeout(() => {
+                                                if (typeof adjustPartsTableHeight === 'function') {
+                                                    adjustPartsTableHeight();
+                                                }
+                                            }, 100);
+                                        }
+                                    });
+                                });
+                            }
+                            if (typeof adjustPartsTableHeight === 'function') {
+                                adjustPartsTableHeight();
+                            }
+                        }, 100);
+                    } else if (tabKey === 'drawing' && typeof renderMfcDrawingTab === 'function') {
+                        console.log('Calling renderMfcDrawingTab');
+                        const mfcParams = new Set(['MFC7_DCS', 'MFC8_NH3', 'MFC1_N2-1', 'MFC2_N2-2', 'MFC3_N2-3', 'MFC4_N2-4']);
+                        if (mfcParams.has(entry.param)) {
+                            renderMfcDrawingTab(entry);
+                        } else {
+                            if (typeof destroyReportChart === 'function') destroyReportChart();
+                            if (typeof disposeThreeViewer === 'function') disposeThreeViewer();
+                            body.textContent = '도면(이상 위치) 정보가 없습니다.';
+                        }
+                    } else if (tabKey === 'process' && typeof renderProcessTab === 'function') {
+                        console.log('Calling renderProcessTab');
+                        renderProcessTab();
+                    } else {
+                        console.warn('Function not found for tab:', tabKey);
+                        body.textContent = `${tabKey} 탭 내용을 불러오는 중...`;
+                    }
+                } catch (err) {
+                    console.error('Error rendering tab content:', err);
+                    body.textContent = '리포트 내용을 불러오지 못했습니다.';
+                }
+            };
+            
+            // realtime_anomaly.js 로드 대기
+            let retryCount = 0;
+            const maxRetries = 50;
+            
+            const tryOpen = () => {
+                if (typeof openReportModal === 'function') {
+                    openReportWithInit();
+                } else {
+                    retryCount++;
+                    if (retryCount < maxRetries) {
+                        setTimeout(tryOpen, 100);
+                    } else {
+                        console.warn('openReportModal not found, using direct method');
+                        openReportDirectly();
+                    }
+                }
+            };
+            
+            tryOpen();
+        };
+        
+        function formatAlarmTime(timeStr) {
+            if (!timeStr) return '-';
+            const d = new Date(timeStr);
+            if (Number.isNaN(d.getTime())) return '-';
+            const pad = (n) => String(n).padStart(2, '0');
+            return `${d.getFullYear()}년 ${pad(d.getMonth() + 1)}월 ${pad(d.getDate())}일 ${pad(d.getHours())}시 ${pad(d.getMinutes())}분 ${pad(d.getSeconds())}초`;
+        }
+        
+
         document.addEventListener('DOMContentLoaded', () => {
-            // 초기화
+            // 초기화 - 현재 월로 설정
+            const now = new Date();
+            currentMonth = now.getFullYear() * 12 + now.getMonth();
+            updateMonthDisplay();
+            
             loadRecipes().then(() => {
                 loadEquipmentHistory();
             });
@@ -1331,8 +2551,8 @@
             // Recipe 선택 변경 이벤트
             document.getElementById('recipe-select').addEventListener('change', (e) => {
                 const selectedRecipe = e.target.value;
+                // 현재 월을 유지하면서 데이터만 다시 로드
                 loadEquipmentHistory(selectedRecipe);
-                selectedIndex = 0;
             });
 
             document.querySelectorAll('.side-panel .ghost-btn').forEach(btn => {
@@ -1341,16 +2561,27 @@
                     if (action === 'latest') {
                         sortOrder = 'desc';
                         selectedIndex = 0;
+                        renderTable();
                     }
                     if (action === 'oldest') {
                         sortOrder = 'asc';
                         selectedIndex = 0;
+                        renderTable();
                     }
-                    if (action === 'top') selectedIndex = 0;
-                    if (action === 'bottom') selectedIndex = Math.max(0, rows.length - 1);
-                    if (action === 'next' && selectedIndex < rows.length - 1) selectedIndex++;
-                    if (action === 'prev' && selectedIndex > 0) selectedIndex--;
-                    renderTable();
+                    if (action === 'top') {
+                        selectedIndex = 0;
+                        renderTable();
+                    }
+                    if (action === 'bottom') {
+                        selectedIndex = Math.max(0, rows.length - 1);
+                        renderTable();
+                    }
+                    if (action === 'next') {
+                        goToNextMonth();
+                    }
+                    if (action === 'prev') {
+                        goToPrevMonth();
+                    }
                 });
             });
 
@@ -1489,7 +2720,7 @@
             
             // Trace Logging 테이블에 CSV 파일 정보 표시
             await renderTraceLogging(row.pjob_id, row.process_recipe);
-            renderAlarmHistory(row);
+            await renderAlarmHistory(row);
             modalEl.style.display = 'flex';
         }
 
@@ -2092,6 +3323,34 @@
             if (modalEl) modalEl.style.display = 'none';
         }
     </script>
+    <script>
+        // realtime_anomaly.js가 필요로 하는 columns 변수 정의 (빈 배열로 설정하여 createCharts 오류 방지)
+        const columns = [];
+        
+        // realtime_anomaly.js의 전역 변수에 접근하기 위한 헬퍼
+        // realtime_anomaly.js가 로드된 후 실행
+        window.addEventListener('DOMContentLoaded', () => {
+            // realtime_anomaly.js가 로드될 때까지 대기
+            const checkRealtimeAnomaly = setInterval(() => {
+                // reportElements와 currentReportEntry가 전역에 있는지 확인
+                // realtime_anomaly.js는 let으로 선언하므로 직접 접근 어려움
+                // 하지만 함수들을 통해 간접 접근 가능
+                
+                // report-modal 요소가 있으면 reportElements 초기화 보장
+                const reportModal = document.getElementById('report-modal');
+                if (reportModal && typeof openReportModal === 'function') {
+                    // reportElements가 초기화되었는지 확인하고, 없으면 초기화
+                    // realtime_anomaly.js의 DOMContentLoaded에서 초기화되지만
+                    // index6.html의 report-modal은 나중에 추가되므로 재초기화 필요
+                    clearInterval(checkRealtimeAnomaly);
+                }
+            }, 100);
+            
+            // 최대 5초 대기
+            setTimeout(() => clearInterval(checkRealtimeAnomaly), 5000);
+        });
+    </script>
+    <script src="/static/realtime_anomaly.js" defer></script>
 </body>
 
 </html>

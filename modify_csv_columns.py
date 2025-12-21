@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 CSV 파일의 특정 컬럼 데이터를 수정하는 스크립트
-- 각 파일당 25% 확률로 0개, 1개, 2개, 3개 컬럼 선택
+- 각 파일당 확률로 0개(30%), 1개(40%), 2개(20%), 3개(10%) 컬럼 선택
 - 선택된 컬럼의 연속된 값을 조건에 맞게 수정
 """
 
@@ -9,8 +9,10 @@ import os
 import csv
 import random
 import glob
+import shutil
 from pathlib import Path
 from typing import List, Tuple, Optional
+from datetime import datetime
 
 
 # 수정할 컬럼 목록
@@ -27,7 +29,7 @@ COLUMN_RULES = {
     'MFC3_N2-3': {
         'target_value': 0.996,
         'target_length': 10,  # 10라인 연속
-        'replace_values': [1.923, 0.623],  # 랜덤 선택
+        'replace_values': [1.923, 0.423],  # 랜덤 선택
         'tolerance': 0.01
     },
     'MFC4_N2-4': {
@@ -38,11 +40,11 @@ COLUMN_RULES = {
     },
     'MFC7_DCS': {
         'target_value': None,  # 1.19xx 패턴
-        'target_length': 5,  # 5라인 연속
+        'target_length': 7,  # 7라인 연속
         'replace_values': None,  # 1.99xx 또는 0.69xx로 변경
         'tolerance': None,
         'pattern': (1.19, 1.20),  # 1.19xx 범위
-        'replace_patterns': [(1.99, 2.00), (0.69, 0.70)]  # 랜덤 선택
+        'replace_patterns': [(1.99, 2.00), (0.59, 0.60)]  # 랜덤 선택
     },
     'MFC8_NH3': {
         'target_value': 4.492,
@@ -145,8 +147,8 @@ def find_continuous_sequence(
 
 
 def select_columns_to_modify() -> List[str]:
-    """25% 확률로 0개, 1개, 2개, 3개 컬럼 선택"""
-    num_columns = random.choices([0, 1, 2, 3], weights=[25, 25, 25, 25])[0]
+    """확률로 0개(30%), 1개(40%), 2개(20%), 3개(10%) 컬럼 선택"""
+    num_columns = random.choices([0, 1, 2, 3], weights=[30, 40, 20, 10])[0]
     if num_columns == 0:
         return []
     
@@ -285,16 +287,68 @@ def modify_column_values(
     return new_values, (start_pos, end_pos)
 
 
-def process_csv_file(file_path: str) -> bool:
-    """CSV 파일 처리"""
+def backup_file(file_path: str, backup_dir: str, source_base: str) -> Optional[str]:
+    """파일을 백업 디렉토리에 복사
+    
+    Args:
+        file_path: 원본 파일 경로
+        backup_dir: 백업 디렉토리
+        source_base: 원본 파일의 기준 디렉토리 (예: /home/goo4168/semi_platform/abnormal_data)
+    
+    Returns:
+        백업 파일 경로 또는 None
+    """
+    try:
+        os.makedirs(backup_dir, exist_ok=True)
+        
+        # 원본 파일의 source_base 이후 경로 추출
+        # 예: /home/goo4168/semi_platform/abnormal_data/2025/12/11/1000.csv
+        #     -> 2025/12/11/1000.csv
+        if not file_path.startswith(source_base):
+            # source_base가 포함되지 않으면 전체 경로 사용
+            rel_path = file_path.replace('/', '_').replace('\\', '_')
+        else:
+            rel_path = os.path.relpath(file_path, source_base)
+        
+        backup_path = os.path.join(backup_dir, rel_path)
+        
+        # 백업 디렉토리 생성
+        os.makedirs(os.path.dirname(backup_path), exist_ok=True)
+        
+        # 파일 복사
+        shutil.copy2(file_path, backup_path)
+        return backup_path
+    except Exception as e:
+        print(f"  경고: 백업 실패 - {e}")
+        return None
+
+
+def process_csv_file(file_path: str, backup_dir: Optional[str] = None, source_base: Optional[str] = None) -> Tuple[bool, int]:
+    """CSV 파일 처리
+    
+    Args:
+        file_path: 처리할 CSV 파일 경로
+        backup_dir: 백업 디렉토리 (None이면 백업 안 함)
+        source_base: 원본 파일의 기준 디렉토리
+    
+    Returns:
+        (성공 여부, 수정된 파라미터 개수)
+    """
     print(f"\n처리 중: {file_path}")
+    
+    # 백업 생성
+    if backup_dir and source_base:
+        backup_path = backup_file(file_path, backup_dir, source_base)
+        if backup_path:
+            print(f"  -> 백업 완료: {backup_path}")
     
     # 수정할 컬럼 선택
     columns_to_modify = select_columns_to_modify()
     
     if not columns_to_modify:
         print(f"  -> 수정할 컬럼 없음 (0개 선택)")
-        return False
+        print(f"  -> 수정된 파라미터: 0개")
+        return (False, 0)
     
     print(f"  -> 선택된 컬럼: {', '.join(columns_to_modify)}")
     
@@ -314,16 +368,19 @@ def process_csv_file(file_path: str) -> bool:
                     column_indices[col] = header.index(col)
                 else:
                     print(f"  경고: 컬럼 '{col}'를 찾을 수 없습니다.")
-                    return False
+                    print(f"  -> 수정된 파라미터: 0개")
+                    return (False, 0)
             
             rows = list(reader)
     except Exception as e:
         print(f"  오류: 파일 읽기 실패 - {e}")
-        return False
+        print(f"  -> 수정된 파라미터: 0개")
+        return (False, 0)
     
     if not rows:
         print(f"  -> 데이터가 없습니다.")
-        return False
+        print(f"  -> 수정된 파라미터: 0개")
+        return (False, 0)
     
     # 각 컬럼별로 수정
     used_positions = []  # (start, end) 튜플 리스트
@@ -358,7 +415,8 @@ def process_csv_file(file_path: str) -> bool:
     
     if not modifications:
         print(f"  -> 수정된 내용이 없습니다.")
-        return False
+        print(f"  -> 수정된 파라미터: 0개")
+        return (False, 0)
     
     # 수정된 파일 저장
     try:
@@ -367,30 +425,43 @@ def process_csv_file(file_path: str) -> bool:
             writer.writerow(header)
             writer.writerows(rows)
         
+        modified_count = len(modifications)
         print(f"  -> 파일 저장 완료")
-        return True
+        print(f"  -> 수정된 파라미터: {modified_count}개")
+        return (True, modified_count)
     except Exception as e:
         print(f"  오류: 파일 저장 실패 - {e}")
-        return False
+        print(f"  -> 수정된 파라미터: 0개")
+        return (False, 0)
 
 
 def main():
     """메인 함수"""
     import sys
     
-    if len(sys.argv) < 2:
-        print("사용법: python modify_csv_columns.py <디렉토리 경로>")
-        print("예시: python modify_csv_columns.py /home/goo4168/semi_platform/data")
-        sys.exit(1)
-    
-    directory = sys.argv[1]
+    if len(sys.argv) >= 2:
+        directory = sys.argv[1]
+    else:
+        directory = '/home/goo4168/semi_platform/abnormal_data/2025'
     
     if not os.path.isdir(directory):
         print(f"오류: 디렉토리를 찾을 수 없습니다: {directory}")
         sys.exit(1)
     
-    # 모든 CSV 파일 찾기
-    csv_files = glob.glob(os.path.join(directory, '*.csv'))
+    # 백업 디렉토리 설정
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    backup_base = '/home/goo4168/semi_platform/abnormal_data_backup'
+    backup_dir = os.path.join(backup_base, timestamp)
+    
+    print(f"백업 디렉토리: {backup_dir}")
+    
+    # 모든 CSV 파일 찾기 (하위 디렉토리 포함)
+    # glob 패턴 수정: **/**/*.csv -> **/*.csv (중복 방지)
+    csv_files = glob.glob(os.path.join(directory, '**/*.csv'), recursive=True)
+    
+    # 중복 제거 (절대 경로로 정규화)
+    csv_files = list(set(os.path.abspath(f) for f in csv_files))
+    csv_files = sorted(csv_files)
     
     if not csv_files:
         print(f"경고: {directory}에 CSV 파일이 없습니다.")
@@ -398,13 +469,30 @@ def main():
     
     print(f"총 {len(csv_files)}개의 CSV 파일을 찾았습니다.")
     
+    # 원본 파일 기준 디렉토리 설정 (백업 경로 계산용)
+    source_base = '/home/goo4168/semi_platform/abnormal_data'
+    
     # 각 파일 처리
     success_count = 0
-    for csv_file in sorted(csv_files):
-        if process_csv_file(csv_file):
+    total_modified_params = 0
+    processed_files = set()  # 이미 처리된 파일 추적
+    
+    for csv_file in csv_files:
+        # 이미 처리된 파일인지 확인
+        if csv_file in processed_files:
+            print(f"\n경고: 파일이 이미 처리되었습니다. 건너뜀: {csv_file}")
+            continue
+        
+        processed_files.add(csv_file)
+        success, modified_count = process_csv_file(csv_file, backup_dir, source_base)
+        if success:
             success_count += 1
+            total_modified_params += modified_count
     
     print(f"\n처리 완료: {success_count}/{len(csv_files)} 파일 수정됨")
+    print(f"총 수정된 파라미터: {total_modified_params}개")
+    print(f"\n백업 위치: {backup_dir}")
+    print(f"원상복구 명령: python restore_csv_backup.py {backup_dir}")
 
 
 if __name__ == '__main__':

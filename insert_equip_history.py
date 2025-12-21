@@ -164,7 +164,7 @@ def process_pjob_folder(pjob_folder_path):
 
 def insert_equipment_history_data():
     """equipment_history 테이블에 데이터 삽입"""
-    base_path = "/home/goo4168/semi_platform/traceData/2025/11"
+    base_path = "/home/goo4168/semi_platform/traceData/2025"
     
     if not os.path.exists(base_path):
         print(f"❌ 경로가 존재하지 않습니다: {base_path}")
@@ -244,4 +244,3 @@ if __name__ == '__main__':
     insert_equipment_history_data()
     
     print("\n✅ 완료!")
-
