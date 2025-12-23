@@ -65,53 +65,62 @@ const partsCatalog = {
         1: {
             title: 'Baratron Gauge 부품 정보',
             image: { src: '/static/img/Baratron%20Gauge.png', alt: 'Baratron Gauge', caption: 'Baratron Gauge' },
-            usage: 'ALD 공정 챔버 내부의 초정밀 진공 압력을 실시간으로 측정하여, 압력 자동 제어(APC) 시스템과 연동해 전구체 도징 및 반응 조건을 일정하게 유지하는 핵심 센서 역할을 수행합니다.',
-            feature: '측정되는 가스의 종류에 영향을 받지 않고, 넓은 온도 범위에서 최고의 측정 정확도(±0.12%)와 반복성을 가지며, 플라즈마 공정에서도 사용 가능하도록 내구성이 높습니다.',
-            principle: '정전 용량 다이어프램 게이지(CDG) 원리를 사용하며, 압력 변화에 따라 다이어프램(Diaphragm)이 변형될 때 발생하는 정전 용량 변화를 측정하여 실제 압력으로 환산합니다.',
+            description: '- Baratron Gauge는 얇은 다이어프램의 정전용량 변화를 이용해 챔버의 절대압을 고정밀로 측정하는 정전용량식 압력계.\n- 가스 조성이나 온도 변화의 영향을 거의 받지 않아 반도체 진공 환경에서 가장 높은 신뢰성을 제공하는 압력 측정 장비.\n- Etch, CVD, ALD 등 미세 압력 제어가 중요한 공정에서 공정 안정성·재현성을 확보하기 위한 핵심 계측 장비.',
+            sales: {
+                iframeUrl: 'https://www.ebay.com/itm/326797587695',
+                imageUrl: '/static/img/link_1.png',
+                text: '[이상 로그 연계 판단]\n본 이상 로그의 원인 후보 중\'Baratron Gauge 성능 저하\'가능성 높음\n동일 증상 발생 시 본 부품 교체 후 정상화 이력 존재'
+            },
             vendors: [
-                { no: 1, name: 'MKS', biz: '126-81-79956', link: 'https://www.mks.com/c/capacitance-manometers', contact: 'TEL: 031-695-9200' },
-                { no: 2, name: '브이시스', biz: '142-81-44975', link: 'http://www.vsys.co.kr/V2/02_product/product_01_1.php', contact: 'TEL: 031-8067-7750' },
-                { no: 3, name: 'ZEUS', biz: '229-81-05323', link: 'https://www.globalzeus.com/kr/sub/products/list.asp?p_cate=1312', contact: 'TEL: 031-5187-1774' },
-                { no: 4, name: '다이나믹세미텍', biz: '565-88-00577', link: 'https://www.dynamicsemi.co.kr/?act=shop.goods_list&GC=GD0301', contact: 'TEL: 054-437-2062' }
+                { name: '제우스', biz: '2298105323', link: 'https://www.globalzeus.com/kr/index.asp', contact: 'TEL: 031-5187-1774 E MAIL: vacuum_2@globalzeus.com' },
+                { name: '다이나믹 세미텍', biz: '5658800577', link: 'https://dynamicsemi.co.kr/?act=main', contact: 'TEL: 054-437-2061' }
             ]
         },
         2: {
             title: 'MFC 부품 정보',
             image: { src: '/static/img/MFC.png', alt: 'MFC', caption: 'MFC' },
-            usage: '전구체(Precursor)와 반응체(Reactant) 가스뿐만 아니라 퍼지(Purge) 가스의 질량 유량을 정확한 비율과 양으로 챔버에 공급하여 박막의 두께와 균일성을 직접 제어합니다.',
-            feature: '빠른 응답 속도와 매우 높은 유량 제어 정확도 및 반복성을 가지며, 특히 고순도 공정 가스의 오염을 방지하기 위해 내부식성 재료와 금속 씰(Metal Seal) 구조를 주로 사용합니다.',
-            principle: '주로 열식(Thermal) 센서를 사용하여 흐르는 가스에 가한 열량 변화를 측정하여 질량 유량을 계산하고, 이 신호를 바탕으로 내장된 제어 밸브(Control Valve)를 구동하여 설정된 유량을 일정하게 유지합니다.',
+            description: '- Alicat MCE/MCV 압력 기반 Mass Flow Controller는 0.01–100%의 넓은 제어 범위와 1ms 미만의 초고속 센서 응답을 제공하는 고정밀 유량 제어 장치\n- 압력·온도·질량·체적 유량의 다변량 측정이 가능하며 ±0.6% of reading의 높은 정확도를 유지해 안정적인 공정 제어를 보장\n- 다중 가스 호환, 내장 디스플레이, 다양한 산업용 통신 프로토콜을 지원해 반도체 및 진공 공정에서 높은 신뢰성과 호환성을 제공',
+            sales: {
+                iframeUrl: 'https://www.ebay.com/itm/182728947822',
+                imageUrl: '/static/img/link_2.png',
+                text: '[이상 로그 연계 판단]\n- 본 이상 로그의 원인 후보 중 \'MFC 성능 저하\'가능성 높음\n- 동일 증상 발생 시 본 부품 교체 후 정상화 이력 존재'
+            },
             vendors: [
-                { no: 1, name: 'MKP', biz: '230-87-00261', link: 'https://www.mkpsemi.com/products/prod-catalog', contact: 'TEL: 031-613-3359' },
-                { no: 2, name: 'MRC', biz: '193-86-00631', link: 'http://www.mfc-mrc.com/product', contact: 'TEL: 031-348-0855' },
-                { no: 3, name: 'HORIBA', biz: '192-81-15730', link: 'https://www.horiba.com/int/semiconductor/products/mass-flow-controller-and-module/', contact: 'TEL: 031-8025-6500' },
-                { no: 4, name: 'Brooks Instrument', biz: '135-81-95781', link: 'https://www.brooksinstrument.com/en/markets/semiconductor-manufacturing', contact: 'TEL: 031-708-2521' }
+                { name: 'MKP', biz: '2308700261', link: 'https://www.mkpsemi.com/main', contact: 'TEL: +82-31-613-3359' },
+                { name: 'Flotron', biz: '2148837332', link: 'http://www.flotron.co.kr/', contact: 'TEL: 02-3470-5800 E MAIL: sales@flotron.co.kr' },
+                { name: '삼일산업', biz: '1398129658', link: 'http://www.samilind.co.kr/', contact: 'TEL: 032-819-9671 E MAIL: samilind79@samilind.co.kr' },
+                { name: '샘시스템', biz: '2118741242', link: 'http://www.semsys.co.kr/', contact: 'TEL : 1899-8016,8827 E MAIL: sem@semsys.co.kr' },
+                { name: '서진 인스텍', biz: '2308700261', link: 'https://www.seojin.biz/sj/sub/main.php', contact: 'TEL: 031-627-9000 / 9010 / 9011' },
+                { name: '세바', biz: '5138112850', link: 'http://www.seba.co.kr/', contact: 'TEL: (054) 712-5200 E MAIL: seba@seba.co.kr' },
+                { name: '세화 하이테크', biz: '1308600547', link: 'https://www.gasplus.com/', contact: 'TEL: 032-624-3800 E MAIL: sehwa@gasplus.com' },
+                { name: '송도산업', biz: '1298654612', link: 'https://song-do.co.kr/', contact: 'TEL: 031-742-3909' }
             ]
         },
         3: {
             title: 'Magnetic Seal 부품 정보',
             image: { src: '/static/img/M_Seal.png', alt: 'Magnetic Seal', caption: 'M.Seal' },
-            usage: '마그네틱 씰은 회전하는 하부 챔버(Substrate Holder) 등을 통해 구동 동력을 전달하면서, ALD 공정의 핵심인 초고진공 상태를 안정적으로 유지하기 위해 사용됩니다.',
-            feature: '회전이 가능하여, 특히 공간 분할 ALD와 같은 회전형 배치/세미 배치 장비의 고생산성 구현에 필수적인 핵심 부품입니다.',
-            principle: '자성 유체(Ferrofluid)와 영구 자석(Nd Magnet)을 사용하여 비접촉식 실링을 구현하며, 기존 기계식 씰의 문제점인 파티클 발생, 높은 구동 토크, 짧은 수명 등의 단점을 극복합니다.',
+            description: '- M.SEAL은 반도체 장비의 펌프·모터·챔버 등에서 유체와 가스 누설을 방지하는 **기계식 씰(Mechanical Seal)**을 의미하는 핵심 부품.\n- 고온·고압·화학환경에서 회전체와 고정체 사이의 밀폐를 유지하며 공정 안정성을 확보하는 구조.열화 시 진동, 유량, 압력 변화로 이어져 장비 성능 저하와 고장 예측의 주요 지표가 되는 요소.\n- TSV·세정·CMP·ALD 등 다양한 공정 장비에서 필수적으로 사용되는 밀폐 구성.',
+            sales: {
+                iframeUrl: 'https://www.ebay.com/itm/267325335220',
+                imageUrl: '/static/img/link_3.png',
+                text: '[이상 로그 연계 판단]\n본 이상 로그의 원인 후보 중 \'M.Seal 성능 저하\'가능성 높음\n동일 증상 발생 시 본 부품 교체 후 정상화 이력 존재'
+            },
             vendors: [
-                { no: 1, name: '마그넥스', biz: '124-86-10394', link: 'https://www.magnex.co.kr/www/product/A?ca=A0001', contact: 'TEL: 043-276-8598' },
-                { no: 2, name: '디노솔루션', biz: '135-86-32836', link: 'https://dinosolution.co.kr/magnetic-seal', contact: 'TEL: 031-206-6406' },
-                { no: 3, name: 'LOTCES', biz: '135-86-28690', link: 'https://lotces.com/bbs/board.php?bo_table=CM&wr_id=8', contact: 'TEL: 041-548-6540' },
-                { no: 4, name: 'KSM', biz: '137-86-07202', link: 'https://www.ksm.co.kr/component/en/product/product_ferro01.php', contact: 'TEL: 031-983-7700' }
+                { name: '서울테크', biz: '8248100138', link: 'https://www.seoul-tech.kr/eng/', contact: 'TEL : +82-32-661-1888 E MAIL: soulteclky@naver.com' },
+                { name: '한성테크', biz: '6758601622', link: 'https://www.sealhs.co.kr/', contact: 'TEL : 051-319-2211 EMAIL : info@sealhs.com' }
             ]
         },
         4: {
             title: 'CKD 밸브 부품 정보',
             image: { src: '/static/img/CKD.png', alt: 'CKD Valve', caption: 'CKD' },
-            usage: 'ALD 공정에서 전구체/반응체 가스의 유량을 초정밀하게 도징(Dosing) 및 차단하며, 가스 라인 등 공정 배관의 안정적인 개폐 및 유량 제어에 사용됩니다.',
-            feature: '고순정, 내식성, 내열 특성을 갖춘 모델이 많고, 응답 속도, 내구성, 누설 관리가 우수하여 자동화 장비의 반복 동작에서도 높은 신뢰성을 보장합니다.',
-            principle: '주로 다이어프램(Diaphragm) 구조를 채택하여 가스와의 접촉을 최소화하고, 공압(Air Operated) 또는 솔레노이드(Solenoid) 방식으로 빠르게 개폐하여 정밀한 펄스 시간을 제어합니다.',
+            description: '- CKD Valve는 일본 CKD(CKD Corporation)에서 제조하는 산업용 공압·유압·유체 제어 밸브로, 반도체·디스플레이·자동화 설비에서 널리 사용되는 정밀 제어 부품.\n- 고청정·내식성·내열 특성을 갖춘 모델이 많아 DIW, 케미컬, 가스 라인 등 공정 배관의 안정적 개폐와 유량 제어에 사용되는 요소.\n- 응답 속도, 내구성, 누설률 관리가 우수하여 자동화 장비의 반복 동작에서도 높은 신뢰성을 보장하는 제품.반도체용 퍼지 밸브·솔레노이드 밸브·피팅류 등 다양한 시리즈 라인업을 가진 밸브 제품군.',
+            sales: {
+                iframeUrl: 'https://www.ebay.com/itm/389248699124',
+                imageUrl: '/static/img/link_4.png',
+                text: '[이상 로그 연계 판단]\n본 이상 로그의 원인 후보 중 \'CKD 성능 저하\'가능성 높음\n동일 증상 발생 시 본 부품 교체 후 정상화 이력 존재'
+            },
             vendors: [
-                { no: 1, name: '삼인CKD', biz: '138-81-06721', link: 'https://www.samin4u.com/product/product_view.php?pg_no=201', contact: 'TEL: 031-433-9922' },
-                { no: 2, name: 'NAT', biz: '128-81-19363', link: 'http://www.nat21.co.kr/gnuboard4/bbs/board.php?bo_table=p03', contact: 'TEL: 02-2676-4483' },
-                { no: 3, name: '한국도키멕유공압', biz: '118-81-03618', link: 'https://tkp.imweb.me/72', contact: 'TEL: 070-7123-4603' },
-                { no: 4, name: 'Inatech&CORP', biz: '106-81-42171', link: 'https://www.inacorp.co.kr/product/product2_2.jsp?pbuid=2', contact: 'TEL: 02-2026-0660' }
+                { name: 'CKD Korea', biz: '1208609538', link: 'https://www.ckdkorea.co.kr/', contact: 'TEL: 02-783-5201 E MAIL: ckdkorea@ckd-k.co.kr' }
             ]
         }
     }
@@ -389,13 +398,13 @@ async function pollGeneratorStatus() {
 function createCharts() {
     const xAxis = {
         type: 'time',
-        time: { 
-            unit: 'second', 
-            tooltipFormat: 'HH:mm:ss', 
-            displayFormats: { 
-                second: 'HH:mm:ss', 
-                minute: 'HH:mm:ss' 
-            } 
+        time: {
+            unit: 'second',
+            tooltipFormat: 'HH:mm:ss',
+            displayFormats: {
+                second: 'HH:mm:ss',
+                minute: 'HH:mm:ss'
+            }
         },
         ticks: {
             source: 'data',
@@ -444,9 +453,9 @@ function createCharts() {
                 animation: false,
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: { 
+                plugins: {
                     legend: { display: false },
-                    highlightRegion: { regions: [] } 
+                    highlightRegion: { regions: [] }
                 },
                 scales: { x: xAxis, y: {} }
             }
@@ -722,22 +731,22 @@ function updateCharts(col, data) {
     const actual = data.actual.map(d => ({ ...d, x: parseTimestamp(d.x), y: d.y }));
     const predicted = data.predicted.map(d => ({ ...d, x: parseTimestamp(d.x), y: d.y }));
     considerActualStepInfo(actual);
-    
+
     const chart = mainCharts[col];
     if (!chart) return;
-    
+
     // fetchData에서 이미 시간 범위로 필터링된 데이터를 받았으므로
     // 추가 필터링 없이 그대로 사용
     chart.data.datasets[0].data = predicted;
     chart.data.datasets[1].data = actual;
-    
+
     // X축 범위 설정: 현재 시간까지 표시되도록
     const now = Date.now();
     const timeRangeMs = selectedTimeRange * 60 * 1000; // 분을 밀리초로 변환
     const allTimestamps = actual.concat(predicted).map(d => new Date(d.x).getTime()).filter(ts => !isNaN(ts));
     let xMin = null;
     let xMax = null;
-    
+
     if (allTimestamps.length) {
         xMin = Math.min(...allTimestamps);
         const dataMax = Math.max(...allTimestamps);
@@ -753,10 +762,10 @@ function updateCharts(col, data) {
         chart.options.scales.x.min = xMin;
         chart.options.scales.x.max = xMax;
     }
-    
+
     const regions = xMin !== null && xMax !== null ? getHighlightRegions(col, xMin, xMax) : [];
     chart.options.plugins.highlightRegion.regions = regions;
-    
+
     const allVals = actual.concat(predicted).map(d => d.y);
     if (allVals.length) {
         const max = Math.max(...allVals);
@@ -768,7 +777,7 @@ function updateCharts(col, data) {
         chart.options.scales.y.max = max + pad;
         chart.options.scales.y.min = min - pad;
     }
-    
+
     setDatasetVisibility(chart, visibilityMode);
     chart.update();
 
@@ -845,7 +854,7 @@ function renderModalChart(param, kind, showModal) {
                 }
             },
             grid: { left: 50, right: 20, top: 40, bottom: 50 },
-            xAxis: { 
+            xAxis: {
                 type: 'time',
                 splitNumber: 5
             },
@@ -878,14 +887,14 @@ function renderModalChart(param, kind, showModal) {
                     legend: { display: false },
                     highlightRegion: { regions }
                 },
-                scales: { 
-                    x: { 
+                scales: {
+                    x: {
                         type: 'time',
                         ticks: {
                             maxTicksLimit: 5
                         }
-                    }, 
-                    y: { type: 'linear' } 
+                    },
+                    y: { type: 'linear' }
                 }
             }
         });
@@ -941,25 +950,25 @@ function openWarningModal(param, text) {
         console.log(`[경고 팝업 스킵] 경고 모달 요소를 찾을 수 없습니다.`);
         return;
     }
-    
+
     const now = Date.now();
     const timeSinceStartup = now - pageStartTime;
     const timeSinceLastWarning = now - lastWarningTime;
-    
+
     console.log(`[경고 팝업 체크] 파라미터: ${param}, 시작 후: ${Math.floor(timeSinceStartup / 1000)}초, 마지막 경고 후: ${Math.floor(timeSinceLastWarning / 1000)}초`);
-    
+
     // 시작 후 5초 그레이스 기간 체크
     if (timeSinceStartup < STARTUP_GRACE_PERIOD_MS) {
         console.log(`[경고 팝업 스킵] 시작 후 ${Math.floor(timeSinceStartup / 1000)}초 (그레이스 기간 중)`);
         return; // 시작 후 5초 이내면 팝업을 표시하지 않음
     }
-    
+
     // 1분 쿨다운 확인
     if (timeSinceLastWarning < WARNING_COOLDOWN_MS) {
         console.log(`[경고 팝업 스킵] 마지막 경고 후 ${Math.floor(timeSinceLastWarning / 1000)}초 (쿨다운 중)`);
         return; // 쿨다운 중이면 팝업을 표시하지 않음
     }
-    
+
     console.log(`[경고 팝업 표시] 파라미터: ${param}`);
     warningElements.warningParam.textContent = text || `${displayParam(param)} 이상 감지`;
     warningElements.warningModal.classList.add('show');
@@ -992,7 +1001,7 @@ async function openConfirmModal() {
         console.error('Error checking equipment status:', e);
         // 에러가 발생해도 확인 모달은 열도록 진행
     }
-    
+
     // 프로세스가 실행 중이면 확인 모달 열기
     closeWarningModal();
     if (warningElements.confirmModal) warningElements.confirmModal.classList.add('show');
@@ -1202,10 +1211,102 @@ async function ensureGltfLoader() {
     }
 }
 
+async function ensureDracoLoader() {
+    if (THREE.DRACOLoader) return;
+
+    // 로컬 파일 경로 먼저 시도
+    const localSrc = '/static/lib/DRACOLoader.js';
+    const cdnVersion = '0.150.0';
+
+    // 로컬 파일 시도
+    try {
+        await loadScriptOnce(localSrc);
+        if (THREE.DRACOLoader) {
+            console.log('DRACOLoader loaded from local file');
+            return;
+        }
+    } catch (err) {
+        console.warn('Local DRACOLoader not found, trying CDN...', err);
+    }
+
+    // CDN 경로 시도 (여러 옵션)
+    const cdnPaths = [
+        `https://cdn.jsdelivr.net/npm/three@${cdnVersion}/examples/js/loaders/DRACOLoader.js`,
+        `https://unpkg.com/three@${cdnVersion}/examples/js/loaders/DRACOLoader.js`,
+        `https://cdn.jsdelivr.net/npm/three@${cdnVersion}/examples/jsm/loaders/DRACOLoader.js`
+    ];
+
+    let lastErr = null;
+    for (const cdnSrc of cdnPaths) {
+        try {
+            await loadScriptOnce(cdnSrc);
+            if (THREE.DRACOLoader) {
+                console.log('DRACOLoader loaded from CDN:', cdnSrc);
+                return;
+            }
+        } catch (err) {
+            lastErr = err;
+            console.warn('Failed to load DRACOLoader from:', cdnSrc, err);
+        }
+    }
+
+    if (!THREE.DRACOLoader) {
+        // 사용자에게 명확한 안내 메시지 제공
+        const downloadUrl = `https://cdn.jsdelivr.net/npm/three@${cdnVersion}/examples/js/loaders/DRACOLoader.js`;
+        const errorMsg = `DRACOLoader를 로드할 수 없습니다.
+
+해결 방법:
+1. 다음 명령어를 실행하여 DRACOLoader.js를 다운로드하세요:
+   curl -L -o /home/goo4168/semi_platform/semi_ondevice/fastapi/static/lib/DRACOLoader.js "${downloadUrl}"
+
+2. 또는 브라우저에서 다음 URL을 열어 파일을 저장하세요:
+   ${downloadUrl}
+   저장 위치: /static/lib/DRACOLoader.js
+
+마지막 오류: ${lastErr ? lastErr.message : 'unknown'}`;
+        console.error(errorMsg);
+        throw new Error(errorMsg);
+    }
+}
+
 async function loadGltfModel(url) {
     await ensureGltfLoader();
+    await ensureDracoLoader();
+
+    if (!THREE.DRACOLoader) {
+        throw new Error('DRACOLoader is required but not available');
+    }
+
     return new Promise((resolve, reject) => {
         const loader = new THREE.GLTFLoader();
+
+        // DRACOLoader 인스턴스 생성 및 설정
+        try {
+            const dracoLoader = new THREE.DRACOLoader();
+
+            // DRACO 디코더 경로 설정 (여러 옵션 시도)
+            const decoderPaths = [
+                'https://www.gstatic.com/draco/v1/decoders/',
+                'https://cdn.jsdelivr.net/npm/three@0.150.0/examples/jsm/libs/draco/gltf/',
+                'https://unpkg.com/three@0.150.0/examples/jsm/libs/draco/gltf/'
+            ];
+
+            if (typeof dracoLoader.setDecoderPath === 'function') {
+                // 첫 번째 경로 사용 (Google 공식)
+                dracoLoader.setDecoderPath(decoderPaths[0]);
+            } else {
+                console.warn('DRACOLoader.setDecoderPath is not a function');
+            }
+
+            // GLTFLoader에 DRACOLoader 설정
+            loader.setDRACOLoader(dracoLoader);
+            console.log('DRACOLoader configured for GLTFLoader');
+        } catch (e) {
+            console.error('Failed to configure DRACOLoader:', e);
+            reject(new Error(`Failed to configure DRACOLoader: ${e.message}`));
+            return;
+        }
+
         loader.load(
             url,
             (gltf) => {
@@ -1219,7 +1320,10 @@ async function loadGltfModel(url) {
                 resolve({ object: root, box });
             },
             undefined,
-            (err) => reject(err || new Error('failed to load glb'))
+            (err) => {
+                console.error('GLTF load error:', err);
+                reject(err || new Error('failed to load gltf'));
+            }
         );
     });
 }
@@ -1235,15 +1339,15 @@ function attachOrbitControls(canvas, camera, target, opts = {}) {
     let radius = camera.position.clone().sub(targetVec).length();
     let spherical = new THREE.Spherical().setFromVector3(camera.position.clone().sub(targetVec));
     let enabled = true; // OrbitControls 활성화 상태
-    
+
     const updateSpherical = () => {
         radius = camera.position.clone().sub(targetVec).length();
         spherical = new THREE.Spherical().setFromVector3(camera.position.clone().sub(targetVec));
     };
-    
+
     // 초기화 시 spherical 업데이트
     updateSpherical();
-    
+
     const onPointerDown = (e) => {
         if (e.button !== 0 || !enabled) {
             console.log('onPointerDown 무시:', { button: e.button, enabled });
@@ -1287,7 +1391,7 @@ function attachOrbitControls(canvas, camera, target, opts = {}) {
                 console.warn('releasePointerCapture 실패:', err);
             }
         }
-        isRotating = false; 
+        isRotating = false;
     };
     const onPointerCancel = (e) => {
         if (e.pointerId !== undefined) {
@@ -1323,14 +1427,14 @@ function attachOrbitControls(canvas, camera, target, opts = {}) {
     window.addEventListener('pointerup', onPointerUp, { passive: false });
     canvas.addEventListener('pointercancel', onPointerCancel, { passive: false });
     canvas.addEventListener('wheel', onWheel, { passive: false });
-    
+
     console.log('OrbitControls 이벤트 리스너 등록 완료', {
         canvas: canvas,
         hasPointerDown: true,
         hasPointerMove: true,
         hasWheel: true
     });
-    
+
     // 활성화/비활성화 함수 반환
     const setEnabled = (value) => {
         const oldValue = enabled;
@@ -1343,14 +1447,14 @@ function attachOrbitControls(canvas, camera, target, opts = {}) {
             updateSpherical();
         }
     };
-    
+
     // 타겟 업데이트 함수
     const updateTarget = (newTarget) => {
         targetVec.copy(newTarget);
         // 현재 카메라 위치를 기준으로 spherical과 radius 재계산
         updateSpherical();
     };
-    
+
     return {
         cleanup: () => {
             canvas.removeEventListener('pointerdown', onPointerDown);
@@ -1393,7 +1497,8 @@ async function createThreeViewer(container, modelUrl, entry = null) {
     }
     disposeThreeViewer();
     const width = container.clientWidth || 600;
-    const height = 420;
+    // 컨테이너의 실제 높이를 사용하거나, 최소 높이 보장
+    const height = Math.max(container.clientHeight || 420, 420);
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setPixelRatio(window.devicePixelRatio || 1);
     renderer.setSize(width, height);
@@ -1402,6 +1507,18 @@ async function createThreeViewer(container, modelUrl, entry = null) {
     renderer.toneMappingExposure = 1.45;
     container.innerHTML = '';
     container.appendChild(renderer.domElement);
+
+    // 컨테이너 크기 변경 감지 및 렌더러 크기 조정
+    const resizeObserver = new ResizeObserver(() => {
+        const newWidth = container.clientWidth || 600;
+        const newHeight = Math.max(container.clientHeight || 420, 400);
+        if (renderer.domElement.width !== newWidth || renderer.domElement.height !== newHeight) {
+            renderer.setSize(newWidth, newHeight);
+            camera.aspect = newWidth / newHeight;
+            camera.updateProjectionMatrix();
+        }
+    });
+    resizeObserver.observe(container);
 
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0xededf1);
@@ -1426,7 +1543,7 @@ async function createThreeViewer(container, modelUrl, entry = null) {
     let cleanup = null;
     const modelGroup = new THREE.Group();
     scene.add(modelGroup);
-    
+
     // 애니메이션 관련 변수
     let highlightMesh = null;
     let highlightStartTime = 0;
@@ -1442,7 +1559,7 @@ async function createThreeViewer(container, modelUrl, entry = null) {
     let orbitTarget = null; // OrbitControls의 타겟
     let orbitControlsEnabled = true; // OrbitControls 활성화 여부
     let orbitControls = null; // OrbitControls 객체 참조
-    
+
     try {
         const lower = (modelUrl || '').toLowerCase();
         let box = null;
@@ -1464,14 +1581,14 @@ async function createThreeViewer(container, modelUrl, entry = null) {
             const { object, box: gltfBox } = await loadGltfModel(modelUrl);
             modelGroup.add(object);
             box = new THREE.Box3().setFromObject(modelGroup);
-            
+
             // violation_type에 따라 애니메이션 설정
             const violationType = Number(entry?.violation_type) || 0;
             let meshName = null;
             let meshColor = null;
             let emissiveIntensityRange = [2.0, 4.0];
             let yawOffset = 0;
-            
+
             if (violationType === 1) {
                 // BG (Baratron Gauge)
                 meshName = 'bg';
@@ -1497,7 +1614,7 @@ async function createThreeViewer(container, modelUrl, entry = null) {
                 emissiveIntensityRange = [2.0, 4.0];
                 yawOffset = Math.PI * 200 / 180; // 200도
             }
-            
+
             // 메쉬 찾기 및 하이라이트 설정
             if (meshName) {
                 if (violationType === 3) {
@@ -1511,7 +1628,7 @@ async function createThreeViewer(container, modelUrl, entry = null) {
                 } else {
                     highlightMesh = findMeshByName(object, meshName);
                 }
-                
+
                 if (highlightMesh) {
                     highlightConfig = {
                         color: meshColor,
@@ -1520,7 +1637,7 @@ async function createThreeViewer(container, modelUrl, entry = null) {
                     };
                     // 하이라이트 애니메이션은 카메라 애니메이션 완료 후 시작 (2.5초 후)
                     highlightStartTime = performance.now() + 2500;
-                    
+
                     // 원본 재질 상태 저장
                     const materials = Array.isArray(highlightMesh.material) ? highlightMesh.material : [highlightMesh.material];
                     originalMaterialState = materials.map((mat) => ({
@@ -1528,7 +1645,7 @@ async function createThreeViewer(container, modelUrl, entry = null) {
                         emissive: mat.emissive ? mat.emissive.clone() : null,
                         emissiveIntensity: mat.emissiveIntensity ?? 1,
                     }));
-                    
+
                     // 카메라 포커스 설정
                     const meshBox = new THREE.Box3().setFromObject(highlightMesh);
                     const meshSphere = meshBox.getBoundingSphere(new THREE.Sphere());
@@ -1547,19 +1664,19 @@ async function createThreeViewer(container, modelUrl, entry = null) {
         modelGroup.rotation.y = 0;
         size = box?.getSize(new THREE.Vector3()).length() || 100;
         target = box?.getCenter(new THREE.Vector3()) || new THREE.Vector3();
-        
+
         // 초기 시야를 정면-약간 위쪽에서 바라보도록 설정 (항상 정면부터 시작)
         const frontDistance = size * 1.1;
         initialCameraPosition = new THREE.Vector3(target.x, target.y + size * 0.12, target.z + frontDistance);
         initialCameraTarget = target.clone();
         camera.position.copy(initialCameraPosition);
         camera.lookAt(initialCameraTarget);
-        
+
         // 타겟 메쉬가 있으면 최종 카메라 위치 계산 (애니메이션용)
         if (targetMesh && highlightConfig) {
             // violation_type == 3 (Magnetic Seal)인 경우 확대를 더 해줌
             const violationType = Number(entry?.violation_type) || 0;
-            const focusDistance = violationType === 3 
+            const focusDistance = violationType === 3
                 ? targetMesh.radius * 1.8  // Magnetic Seal은 더 가깝게 (확대)
                 : targetMesh.radius * 2.5; // 나머지는 기본값
             const spherical = new THREE.Spherical();
@@ -1583,7 +1700,7 @@ async function createThreeViewer(container, modelUrl, entry = null) {
             finalCameraTarget = null;
             isCameraAnimating = false;
         }
-        
+
         camera.near = size / 200;
         camera.far = size * 20;
         camera.updateProjectionMatrix();
@@ -1591,7 +1708,7 @@ async function createThreeViewer(container, modelUrl, entry = null) {
         const minRadius = Math.max(0.1, size * 0.01); // 더 깊게 확대 허용
         const maxRadius = size * 50;
         orbitTarget = target.clone(); // OrbitControls 타겟 초기화
-        
+
         // violation_type이 없거나 애니메이션이 없는 경우 즉시 OrbitControls 생성
         if (!targetMesh || !highlightConfig) {
             orbitControls = attachOrbitControls(renderer.domElement, camera, orbitTarget, { minRadius, maxRadius });
@@ -1624,28 +1741,28 @@ async function createThreeViewer(container, modelUrl, entry = null) {
 
     function animate() {
         const currentTime = performance.now();
-        
+
         // 카메라 애니메이션 (정면 → 이상위치로 이동)
         if (isCameraAnimating && finalCameraPosition && finalCameraTarget) {
             const elapsed = (currentTime - cameraAnimationStartTime) / 1000;
             const duration = 1.5; // 1.5초 동안 이동
-            
+
             // 애니메이션 중에는 OrbitControls 비활성화
             if (orbitControls && orbitControlsEnabled) {
                 orbitControls.setEnabled(false);
                 orbitControlsEnabled = false;
             }
-            
+
             if (elapsed < duration && elapsed > 0) {
                 // 부드러운 이징 함수 (ease-in-out)
                 const t = elapsed / duration;
-                const eased = t < 0.5 
-                    ? 2 * t * t 
+                const eased = t < 0.5
+                    ? 2 * t * t
                     : 1 - Math.pow(-2 * t + 2, 2) / 2;
-                
+
                 // 카메라 위치 보간
                 camera.position.lerpVectors(initialCameraPosition, finalCameraPosition, eased);
-                
+
                 // 카메라 타겟 보간
                 const currentTarget = new THREE.Vector3().lerpVectors(initialCameraTarget, finalCameraTarget, eased);
                 camera.lookAt(currentTarget);
@@ -1656,7 +1773,7 @@ async function createThreeViewer(container, modelUrl, entry = null) {
                 isCameraAnimating = false;
                 // OrbitControls 타겟을 최종 타겟으로 업데이트
                 orbitTarget.copy(finalCameraTarget);
-                
+
                 // OrbitControls가 이미 있으면 타겟만 업데이트하고 활성화
                 if (orbitControls) {
                     orbitControls.updateTarget(orbitTarget);
@@ -1673,9 +1790,9 @@ async function createThreeViewer(container, modelUrl, entry = null) {
                         cleanup();
                         console.log('기존 OrbitControls 정리 완료');
                     }
-                    orbitControls = attachOrbitControls(renderer.domElement, camera, orbitTarget, { 
-                        minRadius: Math.max(0.1, size * 0.01), 
-                        maxRadius: size * 50 
+                    orbitControls = attachOrbitControls(renderer.domElement, camera, orbitTarget, {
+                        minRadius: Math.max(0.1, size * 0.01),
+                        maxRadius: size * 50
                     });
                     cleanup = orbitControls.cleanup;
                     orbitControlsEnabled = true;
@@ -1688,19 +1805,19 @@ async function createThreeViewer(container, modelUrl, entry = null) {
                 }
             }
         }
-        
+
         // 하이라이트 애니메이션 (카메라 애니메이션 완료 후 시작)
         if (highlightMesh && highlightConfig && originalMaterialState) {
             const highlightElapsed = (currentTime - highlightStartTime) / 1000;
             if (highlightElapsed > 0) {
                 const pulse = 0.5 + 0.5 * Math.sin(highlightElapsed * 4); // 0~1 사이 펄스
                 const materials = Array.isArray(highlightMesh.material) ? highlightMesh.material : [highlightMesh.material];
-                
+
                 materials.forEach((mat, idx) => {
                     if (!mat) return;
                     const orig = originalMaterialState[idx];
                     if (!orig) return;
-                    
+
                     // emissive 색상 설정
                     if (mat.emissive) {
                         mat.emissive.setRGB(
@@ -1709,14 +1826,14 @@ async function createThreeViewer(container, modelUrl, entry = null) {
                             highlightConfig.color.b
                         );
                     }
-                    
+
                     // emissive 강도 애니메이션
                     if (mat.emissiveIntensity !== undefined) {
                         const [minI, maxI] = highlightConfig.emissiveIntensityRange;
                         mat.emissiveIntensity = minI + pulse * (maxI - minI);
                     }
                 });
-                
+
                 // wafer-jig의 경우 모든 메쉬에 적용
                 if (highlightMesh.userData && highlightMesh.userData.allWaferJigMeshes) {
                     highlightMesh.userData.allWaferJigMeshes.forEach((jigMesh) => {
@@ -1740,11 +1857,19 @@ async function createThreeViewer(container, modelUrl, entry = null) {
                 }
             }
         }
-        
+
         renderer.render(scene, camera);
         threeViewer.rafId = requestAnimationFrame(animate);
     }
-    threeViewer = { renderer, scene, camera, rafId: requestAnimationFrame(animate), cleanup };
+
+    // cleanup 함수에 resizeObserver 정리 추가
+    const originalCleanup = cleanup;
+    const enhancedCleanup = () => {
+        if (originalCleanup) originalCleanup();
+        if (resizeObserver) resizeObserver.disconnect();
+    };
+
+    threeViewer = { renderer, scene, camera, rafId: requestAnimationFrame(animate), cleanup: enhancedCleanup };
 }
 
 function buildCauseHeadline(entry) {
@@ -1784,7 +1909,7 @@ async function drawReportChart(entry, canvas, timeWindow) {
     const endMs = timeWindow?.endMs ?? (center + windowMs);
     const startIso = new Date(startMs).toISOString();
     const endIso = new Date(endMs).toISOString();
-    
+
     // limits.yaml에서 상한값/하한값 가져오기
     let limits = {};
     try {
@@ -1801,7 +1926,7 @@ async function drawReportChart(entry, canvas, timeWindow) {
     } catch (err) {
         console.error('failed to load limits', err);
     }
-    
+
     let payload;
     try {
         const res = await fetch(`/api/event_chart?param=${encodeURIComponent(entry.param)}&start=${encodeURIComponent(startIso)}&end=${encodeURIComponent(endIso)}`);
@@ -1832,25 +1957,25 @@ async function drawReportChart(entry, canvas, timeWindow) {
         replaceCanvasWithMessage(canvas, '해당 구간 데이터가 없습니다.');
         return;
     }
-    
+
     // limits.yaml에서 상한값(UCU)과 하한값(LCL) 가져오기
     let ucu = null;
     let lcl = null;
-    
+
     console.log('=== Limits Debug Start ===');
     console.log('Entry param:', entry.param);
     console.log('Entry step_id:', entry.step_id);
     console.log('Limits object keys count:', Object.keys(limits).length);
-    
+
     // 파라미터명으로 limits 찾기
     let paramLimits = limits[entry.param];
     console.log('Direct match for', entry.param, ':', paramLimits ? 'FOUND' : 'NOT FOUND');
-    
+
     // 정확한 매칭이 안 되면 모든 키를 확인
     if (!paramLimits) {
         const paramKeys = Object.keys(limits);
         console.log('Searching in', paramKeys.length, 'keys...');
-        
+
         // 정확히 일치하는 키 찾기
         for (const key of paramKeys) {
             if (key === entry.param) {
@@ -1859,7 +1984,7 @@ async function drawReportChart(entry, canvas, timeWindow) {
                 break;
             }
         }
-        
+
         // 여전히 못 찾았으면 유사한 것 찾기
         if (!paramLimits) {
             for (const key of paramKeys) {
@@ -1873,10 +1998,10 @@ async function drawReportChart(entry, canvas, timeWindow) {
             }
         }
     }
-    
+
     if (paramLimits) {
         console.log('ParamLimits found:', Object.keys(paramLimits));
-        
+
         // step_id 처리
         let stepId = 'all';
         if (Array.isArray(entry.step_id) && entry.step_id.length > 0) {
@@ -1884,18 +2009,18 @@ async function drawReportChart(entry, canvas, timeWindow) {
         } else if (entry.step_id) {
             stepId = String(entry.step_id);
         }
-        
+
         console.log('Using stepId:', stepId);
-        
+
         // 해당 step_id의 limits 찾기, 없으면 'all' 사용
         let stepLimits = paramLimits[stepId];
         if (!stepLimits || Object.keys(stepLimits).length === 0) {
             stepLimits = paramLimits['all'];
             console.log('Using "all" limits instead of stepId:', stepId);
         }
-        
+
         console.log('StepLimits:', stepLimits);
-        
+
         if (stepLimits) {
             ucu = stepLimits.max;
             lcl = stepLimits.min;
@@ -1910,15 +2035,15 @@ async function drawReportChart(entry, canvas, timeWindow) {
         const n2Keys = Object.keys(limits).filter(k => k.includes('N2'));
         console.log('N2 related keys:', n2Keys);
     }
-    
+
     console.log('=== Limits Debug End ===');
     console.log('Final UCU:', ucu, 'LCL:', lcl);
-    
+
     // 실제값만 사용하여 Y축 범위 계산
     const values = actual.map(d => d.y);
     const yMax = values.length ? Math.max(...values) : undefined;
     const yMin = values.length ? Math.min(...values) : undefined;
-    
+
     // 상한값/하한값이 있으면 Y축 범위에 포함
     let finalYMax = yMax;
     let finalYMin = yMin;
@@ -1928,12 +2053,12 @@ async function drawReportChart(entry, canvas, timeWindow) {
     if (lcl !== null && lcl !== undefined && Number.isFinite(Number(lcl))) {
         finalYMin = finalYMin !== undefined ? Math.min(finalYMin, Number(lcl)) : Number(lcl);
     }
-    
+
     // 상한선/하한선 데이터 생성
     const datasets = [
         { label: '실제값', borderColor: 'blue', tension: 0.25, borderWidth: 3, pointRadius: 0, data: actual, hidden: false }
     ];
-    
+
     // 상한선(UCU) - 초록색
     if (ucu !== null && ucu !== undefined && Number.isFinite(Number(ucu))) {
         const ucuValue = Number(ucu);
@@ -1951,7 +2076,7 @@ async function drawReportChart(entry, canvas, timeWindow) {
     } else {
         console.warn('UCU not added - value:', ucu, 'isFinite:', ucu !== null && ucu !== undefined ? Number.isFinite(Number(ucu)) : false);
     }
-    
+
     // 하한선(LCL) - 주황색
     if (lcl !== null && lcl !== undefined && Number.isFinite(Number(lcl))) {
         const lclValue = Number(lcl);
@@ -1969,9 +2094,9 @@ async function drawReportChart(entry, canvas, timeWindow) {
     } else {
         console.warn('LCL not added - value:', lcl, 'isFinite:', lcl !== null && lcl !== undefined ? Number.isFinite(Number(lcl)) : false);
     }
-    
+
     console.log('Total datasets to render:', datasets.length, 'datasets:', datasets.map(d => d.label));
-    
+
     reportChart = new Chart(ctx, {
         type: 'line',
         data: {
@@ -1990,18 +2115,18 @@ async function drawReportChart(entry, canvas, timeWindow) {
                     type: 'time',
                     min: parseTimestamp(startIso),
                     max: parseTimestamp(endIso),
-                    time: { 
-                        unit: 'second', 
+                    time: {
+                        unit: 'second',
                         tooltipFormat: 'yyyy-MM-dd HH:mm:ss',
                         displayFormats: {
                             second: 'HH:mm:ss',
                             minute: 'HH:mm:ss'
                         }
                     },
-                    ticks: { 
-                        autoSkip: true, 
+                    ticks: {
+                        autoSkip: true,
                         maxRotation: 0,
-                        callback: function(value, index, ticks) {
+                        callback: function (value, index, ticks) {
                             const d = new Date(value);
                             if (Number.isNaN(d.getTime())) return '';
                             const hours = String(d.getHours()).padStart(2, '0');
@@ -2095,27 +2220,218 @@ function renderMfcActionTab(entry) {
         });
 }
 
+// Cover 제어 함수들
+function findAllCoverMeshes(scene) {
+    if (!scene) return [];
+    const coverMeshes = [];
+    const coverNames = ['대칭_복사cover_1', 'cover', 'Cover', 'COVER'];
+    scene.traverse((child) => {
+        if (child instanceof THREE.Mesh && child.name) {
+            const nameLower = child.name.toLowerCase();
+            if (coverNames.some(n => nameLower.includes(n.toLowerCase())) || nameLower.includes('cover')) {
+                coverMeshes.push(child);
+            }
+        }
+    });
+    return coverMeshes;
+}
+
+function controlCover(action) {
+    if (!threeViewer || !threeViewer.scene) {
+        console.warn('3D 뷰어가 초기화되지 않았습니다.');
+        return;
+    }
+
+    const coverMeshes = findAllCoverMeshes(threeViewer.scene);
+    if (coverMeshes.length === 0) {
+        console.warn('Cover 메쉬를 찾을 수 없습니다.');
+        // 모든 메쉬 이름 출력 (디버깅)
+        const allNames = [];
+        threeViewer.scene.traverse((child) => {
+            if (child.name) allNames.push(child.name);
+        });
+        console.log('사용 가능한 메쉬 이름:', allNames);
+        return;
+    }
+
+    console.log(`Cover 메쉬 ${coverMeshes.length}개 발견:`, coverMeshes.map(m => m.name));
+
+    // 모든 Cover 메쉬에 대해 동일한 작업 수행
+    coverMeshes.forEach((coverMesh) => {
+        if (action === 'hide') {
+            // 원본 상태 저장
+            if (coverMesh.userData.originalVisibility === undefined) {
+                coverMesh.userData.originalVisibility = coverMesh.visible;
+            }
+            coverMesh.visible = false;
+        } else if (action === 'show') {
+            // 원본 상태로 복원
+            if (coverMesh.userData.originalVisibility !== undefined) {
+                coverMesh.visible = coverMesh.userData.originalVisibility;
+            } else {
+                coverMesh.visible = true;
+            }
+            // 투명도도 원래대로
+            if (coverMesh.material) {
+                const materials = Array.isArray(coverMesh.material) ? coverMesh.material : [coverMesh.material];
+                materials.forEach((mat) => {
+                    if (mat instanceof THREE.MeshStandardMaterial || mat instanceof THREE.MeshPhysicalMaterial) {
+                        if (mat.userData.originalOpacity !== undefined) {
+                            mat.opacity = mat.userData.originalOpacity;
+                            mat.transparent = false;
+                        }
+                    }
+                });
+            }
+        } else if (action === 'transparent') {
+            // 투명 처리를 위해서는 Cover를 보이게 해야 함
+            // 원본 상태 저장
+            if (coverMesh.userData.originalVisibility === undefined) {
+                coverMesh.userData.originalVisibility = coverMesh.visible;
+            }
+            coverMesh.visible = true;
+
+            // 원본 투명도 저장 및 투명 처리
+            if (coverMesh.material) {
+                const materials = Array.isArray(coverMesh.material) ? coverMesh.material : [coverMesh.material];
+                materials.forEach((mat) => {
+                    if (mat instanceof THREE.MeshStandardMaterial || mat instanceof THREE.MeshPhysicalMaterial) {
+                        if (mat.userData.originalOpacity === undefined) {
+                            mat.userData.originalOpacity = mat.opacity;
+                        }
+                        mat.transparent = true;
+                        mat.opacity = 0.3; // 30% 투명도
+                    }
+                });
+            }
+        } else if (action === 'reset') {
+            // 투명도를 원래대로 복원하되, 현재 visible 상태는 유지
+            if (coverMesh.material) {
+                const materials = Array.isArray(coverMesh.material) ? coverMesh.material : [coverMesh.material];
+                materials.forEach((mat) => {
+                    if (mat instanceof THREE.MeshStandardMaterial || mat instanceof THREE.MeshPhysicalMaterial) {
+                        if (mat.userData.originalOpacity !== undefined) {
+                            mat.opacity = mat.userData.originalOpacity;
+                            mat.transparent = false;
+                        } else {
+                            mat.opacity = 1.0;
+                            mat.transparent = false;
+                        }
+                    }
+                });
+            }
+        }
+    });
+
+    console.log(`Cover ${action} 처리 완료 (${coverMeshes.length}개 메쉬)`);
+}
+
 function renderMfcDrawingTab(entry) {
     const body = reportElements.reportBody;
     if (!body) return;
     destroyReportChart();
     disposeThreeViewer();
     const label = displayParam(entry?.param || 'MFC');
-    // 경량화된 GLB 사용 (STEP은 브라우저에서 바로 로드 불가)
-    const encoded = encodeURIComponent('ALD_light2.glb');
+    // ALD Batch Type Assy9.gltf 파일 사용 (.bin 파일은 자동으로 참조됨)
+    const encoded = encodeURIComponent('ALD Batch Type Assy9.gltf');
     const modelUrl = `/static/3D/${encoded}`;
     body.innerHTML = `
         <div class="report-3d-wrap">
             <div class="report-3d-header">
                 <span>도면 (3D)</span>
-                <span style="font-size:13px; color:#475569;">파일: ALD_light2.glb</span>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <button id="cover-hide-btn" style="padding: 6px 12px; background: #3b82f6; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; min-width: 110px; width: 110px; text-align: center;">Cover 숨기기</button>
+                    <button id="cover-show-btn" style="padding: 6px 12px; background: #3b82f6; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; display: none; min-width: 110px; width: 110px; text-align: center;">Cover 보이기</button>
+                    <button id="cover-transparent-btn" style="padding: 6px 12px; background: #9333ea; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; min-width: 110px; width: 110px; text-align: center;">Cover 투명하게</button>
+                    <span style="font-size:13px; color:#475569;">파일: ALD Batch Type Assy9.gltf</span>
+                </div>
             </div>
             <div class="report-3d-canvas" id="report-3d-container">로딩 중...</div>
             <div class="report-3d-note">마우스 드래그: 회전 · 스크롤: 줌 · 오른쪽 버튼: 이동 (대용량 파일은 로딩이 다소 지연될 수 있습니다)</div>
         </div>
     `;
     const container = document.getElementById('report-3d-container');
+
+    // 버튼 이벤트 리스너 설정
+    const hideBtn = document.getElementById('cover-hide-btn');
+    const showBtn = document.getElementById('cover-show-btn');
+    const transparentBtn = document.getElementById('cover-transparent-btn');
+
+    let coverVisible = true; // Cover가 보이는지 여부
+    let coverTransparent = false; // Cover가 투명한지 여부
+
+    const updateButtonStates = () => {
+        // 숨기기/보이기 버튼 토글
+        if (coverVisible) {
+            hideBtn.style.display = 'inline-block';
+            showBtn.style.display = 'none';
+        } else {
+            hideBtn.style.display = 'none';
+            showBtn.style.display = 'inline-block';
+        }
+
+        // 투명 버튼 텍스트 업데이트
+        if (coverTransparent) {
+            transparentBtn.textContent = '원래대로';
+        } else {
+            transparentBtn.textContent = 'Cover 투명하게';
+        }
+    };
+
+    hideBtn?.addEventListener('click', () => {
+        controlCover('hide');
+        coverVisible = false;
+        updateButtonStates();
+    });
+
+    showBtn?.addEventListener('click', () => {
+        controlCover('show');
+        coverVisible = true;
+        updateButtonStates();
+    });
+
+    transparentBtn?.addEventListener('click', () => {
+        if (coverTransparent) {
+            // 투명 상태에서 원래대로 클릭 → 불투명 처리
+            controlCover('reset');
+            coverTransparent = false;
+            // 불투명 처리 후 원래 visible 상태로 복원
+            if (threeViewer && threeViewer.scene) {
+                const coverMeshes = findAllCoverMeshes(threeViewer.scene);
+                if (coverMeshes.length > 0 && coverMeshes[0].userData.originalVisibility !== undefined) {
+                    // 첫 번째 메쉬의 원래 상태를 기준으로 설정
+                    coverVisible = coverMeshes[0].userData.originalVisibility;
+                    // 모든 메쉬를 원래 상태로 복원
+                    coverMeshes.forEach(mesh => {
+                        if (mesh.userData.originalVisibility !== undefined) {
+                            mesh.visible = mesh.userData.originalVisibility;
+                        }
+                    });
+                }
+            }
+        } else {
+            // 투명하게 클릭 → 투명 처리 (Cover를 보이게 함)
+            controlCover('transparent');
+            coverTransparent = true;
+            coverVisible = true; // 투명 처리 시 항상 보이게
+        }
+        updateButtonStates();
+    });
+
+    // 3D 뷰어 생성
     createThreeViewer(container, modelUrl, entry);
+
+    // 모델 로드 완료 후 Cover 메쉬 확인 (약간의 지연 후)
+    setTimeout(() => {
+        if (threeViewer && threeViewer.scene) {
+            const coverMeshes = findAllCoverMeshes(threeViewer.scene);
+            if (coverMeshes.length > 0) {
+                console.log(`Cover 메쉬 ${coverMeshes.length}개 찾음:`, coverMeshes.map(m => m.name));
+            } else {
+                console.warn('Cover 메쉬를 찾을 수 없습니다.');
+            }
+        }
+    }, 2000);
 }
 
 function getPartsData(entry) {
@@ -2137,60 +2453,189 @@ function renderPartsTab(entry) {
     destroyReportChart();
     disposeThreeViewer();
     const data = getPartsData(entry);
-    const vendorRows = (data.vendors || []).map(v => `
-        <tr>
-            <td>${v.no ?? ''}</td>
-            <td>${v.name ?? ''}</td>
-            <td>${v.biz ?? ''}</td>
-            <td>${v.link ? `<a href="${v.link}" target="_blank" rel="noopener">제품상세정보</a>` : ''}</td>
-            <td>${v.contact ?? ''}</td>
-        </tr>
-    `).join('');
+
+    // 판매처 데이터 준비 (NO 칼럼 제거)
+    const vendors = data.vendors || [];
+    const itemsPerPage = 4;
+    const totalPages = Math.ceil(vendors.length / itemsPerPage);
+
+    // 현재 페이지의 데이터만 렌더링하는 함수
+    const renderVendorTable = (page = 1) => {
+        const startIdx = (page - 1) * itemsPerPage;
+        const endIdx = startIdx + itemsPerPage;
+        const pageVendors = vendors.slice(startIdx, endIdx);
+
+        // 제품 문의처에서 TEL과 E-MAIL 개행 처리
+        const formatContact = (contact) => {
+            if (!contact) return '';
+            // E MAIL, E-MAIL, EMAIL 패턴을 <br>로 변경
+            return contact.replace(/\s+(E\s*[-\s]?MAIL|EMAIL)\s*:\s*/gi, '<br>$1: ');
+        };
+
+        const vendorRows = pageVendors.map((v, idx) => {
+            const no = startIdx + idx + 1;
+            const formattedContact = formatContact(v.contact);
+            return `
+            <tr>
+                <td>${no}</td>
+                <td>${v.name ?? ''}</td>
+                <td>${v.biz ?? ''}</td>
+                <td>${v.link ? `<a href="${v.link}" target="_blank" rel="noopener">${v.link}</a>` : ''}</td>
+                <td>${formattedContact}</td>
+            </tr>
+        `;
+        }).join('');
+
+        // 페이지네이션 버튼 생성
+        let paginationHtml = '';
+        if (totalPages > 1) {
+            const pageButtons = [];
+            for (let i = 1; i <= totalPages; i++) {
+                pageButtons.push(`<button class="vendor-page-btn ${i === page ? 'active' : ''}" data-page="${i}">${i}</button>`);
+            }
+            paginationHtml = `<div class="vendor-pagination">${pageButtons.join('')}</div>`;
+        }
+
+        return { vendorRows, paginationHtml };
+    };
+
+    // 초기 렌더링 (1페이지)
+    const { vendorRows, paginationHtml } = renderVendorTable(1);
+
     const imageHtml = data.image ? `
         <figure class="parts-figure">
             <img src="${data.image.src}" alt="${data.image.alt || data.title || ''}">
             <figcaption>${data.image.caption || ''}</figcaption>
         </figure>
     ` : '';
-    const usage = data.usage ? `<div class="parts-text-block"><div class="label">용도</div><div>${data.usage}</div></div>` : '';
-    const feature = data.feature ? `<div class="parts-text-block"><div class="label">특성</div><div>${data.feature}</div></div>` : '';
-    const principle = data.principle ? `<div class="parts-text-block"><div class="label">작동원리</div><div>${data.principle}</div></div>` : '';
-    body.innerHTML = `
-        <div class="parts-tablist" role="tablist" aria-label="부품 확인 탭">
-            <button class="parts-subtab active" data-sub="info" role="tab" aria-selected="true">부품 정보</button>
-            <button class="parts-subtab" data-sub="vendor" role="tab" aria-selected="false">판매 기업</button>
-        </div>
-        <div class="parts-panel active" data-sub="info" role="tabpanel">
-            <div class="parts-section">
-                <div class="parts-section-title">${data.title}</div>
-                <div class="parts-info-layout">
-                    ${imageHtml}
-                    <div class="parts-text-cols">
-                        ${usage || ''}
-                        ${feature || ''}
-                        ${principle || ''}
-                        ${(!usage && !feature && !principle) ? '<div class="parts-note">부품 정보가 없습니다.</div>' : ''}
+
+    // description을 글머리 기호 리스트로 변환
+    let descriptionHtml = '';
+    if (data.description) {
+        const lines = data.description.split('\n').filter(line => line.trim());
+        const listItems = lines.map(line => {
+            // '- '로 시작하는 경우 제거하고 내용만 사용
+            const content = line.replace(/^-\s*/, '').trim();
+            return `<li>${content}</li>`;
+        }).join('');
+        descriptionHtml = `<div class="parts-text-block"><ul class="parts-description-list">${listItems}</ul></div>`;
+    }
+
+    // 판매 정보 탭 HTML 생성
+    let salesInfoHtml = '<div class="parts-note">판매 정보가 없습니다.</div>';
+    if (data.sales && data.sales.iframeUrl) {
+        const salesText = data.sales.text || '';
+        const imageUrl = data.sales.imageUrl || '';
+
+        // 판매 정보 텍스트를 글머리 기호 리스트로 변환
+        let salesTextHtml = '';
+        if (salesText) {
+            const lines = salesText.split('\n').filter(line => line.trim());
+            let titleHtml = '';
+            const listItems = [];
+            let foundTitle = false;
+
+            lines.forEach(line => {
+                const trimmed = line.trim();
+                // '[이상 로그 연계 판단]' 같은 제목 찾기
+                if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+                    titleHtml = `<div class="sales-info-title">${trimmed}</div>`;
+                    foundTitle = true;
+                } else if (foundTitle && trimmed) {
+                    // 제목 이후의 모든 줄을 리스트 항목으로 추가
+                    const content = trimmed.replace(/^-\s*/, '').trim();
+                    if (content) {
+                        listItems.push(`<li>${content}</li>`);
+                    }
+                }
+            });
+
+            // 리스트가 있으면 ul로 감싸기
+            if (listItems.length > 0) {
+                salesTextHtml = `${titleHtml}<ul class="sales-info-list">${listItems.join('')}</ul>`;
+            } else {
+                salesTextHtml = titleHtml || salesText.replace(/\n/g, '<br>');
+            }
+        }
+
+        salesInfoHtml = `
+            <div class="sales-layout">
+                <div class="sales-image-container">
+                    ${imageUrl ? `<img src="${imageUrl}" alt="상품 이미지" class="sales-image" onclick="window.open('${data.sales.iframeUrl}', '_blank')" style="cursor: pointer;">` : ''}
+                </div>
+                <div class="sales-info-container">
+                    <div class="sales-info-content">
+                        <div class="sales-info-text">${salesTextHtml}</div>
+                        <button class="sales-buy-btn" onclick="window.open('${data.sales.iframeUrl}', '_blank')">바로 구매하기</button>
                     </div>
                 </div>
             </div>
+        `;
+    }
+    body.innerHTML = `
+        <div class="parts-tablist" role="tablist" aria-label="부품 확인 탭">
+            <button class="parts-subtab active" data-sub="info" role="tab" aria-selected="true">부품 정보</button>
+            <button class="parts-subtab" data-sub="sales" role="tab" aria-selected="false">판매 정보</button>
+            <button class="parts-subtab" data-sub="vendor" role="tab" aria-selected="false">판매처 리스트</button>
+        </div>
+        <div class="parts-panel active" data-sub="info" role="tabpanel">
+            <div class="parts-section">
+                ${imageHtml}
+                <div class="parts-text-cols">
+                    ${descriptionHtml || '<div class="parts-note">부품 정보가 없습니다.</div>'}
+                </div>
+            </div>
+        </div>
+        <div class="parts-panel" data-sub="sales" role="tabpanel">
+            ${salesInfoHtml}
         </div>
         <div class="parts-panel" data-sub="vendor" role="tabpanel">
-            ${vendorRows ? `
+            ${vendors.length > 0 ? `
                 <div class="parts-table-wrapper">
                     <div class="parts-table-container">
-                        <table class="parts-table">
-                            <thead>
-                                <tr><th>NO</th><th>업체명</th><th>사업자번호</th><th>제품상세정보</th><th>제품문의처</th></tr>
-                            </thead>
-                            <tbody>
-                                ${vendorRows}
-                            </tbody>
-                        </table>
+                        <div class="parts-table-inner">
+                            <table class="parts-table">
+                                <thead>
+                                    <tr><th>No.</th><th>업체명</th><th>사업자번호</th><th>제품상세정보</th><th>제품문의처</th></tr>
+                                </thead>
+                                <tbody id="vendor-table-body">
+                                    ${vendorRows}
+                                </tbody>
+                            </table>
+                        </div>
+                        ${paginationHtml}
                     </div>
                 </div>
-            ` : '<div class="parts-note">등록된 판매 기업 정보가 없습니다.</div>'}
+            ` : '<div class="parts-note">등록된 판매처 리스트 정보가 없습니다.</div>'}
         </div>
     `;
+
+    // 페이지네이션 버튼 이벤트 처리
+    if (vendors.length > 0 && totalPages > 1) {
+        const pageButtons = body.querySelectorAll('.vendor-page-btn');
+        const vendorTableBody = body.querySelector('#vendor-table-body');
+
+        pageButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const page = parseInt(btn.dataset.page);
+                const { vendorRows: newRows } = renderVendorTable(page);
+
+                // 테이블 내용 업데이트
+                if (vendorTableBody) {
+                    vendorTableBody.innerHTML = newRows;
+                }
+
+                // 버튼 활성화 상태 업데이트
+                pageButtons.forEach(b => {
+                    b.classList.toggle('active', parseInt(b.dataset.page) === page);
+                });
+
+                // 테이블 높이 조정
+                setTimeout(() => adjustPartsTableHeight(), 100);
+            });
+        });
+    }
+
     const tabs = body.querySelectorAll('.parts-subtab');
     const panels = body.querySelectorAll('.parts-panel');
     tabs.forEach(btn => {
@@ -2204,14 +2649,14 @@ function renderPartsTab(entry) {
             panels.forEach(panel => {
                 panel.classList.toggle('active', panel.dataset.sub === target);
             });
-            // 판매기업 탭이 활성화되면 테이블 높이 조정
+            // 판매처 리스트 탭이 활성화되면 테이블 높이 조정
             if (target === 'vendor') {
                 setTimeout(() => adjustPartsTableHeight(), 100);
             }
         });
     });
-    
-    // 판매기업 탭이 처음 렌더링될 때도 높이 조정
+
+    // 판매처 리스트 탭이 처음 렌더링될 때도 높이 조정
     const vendorPanel = body.querySelector('.parts-panel[data-sub="vendor"]');
     if (vendorPanel && vendorPanel.classList.contains('active')) {
         setTimeout(() => adjustPartsTableHeight(), 100);
@@ -2223,32 +2668,32 @@ function adjustPartsTableHeight() {
     const table = document.querySelector('.parts-table');
     const tbody = table?.querySelector('tbody');
     if (!tableWrapper || !table || !tbody) return;
-    
+
     // wrapper의 실제 사용 가능한 높이 계산
     const wrapperHeight = tableWrapper.clientHeight;
-    
+
     const thead = table.querySelector('thead');
     const theadHeight = thead?.offsetHeight || 0;
     const availableHeight = wrapperHeight - theadHeight;
     const rowCount = tbody.querySelectorAll('tr').length;
-    
+
     if (rowCount > 0 && availableHeight > 0) {
         // 테이블 높이를 wrapper에 정확히 맞춤
         table.style.height = wrapperHeight + 'px';
         table.style.maxHeight = wrapperHeight + 'px';
-        
+
         // 각 행의 높이를 균등하게 분배 (여유 공간 고려)
         const rowHeight = Math.max(40, Math.floor(availableHeight / rowCount));
         tbody.querySelectorAll('tr').forEach(tr => {
             tr.style.height = rowHeight + 'px';
         });
-        
+
         // 테이블 너비가 컨테이너를 넘지 않도록
         const containerWidth = tableWrapper.clientWidth;
         table.style.width = '100%';
         table.style.maxWidth = containerWidth + 'px';
         table.style.boxSizing = 'border-box';
-        
+
         // thead와 tbody의 칼럼 너비를 정확히 맞추기
         if (thead) {
             const theadCells = thead.querySelectorAll('th');
@@ -2260,7 +2705,7 @@ function adjustPartsTableHeight() {
                 const availableWidth = containerWidth - tableBorder;
                 const columnCount = theadCells.length;
                 const columnWidth = Math.floor(availableWidth / columnCount);
-                
+
                 // 모든 thead와 tbody 셀의 너비를 동일하게 설정
                 theadCells.forEach((th, idx) => {
                     th.style.width = columnWidth + 'px';
@@ -2268,7 +2713,7 @@ function adjustPartsTableHeight() {
                     th.style.maxWidth = columnWidth + 'px';
                     th.style.boxSizing = 'border-box';
                 });
-                
+
                 tbody.querySelectorAll('tr').forEach(tr => {
                     const cells = tr.querySelectorAll('td');
                     cells.forEach((td, idx) => {
@@ -2303,14 +2748,16 @@ function renderProcessTab() {
     `).join('');
     body.innerHTML = `
         <div class="parts-section">
-            <div class="parts-section-title">${step.title}${step.subtitle ? ` (${step.subtitle})` : ''}</div>
             <div class="parts-info-layout process-layout">
                 <figure class="parts-figure">
                     <img src="${step.image?.src || ''}" alt="${step.image?.alt || ''}">
                     <figcaption>${step.image?.caption || ''}</figcaption>
                 </figure>
                 <div class="parts-text-cols">
-                    ${sections || '<div class="parts-note">설명 정보가 없습니다.</div>'}
+                    <div class="parts-section-title">${step.title}${step.subtitle ? ` (${step.subtitle})` : ''}</div>
+                    <div class="parts-text-content">
+                        ${sections || '<div class="parts-note">설명 정보가 없습니다.</div>'}
+                    </div>
                 </div>
             </div>
         </div>
@@ -2362,14 +2809,14 @@ async function setActiveReportTab(tabKey) {
 
 async function openReportModal(entry) {
     if (!reportElements.reportModal || !reportElements.reportSummary || !reportElements.reportBody) return;
-    
+
     // DB에서 최신 violation_type 가져오기
     try {
         // entry의 start와 end를 사용하여 해당 기간의 이상 로그 조회
         // 시간 범위를 넓히기 위해 ±5초 여유를 둠
         const searchStart = entry.start ? entry.start - 5000 : null;
         const searchEnd = entry.end ? entry.end + 5000 : null;
-        
+
         if (searchStart && searchEnd) {
             // 로컬 시간 형식으로 변환 (YYYY-MM-DD HH:MM:SS)
             const formatLocalTime = (timestamp) => {
@@ -2382,16 +2829,16 @@ async function openReportModal(entry) {
                 const seconds = String(d.getSeconds()).padStart(2, '0');
                 return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
             };
-            
+
             const startTime = formatLocalTime(searchStart);
             const endTime = formatLocalTime(searchEnd);
-            
+
             console.log('리포트 모달 - 조회 시간 범위:', { startTime, endTime });
-            console.log('리포트 모달 - entry 시간:', { 
-                entryStart: formatLocalTime(entry.start), 
-                entryEnd: formatLocalTime(entry.end) 
+            console.log('리포트 모달 - entry 시간:', {
+                entryStart: formatLocalTime(entry.start),
+                entryEnd: formatLocalTime(entry.end)
             });
-            
+
             const timestamp = new Date().getTime(); // 캐시 방지용 타임스탬프
             const res = await fetch(`/api/alarm_history?process_start_time=${encodeURIComponent(startTime)}&process_end_time=${encodeURIComponent(endTime)}&_t=${timestamp}`, {
                 cache: 'no-cache',
@@ -2400,20 +2847,20 @@ async function openReportModal(entry) {
                     'Pragma': 'no-cache'
                 }
             });
-            
+
             if (res.ok) {
                 const alarmData = await res.json();
                 console.log('리포트 모달 - DB에서 가져온 이상 로그:', alarmData);
                 console.log('리포트 모달 - 조회된 이상 로그 개수:', alarmData ? alarmData.length : 0);
-                
+
                 // 해당 파라미터와 시간이 일치하는 이상 로그 찾기
                 if (alarmData && alarmData.length > 0) {
                     console.log('리포트 모달 - entry.param:', entry.param);
-                    
+
                     // 파라미터가 일치하는 이상 로그 필터링
                     const paramMatches = alarmData.filter(alarm => alarm.parameter === entry.param);
                     console.log('리포트 모달 - 파라미터 일치하는 이상 로그:', paramMatches);
-                    
+
                     if (paramMatches.length > 0) {
                         // 가장 최근의 이상 로그 사용 (end_time 기준)
                         const sorted = [...paramMatches].sort((a, b) => {
@@ -2421,7 +2868,7 @@ async function openReportModal(entry) {
                             const timeB = new Date(b.end_time || b.start_time || 0);
                             return timeB - timeA;
                         });
-                        
+
                         // 시간 범위가 겹치는 이상 로그 찾기
                         let matchedAlarm = sorted.find(alarm => {
                             // 시간 문자열을 Date 객체로 변환
@@ -2434,14 +2881,14 @@ async function openReportModal(entry) {
                                 const [hours, minutes, seconds] = timePart.split(':').map(Number);
                                 return new Date(year, month - 1, day, hours, minutes, seconds);
                             };
-                            
+
                             const alarmStart = parseTime(alarm.start_time);
                             const alarmEnd = parseTime(alarm.end_time);
                             const entryStart = new Date(entry.start);
                             const entryEnd = new Date(entry.end);
-                            
+
                             if (!alarmStart || !alarmEnd) return false;
-                            
+
                             // 시간 범위가 겹치는지 확인 (5초 여유)
                             const overlap = alarmStart <= entryEnd + 5000 && alarmEnd >= entryStart - 5000;
                             console.log('리포트 모달 - 시간 매칭 확인:', {
@@ -2451,19 +2898,19 @@ async function openReportModal(entry) {
                             });
                             return overlap;
                         });
-                        
+
                         // 시간 매칭이 없으면 가장 최근 것 사용
                         if (!matchedAlarm && sorted.length > 0) {
                             matchedAlarm = sorted[0];
                             console.log('리포트 모달 - 시간 매칭 없음, 가장 최근 것 사용:', matchedAlarm);
                         }
-                        
+
                         if (matchedAlarm && matchedAlarm.violation_type !== null && matchedAlarm.violation_type !== undefined) {
                             // DB에서 가져온 최신 violation_type으로 업데이트
                             const oldVt = entry.violation_type;
                             entry.violation_type = matchedAlarm.violation_type;
-                            console.log('리포트 모달 - violation_type 업데이트:', { 
-                                old: oldVt, 
+                            console.log('리포트 모달 - violation_type 업데이트:', {
+                                old: oldVt,
                                 new: matchedAlarm.violation_type,
                                 alarm: matchedAlarm
                             });
@@ -2482,7 +2929,7 @@ async function openReportModal(entry) {
         console.error('리포트 모달 - DB에서 violation_type 가져오기 실패:', e);
         // 실패해도 기존 entry 사용
     }
-    
+
     currentReportEntry = entry;
     const timeText = formatTimelineTime(entry.end);
     const diff = entry.diff != null ? Math.abs(entry.diff).toFixed(0) : '0';
@@ -2702,7 +3149,7 @@ window.addEventListener('DOMContentLoaded', () => {
     // 장비 상태 RUN/DOWN 버튼 클릭 이벤트
     const deviceRunBtn = document.getElementById('device-state-run');
     const deviceDownBtn = document.getElementById('device-state-down');
-    
+
     async function startEquipment() {
         try {
             const res = await fetch('/api/equipment/start', {

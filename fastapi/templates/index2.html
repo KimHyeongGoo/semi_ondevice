@@ -100,6 +100,10 @@
             border: 1px solid #ccc;
             border-radius: 6px;
             padding: 10px;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            max-height: calc(100vh - 200px);
         }
 
         .proc-header {
@@ -153,6 +157,9 @@
         .thickness-table {
             width: 100%;
             border-collapse: collapse;
+            table-layout: fixed;
+            flex: 1 1 auto;
+            min-height: 0;
         }
 
         .thickness-table th,
@@ -162,10 +169,9 @@
             text-align: center;
             line-height: 1.2;
             font-size: 0.9em;
-        }
-
-        .thickness-table {
-            table-layout: fixed;
+            min-height: 20px;
+            max-height: 40px;
+            vertical-align: middle;
         }
 
         .thickness-table th {
@@ -329,8 +335,8 @@
         }
 
         #heatmap-modal-image img {
-            width: 100%;
-            height: 100%;
+            width: 90%;
+            height: 90%;
             object-fit: contain;
             border: 1px solid #ccc;
             border-radius: 8px;
@@ -343,8 +349,8 @@
         }
 
         #heatmap-modal-table table {
-            width: 100%;
-            height: 100%;
+            width: 90%;
+            height: 90%;
         }
 
         /* Parts Tab Styles - 부품확인탭 부품정보 이미지 */

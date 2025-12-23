@@ -55,7 +55,7 @@ function buildTable(proc) {
 
     const heatmapRow = document.createElement('tr');
     const images = proc.heatmap_images || {};
-    let heatmapHtml = '<td class="heatmap-index-cell">등고선</td>';
+    let heatmapHtml = '<td class="heatmap-index-cell">wafer map</td>';
     HEATMAP_LABELS.forEach(label => {
         const src = images[label];
         if (src) {
@@ -272,7 +272,7 @@ function renderPage() {
 
         const header = document.createElement('div');
         header.className = 'proc-header';
-        
+
         const headerContent = document.createElement('div');
         headerContent.className = 'proc-header-content';
         headerContent.innerHTML = `
@@ -280,7 +280,7 @@ function renderPage() {
             <div class="proc-row"><span class="label">START :</span><span class="value">${proc.start_time}</span></div>
             <div class="proc-row"><span class="label">END :</span><span class="value">${proc.end_time}</span></div>
         `;
-        
+
         const copyBtn = document.createElement('button');
         copyBtn.className = 'copy-llm-btn';
         copyBtn.textContent = 'LLM 질의문 복사';
@@ -299,7 +299,7 @@ function renderPage() {
                 alert('복사에 실패했습니다. 브라우저가 클립보드 접근을 지원하지 않습니다.');
             }
         });
-        
+
         header.appendChild(headerContent);
         header.appendChild(copyBtn);
         box.appendChild(header);

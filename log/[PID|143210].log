@@ -34,3 +34,3059 @@
 [2025-12-21 20:04:51] ray_predict() : 시퀀스 데이터 부족
 [2025-12-21 20:04:52] ray_predict() : 시퀀스 데이터 부족
 [2025-12-21 20:04:53] ray_predict() : 시퀀스 데이터 부족
+[2025-12-21 20:36:37] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-21 20:36:37] 'NoneType' object is not subscriptable
+[2025-12-21 20:36:37] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-21 20:36:37] 'NoneType' object is not subscriptable
+[2025-12-21 20:36:37] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-21 20:36:37] 'NoneType' object is not subscriptable
+[2025-12-21 20:52:06] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-21 20:52:06] 'NoneType' object is not subscriptable
+[2025-12-21 20:52:06] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-21 20:52:06] 'NoneType' object is not subscriptable
+[2025-12-21 20:52:06] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-21 20:52:06] 'NoneType' object is not subscriptable
+[2025-12-21 21:23:18] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-21 21:23:18] 'NoneType' object is not subscriptable
+[2025-12-21 21:23:18] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-21 21:23:18] 'NoneType' object is not subscriptable
+[2025-12-21 21:23:18] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-21 21:23:18] 'NoneType' object is not subscriptable
+[2025-12-21 22:58:32] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-21 22:58:32] 'NoneType' object is not subscriptable
+[2025-12-21 22:58:32] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-21 22:58:32] 'NoneType' object is not subscriptable
+[2025-12-21 22:58:32] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-21 22:58:32] 'NoneType' object is not subscriptable
+[2025-12-22 00:17:37] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-22 00:17:37] 'NoneType' object is not subscriptable
+[2025-12-22 00:17:37] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-22 00:17:37] 'NoneType' object is not subscriptable
+[2025-12-22 00:17:38] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-22 00:17:38] 'NoneType' object is not subscriptable
+[2025-12-22 00:32:43] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-22 00:32:43] 'NoneType' object is not subscriptable
+[2025-12-22 00:32:43] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-22 00:32:43] 'NoneType' object is not subscriptable
+[2025-12-22 00:32:44] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-22 00:32:44] 'NoneType' object is not subscriptable
+[2025-12-22 03:22:37] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-22 03:22:37] 'NoneType' object is not subscriptable
+[2025-12-22 03:22:38] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-22 03:22:38] 'NoneType' object is not subscriptable
+[2025-12-22 03:22:38] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-22 03:22:38] 'NoneType' object is not subscriptable
+[2025-12-22 04:24:31] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-22 04:24:31] 'NoneType' object is not subscriptable
+[2025-12-22 04:24:31] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-22 04:24:31] 'NoneType' object is not subscriptable
+[2025-12-22 04:24:32] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-22 04:24:32] 'NoneType' object is not subscriptable
+[2025-12-22 04:39:56] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-22 04:39:56] 'NoneType' object is not subscriptable
+[2025-12-22 04:39:56] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-22 04:39:56] 'NoneType' object is not subscriptable
+[2025-12-22 04:39:57] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-22 04:39:57] 'NoneType' object is not subscriptable
+[2025-12-22 05:10:53] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-22 05:10:53] 'NoneType' object is not subscriptable
+[2025-12-22 05:10:53] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-22 05:10:53] 'NoneType' object is not subscriptable
+[2025-12-22 05:10:53] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-22 05:10:53] 'NoneType' object is not subscriptable
+[2025-12-22 06:28:39] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-22 06:28:39] 'NoneType' object is not subscriptable
+[2025-12-22 06:28:40] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-22 06:28:40] 'NoneType' object is not subscriptable
+[2025-12-22 06:28:40] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-22 06:28:40] 'NoneType' object is not subscriptable
+[2025-12-22 07:00:37] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-22 07:00:37] 'NoneType' object is not subscriptable
+[2025-12-22 07:00:37] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-22 07:00:37] 'NoneType' object is not subscriptable
+[2025-12-22 07:00:37] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-22 07:00:37] 'NoneType' object is not subscriptable
+[2025-12-22 09:52:13] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-22 09:52:13] 'NoneType' object is not subscriptable
+[2025-12-22 09:52:13] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-22 09:52:13] 'NoneType' object is not subscriptable
+[2025-12-22 09:52:13] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-22 09:52:13] 'NoneType' object is not subscriptable
+[2025-12-22 10:07:42] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-22 10:07:42] 'NoneType' object is not subscriptable
+[2025-12-22 10:07:42] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-22 10:07:42] 'NoneType' object is not subscriptable
+[2025-12-22 10:07:42] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-22 10:07:42] 'NoneType' object is not subscriptable
+[2025-12-22 11:25:03] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-22 11:25:03] 'NoneType' object is not subscriptable
+[2025-12-22 11:25:03] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-22 11:25:03] 'NoneType' object is not subscriptable
+[2025-12-22 11:25:03] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-22 11:25:03] 'NoneType' object is not subscriptable
+[2025-12-22 12:27:16] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-22 12:27:16] 'NoneType' object is not subscriptable
+[2025-12-22 12:27:17] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-22 12:27:17] 'NoneType' object is not subscriptable
+[2025-12-22 12:27:17] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-22 12:27:17] 'NoneType' object is not subscriptable
+[2025-12-22 13:29:24] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-22 13:29:24] 'NoneType' object is not subscriptable
+[2025-12-22 13:29:25] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-22 13:29:25] 'NoneType' object is not subscriptable
+[2025-12-22 13:29:25] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-22 13:29:25] 'NoneType' object is not subscriptable
+[2025-12-22 13:44:56] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-22 13:44:56] 'NoneType' object is not subscriptable
+[2025-12-22 13:44:56] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-22 13:44:56] 'NoneType' object is not subscriptable
+[2025-12-22 13:44:56] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-22 13:44:56] 'NoneType' object is not subscriptable
+[2025-12-22 15:50:19] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-22 15:50:19] 'NoneType' object is not subscriptable
+[2025-12-22 15:50:19] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-22 15:50:19] 'NoneType' object is not subscriptable
+[2025-12-22 15:50:19] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-22 15:50:19] 'NoneType' object is not subscriptable
+[2025-12-22 16:10:46] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:10:48] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:10:50] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:10:52] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:10:54] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:10:56] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:10:59] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:11:02] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:11:03] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:11:11] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:11:12] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:11:13] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:11:14] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:11:15] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:11:16] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:11:17] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:11:19] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:11:20] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:11:21] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:11:27] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:11:33] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:11:43] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:11:44] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:11:48] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:11:57] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:11:58] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:12:07] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:12:14] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:12:26] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:12:33] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:12:34] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:12:42] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:12:48] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:12:55] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:13:06] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:13:12] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:13:13] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:13:17] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:13:19] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:13:21] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:13:22] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:13:23] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:13:24] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:13:25] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:13:26] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:13:27] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:13:28] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:13:29] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:13:30] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:13:31] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:13:32] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:13:33] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:13:34] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:13:35] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:13:36] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:13:37] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:13:38] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:13:39] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:13:40] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:13:41] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:13:42] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:13:43] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:13:44] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:13:45] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:13:46] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:13:47] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:13:48] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:13:49] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:13:50] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:13:51] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:13:52] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:13:53] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:13:54] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:13:55] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:13:56] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:13:57] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:13:58] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:13:59] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:14:00] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:14:01] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:14:02] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:14:03] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:14:04] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:14:05] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:14:06] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:14:07] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:14:08] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:14:09] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:14:10] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:14:11] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:14:12] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:14:13] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:14:14] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:14:15] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:14:16] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:14:17] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:14:18] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:14:19] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:14:20] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:14:21] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:14:22] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:14:23] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:14:24] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:14:25] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:14:26] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:14:27] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:14:28] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:14:29] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:14:30] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:14:31] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:14:32] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:14:33] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:14:34] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:14:35] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:14:36] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:14:37] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:14:38] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:14:39] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:14:40] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:14:41] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:14:42] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:14:43] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:14:44] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:14:45] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:14:46] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:14:47] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:14:49] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:14:50] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:14:51] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:14:52] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:14:55] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:14:56] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:14:57] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:15:00] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:15:01] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:15:02] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:15:06] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:15:11] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:15:12] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:15:13] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:15:14] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:15:15] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:15:21] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:15:22] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:15:23] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:15:24] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:15:29] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:15:30] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:15:32] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:15:37] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:15:57] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:15:58] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:16:19] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:16:20] ray_predict() : 시퀀스 데이터 부족
+[2025-12-22 16:46:08] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-22 16:46:08] 'NoneType' object is not subscriptable
+[2025-12-22 16:46:08] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-22 16:46:08] 'NoneType' object is not subscriptable
+[2025-12-22 16:46:09] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-22 16:46:09] 'NoneType' object is not subscriptable
+[2025-12-22 17:02:04] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-22 17:02:04] 'NoneType' object is not subscriptable
+[2025-12-22 17:02:04] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-22 17:02:04] 'NoneType' object is not subscriptable
+[2025-12-22 17:02:04] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-22 17:02:04] 'NoneType' object is not subscriptable
+[2025-12-22 18:06:01] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-22 18:06:01] 'NoneType' object is not subscriptable
+[2025-12-22 18:06:02] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-22 18:06:02] 'NoneType' object is not subscriptable
+[2025-12-22 18:06:02] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-22 18:06:02] 'NoneType' object is not subscriptable
+[2025-12-22 18:21:47] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-22 18:21:47] 'NoneType' object is not subscriptable
+[2025-12-22 18:21:47] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-22 18:21:47] 'NoneType' object is not subscriptable
+[2025-12-22 18:21:47] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-22 18:21:47] 'NoneType' object is not subscriptable
+[2025-12-22 18:52:50] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-22 18:52:50] 'NoneType' object is not subscriptable
+[2025-12-22 18:52:50] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-22 18:52:50] 'NoneType' object is not subscriptable
+[2025-12-22 18:52:50] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-22 18:52:50] 'NoneType' object is not subscriptable
+[2025-12-22 19:08:22] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-22 19:08:22] 'NoneType' object is not subscriptable
+[2025-12-22 19:08:22] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-22 19:08:22] 'NoneType' object is not subscriptable
+[2025-12-22 19:08:22] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-22 19:08:22] 'NoneType' object is not subscriptable
+[2025-12-22 19:39:23] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-22 19:39:23] 'NoneType' object is not subscriptable
+[2025-12-22 19:39:23] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-22 19:39:23] 'NoneType' object is not subscriptable
+[2025-12-22 19:39:23] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-22 19:39:23] 'NoneType' object is not subscriptable
+[2025-12-22 21:12:26] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-22 21:12:26] 'NoneType' object is not subscriptable
+[2025-12-22 21:12:27] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-22 21:12:27] 'NoneType' object is not subscriptable
+[2025-12-22 21:12:27] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-22 21:12:27] 'NoneType' object is not subscriptable
+[2025-12-22 21:59:05] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-22 21:59:05] 'NoneType' object is not subscriptable
+[2025-12-22 21:59:05] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-22 21:59:05] 'NoneType' object is not subscriptable
+[2025-12-22 21:59:05] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-22 21:59:05] 'NoneType' object is not subscriptable
+[2025-12-22 23:17:50] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-22 23:17:50] 'NoneType' object is not subscriptable
+[2025-12-22 23:17:50] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-22 23:17:50] 'NoneType' object is not subscriptable
+[2025-12-22 23:17:50] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-22 23:17:50] 'NoneType' object is not subscriptable
+[2025-12-23 02:56:39] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-23 02:56:39] 'NoneType' object is not subscriptable
+[2025-12-23 02:56:39] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-23 02:56:39] 'NoneType' object is not subscriptable
+[2025-12-23 02:56:39] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-23 02:56:39] 'NoneType' object is not subscriptable
+[2025-12-23 05:01:34] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-23 05:01:34] 'NoneType' object is not subscriptable
+[2025-12-23 05:01:34] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-23 05:01:34] 'NoneType' object is not subscriptable
+[2025-12-23 05:01:34] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-23 05:01:34] 'NoneType' object is not subscriptable
+[2025-12-23 05:33:31] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-23 05:33:31] 'NoneType' object is not subscriptable
+[2025-12-23 05:33:31] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-23 05:33:31] 'NoneType' object is not subscriptable
+[2025-12-23 05:33:31] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-23 05:33:31] 'NoneType' object is not subscriptable
+[2025-12-23 06:05:27] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-23 06:05:27] 'NoneType' object is not subscriptable
+[2025-12-23 06:05:27] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-23 06:05:27] 'NoneType' object is not subscriptable
+[2025-12-23 06:05:27] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-23 06:05:27] 'NoneType' object is not subscriptable
+[2025-12-23 06:21:15] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-23 06:21:15] 'NoneType' object is not subscriptable
+[2025-12-23 06:21:15] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-23 06:21:15] 'NoneType' object is not subscriptable
+[2025-12-23 06:21:15] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-23 06:21:15] 'NoneType' object is not subscriptable
+[2025-12-23 06:36:44] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-23 06:36:44] 'NoneType' object is not subscriptable
+[2025-12-23 06:36:45] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-23 06:36:45] 'NoneType' object is not subscriptable
+[2025-12-23 06:36:45] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-23 06:36:45] 'NoneType' object is not subscriptable
+[2025-12-23 07:54:27] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-23 07:54:27] 'NoneType' object is not subscriptable
+[2025-12-23 07:54:27] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-23 07:54:27] 'NoneType' object is not subscriptable
+[2025-12-23 07:54:27] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-23 07:54:27] 'NoneType' object is not subscriptable
+[2025-12-23 08:09:57] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-23 08:09:57] 'NoneType' object is not subscriptable
+[2025-12-23 08:09:58] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-23 08:09:58] 'NoneType' object is not subscriptable
+[2025-12-23 08:09:58] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-23 08:09:58] 'NoneType' object is not subscriptable
+[2025-12-23 08:41:07] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-23 08:41:07] 'NoneType' object is not subscriptable
+[2025-12-23 08:41:07] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-23 08:41:07] 'NoneType' object is not subscriptable
+[2025-12-23 08:41:07] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-23 08:41:07] 'NoneType' object is not subscriptable
+[2025-12-23 08:56:38] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-23 08:56:38] 'NoneType' object is not subscriptable
+[2025-12-23 08:56:38] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-23 08:56:38] 'NoneType' object is not subscriptable
+[2025-12-23 08:56:38] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-23 08:56:38] 'NoneType' object is not subscriptable
+[2025-12-23 09:12:09] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-23 09:12:09] 'NoneType' object is not subscriptable
+[2025-12-23 09:12:09] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-23 09:12:09] 'NoneType' object is not subscriptable
+[2025-12-23 09:12:09] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-23 09:12:09] 'NoneType' object is not subscriptable
+[2025-12-23 10:14:21] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-23 10:14:21] 'NoneType' object is not subscriptable
+[2025-12-23 10:14:21] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-23 10:14:21] 'NoneType' object is not subscriptable
+[2025-12-23 10:14:21] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-23 10:14:21] 'NoneType' object is not subscriptable
+[2025-12-23 10:45:27] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-23 10:45:27] 'NoneType' object is not subscriptable
+[2025-12-23 10:45:27] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-23 10:45:27] 'NoneType' object is not subscriptable
+[2025-12-23 10:45:27] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-23 10:45:27] 'NoneType' object is not subscriptable
+[2025-12-23 13:04:54] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-23 13:04:54] 'NoneType' object is not subscriptable
+[2025-12-23 13:04:54] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-23 13:04:54] 'NoneType' object is not subscriptable
+[2025-12-23 13:04:54] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-23 13:04:54] 'NoneType' object is not subscriptable
+[2025-12-23 13:35:57] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-23 13:35:57] 'NoneType' object is not subscriptable
+[2025-12-23 13:35:57] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-23 13:35:57] 'NoneType' object is not subscriptable
+[2025-12-23 13:35:57] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-23 13:35:57] 'NoneType' object is not subscriptable
+[2025-12-23 14:07:02] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-23 14:07:02] 'NoneType' object is not subscriptable
+[2025-12-23 14:07:02] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-23 14:07:02] 'NoneType' object is not subscriptable
+[2025-12-23 14:07:02] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-23 14:07:02] 'NoneType' object is not subscriptable
+[2025-12-23 15:09:13] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-23 15:09:13] 'NoneType' object is not subscriptable
+[2025-12-23 15:09:13] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-23 15:09:13] 'NoneType' object is not subscriptable
+[2025-12-23 15:09:13] insert_pred_data() 오래된 데이터 삭제 오류
+[2025-12-23 15:09:13] 'NoneType' object is not subscriptable
+[2025-12-23 15:44:20] ray_predict() : 상하한 터치 이벤트 처리시 오류발생
+[2025-12-23 15:44:20] while parsing a block mapping
+  in "./fastapi/limits.yaml", line 1, column 1
+expected <block end>, but found '}'
+  in "./fastapi/limits.yaml", line 718, column 1
+[2025-12-23 15:45:46] ray_predict() : 상하한 터치 이벤트 처리시 오류발생
+[2025-12-23 15:45:46] while parsing a block mapping
+  in "./fastapi/limits.yaml", line 1, column 1
+expected <block end>, but found '}'
+  in "./fastapi/limits.yaml", line 718, column 1
+[2025-12-23 15:48:41] insert_violation() 오류발생
+[2025-12-23 15:48:41] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 15:49:09.781) already exists.
+
+[2025-12-23 15:48:45] insert_violation() 오류발생
+[2025-12-23 15:48:45] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 15:49:03.798) already exists.
+
+[2025-12-23 15:48:46] insert_violation() 오류발생
+[2025-12-23 15:48:46] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 15:49:04.841) already exists.
+
+[2025-12-23 15:48:50] insert_violation() 오류발생
+[2025-12-23 15:48:50] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 15:49:08.859) already exists.
+
+[2025-12-23 15:48:51] insert_violation() 오류발생
+[2025-12-23 15:48:51] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 15:49:09.863) already exists.
+
+[2025-12-23 15:49:23] insert_violation() 오류발생
+[2025-12-23 15:49:23] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 15:49:41.997) already exists.
+
+[2025-12-23 15:49:24] insert_violation() 오류발생
+[2025-12-23 15:49:24] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 15:49:43.001) already exists.
+
+[2025-12-23 15:49:25] insert_violation() 오류발생
+[2025-12-23 15:49:25] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 15:49:44.006) already exists.
+
+[2025-12-23 15:49:26] insert_violation() 오류발생
+[2025-12-23 15:49:26] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 15:49:45.01) already exists.
+
+[2025-12-23 15:49:29] insert_violation() 오류발생
+[2025-12-23 15:49:29] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 15:49:48.022) already exists.
+
+[2025-12-23 15:49:30] insert_violation() 오류발생
+[2025-12-23 15:49:30] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 15:49:49.027) already exists.
+
+[2025-12-23 15:49:38] insert_violation() 오류발생
+[2025-12-23 15:49:38] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 15:49:47.06) already exists.
+
+[2025-12-23 15:50:02] insert_violation() 오류발생
+[2025-12-23 15:50:02] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 15:50:21.159) already exists.
+
+[2025-12-23 15:50:03] insert_violation() 오류발생
+[2025-12-23 15:50:03] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 15:50:22.164) already exists.
+
+[2025-12-23 15:50:11] insert_violation() 오류발생
+[2025-12-23 15:50:11] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 15:50:20.196) already exists.
+
+[2025-12-23 15:50:30] insert_violation() 오류발생
+[2025-12-23 15:50:30] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 15:50:59.274) already exists.
+
+[2025-12-23 15:50:40] insert_violation() 오류발생
+[2025-12-23 15:50:40] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 15:50:59.316) already exists.
+
+[2025-12-23 15:50:50] insert_violation() 오류발생
+[2025-12-23 15:50:50] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 15:50:59.36) already exists.
+
+[2025-12-23 15:51:09] insert_violation() 오류발생
+[2025-12-23 15:51:09] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 15:51:38.438) already exists.
+
+[2025-12-23 15:51:19] insert_violation() 오류발생
+[2025-12-23 15:51:19] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 15:51:38.482) already exists.
+
+[2025-12-23 15:51:29] insert_violation() 오류발생
+[2025-12-23 15:51:29] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 15:51:38.524) already exists.
+
+[2025-12-23 15:51:48] insert_violation() 오류발생
+[2025-12-23 15:51:48] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 15:52:17.608) already exists.
+
+[2025-12-23 15:51:58] insert_violation() 오류발생
+[2025-12-23 15:51:58] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 15:52:17.654) already exists.
+
+[2025-12-23 15:52:08] insert_violation() 오류발생
+[2025-12-23 15:52:08] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 15:52:17.694) already exists.
+
+[2025-12-23 15:52:27] insert_violation() 오류발생
+[2025-12-23 15:52:27] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 15:52:56.775) already exists.
+
+[2025-12-23 15:52:37] insert_violation() 오류발생
+[2025-12-23 15:52:37] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 15:52:56.822) already exists.
+
+[2025-12-23 15:52:47] insert_violation() 오류발생
+[2025-12-23 15:52:47] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 15:52:56.866) already exists.
+
+[2025-12-23 15:53:06] insert_violation() 오류발생
+[2025-12-23 15:53:06] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 15:53:35.944) already exists.
+
+[2025-12-23 15:53:16] insert_violation() 오류발생
+[2025-12-23 15:53:16] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 15:53:35.989) already exists.
+
+[2025-12-23 15:53:27] insert_violation() 오류발생
+[2025-12-23 15:53:27] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 15:53:36.072) already exists.
+
+[2025-12-23 15:53:46] insert_violation() 오류발생
+[2025-12-23 15:53:46] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 15:54:15.164) already exists.
+
+[2025-12-23 15:53:56] insert_violation() 오류발생
+[2025-12-23 15:53:56] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 15:54:15.204) already exists.
+
+[2025-12-23 15:54:06] insert_violation() 오류발생
+[2025-12-23 15:54:06] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 15:54:15.243) already exists.
+
+[2025-12-23 15:54:25] insert_violation() 오류발생
+[2025-12-23 15:54:25] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 15:54:54.32) already exists.
+
+[2025-12-23 15:54:35] insert_violation() 오류발생
+[2025-12-23 15:54:35] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 15:54:54.358) already exists.
+
+[2025-12-23 15:54:45] insert_violation() 오류발생
+[2025-12-23 15:54:45] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 15:54:54.399) already exists.
+
+[2025-12-23 15:55:04] insert_violation() 오류발생
+[2025-12-23 15:55:04] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 15:55:33.471) already exists.
+
+[2025-12-23 15:55:14] insert_violation() 오류발생
+[2025-12-23 15:55:14] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 15:55:33.515) already exists.
+
+[2025-12-23 15:55:25] insert_violation() 오류발생
+[2025-12-23 15:55:25] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 15:55:33.553) already exists.
+
+[2025-12-23 15:55:44] insert_violation() 오류발생
+[2025-12-23 15:55:44] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 15:56:12.622) already exists.
+
+[2025-12-23 15:55:54] insert_violation() 오류발생
+[2025-12-23 15:55:54] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 15:56:12.66) already exists.
+
+[2025-12-23 15:56:04] insert_violation() 오류발생
+[2025-12-23 15:56:04] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 15:56:12.698) already exists.
+
+[2025-12-23 15:56:23] insert_violation() 오류발생
+[2025-12-23 15:56:23] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 15:56:51.807) already exists.
+
+[2025-12-23 15:56:33] insert_violation() 오류발생
+[2025-12-23 15:56:33] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 15:56:51.888) already exists.
+
+[2025-12-23 15:56:43] insert_violation() 오류발생
+[2025-12-23 15:56:43] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 15:56:52.011) already exists.
+
+[2025-12-23 15:57:02] insert_violation() 오류발생
+[2025-12-23 15:57:02] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 15:57:31.139) already exists.
+
+[2025-12-23 15:57:12] insert_violation() 오류발생
+[2025-12-23 15:57:12] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 15:57:31.178) already exists.
+
+[2025-12-23 15:57:22] insert_violation() 오류발생
+[2025-12-23 15:57:22] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 15:57:31.231) already exists.
+
+[2025-12-23 15:57:41] insert_violation() 오류발생
+[2025-12-23 15:57:41] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 15:58:10.314) already exists.
+
+[2025-12-23 15:57:51] insert_violation() 오류발생
+[2025-12-23 15:57:51] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 15:58:10.356) already exists.
+
+[2025-12-23 15:58:01] insert_violation() 오류발생
+[2025-12-23 15:58:01] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 15:58:10.401) already exists.
+
+[2025-12-23 15:58:20] insert_violation() 오류발생
+[2025-12-23 15:58:20] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 15:58:49.486) already exists.
+
+[2025-12-23 15:58:30] insert_violation() 오류발생
+[2025-12-23 15:58:30] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 15:58:49.527) already exists.
+
+[2025-12-23 15:58:40] insert_violation() 오류발생
+[2025-12-23 15:58:40] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 15:58:49.648) already exists.
+
+[2025-12-23 15:59:00] insert_violation() 오류발생
+[2025-12-23 15:59:00] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 15:59:28.745) already exists.
+
+[2025-12-23 15:59:10] insert_violation() 오류발생
+[2025-12-23 15:59:10] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 15:59:28.786) already exists.
+
+[2025-12-23 15:59:20] insert_violation() 오류발생
+[2025-12-23 15:59:20] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 15:59:28.83) already exists.
+
+[2025-12-23 15:59:39] insert_violation() 오류발생
+[2025-12-23 15:59:39] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:00:07.967) already exists.
+
+[2025-12-23 15:59:49] insert_violation() 오류발생
+[2025-12-23 15:59:49] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:00:08.001) already exists.
+
+[2025-12-23 15:59:59] insert_violation() 오류발생
+[2025-12-23 15:59:59] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:00:08.047) already exists.
+
+[2025-12-23 16:00:18] insert_violation() 오류발생
+[2025-12-23 16:00:18] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:00:47.125) already exists.
+
+[2025-12-23 16:00:28] insert_violation() 오류발생
+[2025-12-23 16:00:28] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:00:47.161) already exists.
+
+[2025-12-23 16:00:38] insert_violation() 오류발생
+[2025-12-23 16:00:38] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:00:47.198) already exists.
+
+[2025-12-23 16:00:57] insert_violation() 오류발생
+[2025-12-23 16:00:57] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:01:26.265) already exists.
+
+[2025-12-23 16:01:07] insert_violation() 오류발생
+[2025-12-23 16:01:07] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:01:26.307) already exists.
+
+[2025-12-23 16:01:17] insert_violation() 오류발생
+[2025-12-23 16:01:17] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:01:26.39) already exists.
+
+[2025-12-23 16:01:36] insert_violation() 오류발생
+[2025-12-23 16:01:36] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:02:05.551) already exists.
+
+[2025-12-23 16:01:46] insert_violation() 오류발생
+[2025-12-23 16:01:46] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:02:05.592) already exists.
+
+[2025-12-23 16:01:56] insert_violation() 오류발생
+[2025-12-23 16:01:56] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:02:05.637) already exists.
+
+[2025-12-23 16:02:15] insert_violation() 오류발생
+[2025-12-23 16:02:15] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:02:44.72) already exists.
+
+[2025-12-23 16:02:25] insert_violation() 오류발생
+[2025-12-23 16:02:25] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:02:44.771) already exists.
+
+[2025-12-23 16:02:35] insert_violation() 오류발생
+[2025-12-23 16:02:35] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:02:44.811) already exists.
+
+[2025-12-23 16:02:54] insert_violation() 오류발생
+[2025-12-23 16:02:54] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:03:23.886) already exists.
+
+[2025-12-23 16:03:04] insert_violation() 오류발생
+[2025-12-23 16:03:04] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:03:23.927) already exists.
+
+[2025-12-23 16:03:15] insert_violation() 오류발생
+[2025-12-23 16:03:15] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:03:23.972) already exists.
+
+[2025-12-23 16:03:33] insert_violation() 오류발생
+[2025-12-23 16:03:33] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:04:03.052) already exists.
+
+[2025-12-23 16:03:43] insert_violation() 오류발생
+[2025-12-23 16:03:43] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:04:03.133) already exists.
+
+[2025-12-23 16:03:54] insert_violation() 오류발생
+[2025-12-23 16:03:54] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:04:03.212) already exists.
+
+[2025-12-23 16:04:14] insert_violation() 오류발생
+[2025-12-23 16:04:14] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:04:42.334) already exists.
+
+[2025-12-23 16:04:24] insert_violation() 오류발생
+[2025-12-23 16:04:24] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:04:42.376) already exists.
+
+[2025-12-23 16:04:34] insert_violation() 오류발생
+[2025-12-23 16:04:34] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:04:42.42) already exists.
+
+[2025-12-23 16:04:53] insert_violation() 오류발생
+[2025-12-23 16:04:53] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:05:21.498) already exists.
+
+[2025-12-23 16:05:03] insert_violation() 오류발생
+[2025-12-23 16:05:03] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:05:21.539) already exists.
+
+[2025-12-23 16:05:13] insert_violation() 오류발생
+[2025-12-23 16:05:13] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:05:21.579) already exists.
+
+[2025-12-23 16:05:32] insert_violation() 오류발생
+[2025-12-23 16:05:32] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:06:00.653) already exists.
+
+[2025-12-23 16:05:42] insert_violation() 오류발생
+[2025-12-23 16:05:42] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:06:00.691) already exists.
+
+[2025-12-23 16:05:52] insert_violation() 오류발생
+[2025-12-23 16:05:52] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:06:00.727) already exists.
+
+[2025-12-23 16:06:11] insert_violation() 오류발생
+[2025-12-23 16:06:11] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:06:39.795) already exists.
+
+[2025-12-23 16:06:21] insert_violation() 오류발생
+[2025-12-23 16:06:21] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:06:39.835) already exists.
+
+[2025-12-23 16:06:31] insert_violation() 오류발생
+[2025-12-23 16:06:31] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:06:39.875) already exists.
+
+[2025-12-23 16:06:50] insert_violation() 오류발생
+[2025-12-23 16:06:50] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:07:18.947) already exists.
+
+[2025-12-23 16:07:00] insert_violation() 오류발생
+[2025-12-23 16:07:00] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:07:18.989) already exists.
+
+[2025-12-23 16:07:10] insert_violation() 오류발생
+[2025-12-23 16:07:10] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:07:19.026) already exists.
+
+[2025-12-23 16:07:29] insert_violation() 오류발생
+[2025-12-23 16:07:29] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:07:58.104) already exists.
+
+[2025-12-23 16:07:39] insert_violation() 오류발생
+[2025-12-23 16:07:39] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:07:58.144) already exists.
+
+[2025-12-23 16:07:49] insert_violation() 오류발생
+[2025-12-23 16:07:49] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:07:58.184) already exists.
+
+[2025-12-23 16:08:08] insert_violation() 오류발생
+[2025-12-23 16:08:08] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:08:37.264) already exists.
+
+[2025-12-23 16:08:18] insert_violation() 오류발생
+[2025-12-23 16:08:18] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:08:37.305) already exists.
+
+[2025-12-23 16:08:28] insert_violation() 오류발생
+[2025-12-23 16:08:28] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:08:37.35) already exists.
+
+[2025-12-23 16:08:47] insert_violation() 오류발생
+[2025-12-23 16:08:47] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:09:16.433) already exists.
+
+[2025-12-23 16:08:57] insert_violation() 오류발생
+[2025-12-23 16:08:57] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:09:16.48) already exists.
+
+[2025-12-23 16:09:07] insert_violation() 오류발생
+[2025-12-23 16:09:07] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:09:16.519) already exists.
+
+[2025-12-23 16:09:26] insert_violation() 오류발생
+[2025-12-23 16:09:26] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:09:55.6) already exists.
+
+[2025-12-23 16:09:36] insert_violation() 오류발생
+[2025-12-23 16:09:36] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:09:55.644) already exists.
+
+[2025-12-23 16:09:46] insert_violation() 오류발생
+[2025-12-23 16:09:46] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:09:55.695) already exists.
+
+[2025-12-23 16:10:05] insert_violation() 오류발생
+[2025-12-23 16:10:05] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:10:34.816) already exists.
+
+[2025-12-23 16:10:15] insert_violation() 오류발생
+[2025-12-23 16:10:15] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:10:34.867) already exists.
+
+[2025-12-23 16:10:25] insert_violation() 오류발생
+[2025-12-23 16:10:25] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:10:34.936) already exists.
+
+[2025-12-23 16:10:44] insert_violation() 오류발생
+[2025-12-23 16:10:44] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:11:14.017) already exists.
+
+[2025-12-23 16:10:54] insert_violation() 오류발생
+[2025-12-23 16:10:54] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:11:14.059) already exists.
+
+[2025-12-23 16:11:04] insert_violation() 오류발생
+[2025-12-23 16:11:04] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:11:14.099) already exists.
+
+[2025-12-23 16:11:24] insert_violation() 오류발생
+[2025-12-23 16:11:24] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:11:53.174) already exists.
+
+[2025-12-23 16:11:35] insert_violation() 오류발생
+[2025-12-23 16:11:35] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:11:53.211) already exists.
+
+[2025-12-23 16:11:44] insert_violation() 오류발생
+[2025-12-23 16:11:44] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:11:53.254) already exists.
+
+[2025-12-23 16:12:03] insert_violation() 오류발생
+[2025-12-23 16:12:03] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:12:32.347) already exists.
+
+[2025-12-23 16:12:14] insert_violation() 오류발생
+[2025-12-23 16:12:14] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:12:32.387) already exists.
+
+[2025-12-23 16:12:23] insert_violation() 오류발생
+[2025-12-23 16:12:23] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:12:32.432) already exists.
+
+[2025-12-23 16:12:43] insert_violation() 오류발생
+[2025-12-23 16:12:43] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:13:11.513) already exists.
+
+[2025-12-23 16:12:53] insert_violation() 오류발생
+[2025-12-23 16:12:53] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:13:11.555) already exists.
+
+[2025-12-23 16:13:02] insert_violation() 오류발생
+[2025-12-23 16:13:02] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:13:11.59) already exists.
+
+[2025-12-23 16:13:22] insert_violation() 오류발생
+[2025-12-23 16:13:22] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:13:50.663) already exists.
+
+[2025-12-23 16:13:32] insert_violation() 오류발생
+[2025-12-23 16:13:32] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:13:50.703) already exists.
+
+[2025-12-23 16:13:42] insert_violation() 오류발생
+[2025-12-23 16:13:42] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:13:50.746) already exists.
+
+[2025-12-23 16:14:01] insert_violation() 오류발생
+[2025-12-23 16:14:01] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:14:29.815) already exists.
+
+[2025-12-23 16:14:11] insert_violation() 오류발생
+[2025-12-23 16:14:11] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:14:29.855) already exists.
+
+[2025-12-23 16:14:21] insert_violation() 오류발생
+[2025-12-23 16:14:21] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:14:29.974) already exists.
+
+[2025-12-23 16:14:40] insert_violation() 오류발생
+[2025-12-23 16:14:40] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:15:09.075) already exists.
+
+[2025-12-23 16:14:50] insert_violation() 오류발생
+[2025-12-23 16:14:50] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:15:09.118) already exists.
+
+[2025-12-23 16:15:00] insert_violation() 오류발생
+[2025-12-23 16:15:00] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:15:09.22) already exists.
+
+[2025-12-23 16:15:19] insert_violation() 오류발생
+[2025-12-23 16:15:19] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:15:48.352) already exists.
+
+[2025-12-23 16:15:29] insert_violation() 오류발생
+[2025-12-23 16:15:29] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:15:48.391) already exists.
+
+[2025-12-23 16:15:39] insert_violation() 오류발생
+[2025-12-23 16:15:39] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:15:48.432) already exists.
+
+[2025-12-23 16:15:58] insert_violation() 오류발생
+[2025-12-23 16:15:58] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:16:27.512) already exists.
+
+[2025-12-23 16:16:08] insert_violation() 오류발생
+[2025-12-23 16:16:08] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:16:27.553) already exists.
+
+[2025-12-23 16:16:18] insert_violation() 오류발생
+[2025-12-23 16:16:18] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:16:27.598) already exists.
+
+[2025-12-23 16:16:37] insert_violation() 오류발생
+[2025-12-23 16:16:37] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:17:06.745) already exists.
+
+[2025-12-23 16:16:48] insert_violation() 오류발생
+[2025-12-23 16:16:48] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:17:06.823) already exists.
+
+[2025-12-23 16:16:58] insert_violation() 오류발생
+[2025-12-23 16:16:58] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:17:06.904) already exists.
+
+[2025-12-23 16:17:17] insert_violation() 오류발생
+[2025-12-23 16:17:17] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:17:45.982) already exists.
+
+[2025-12-23 16:17:27] insert_violation() 오류발생
+[2025-12-23 16:17:27] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:17:46.024) already exists.
+
+[2025-12-23 16:17:37] insert_violation() 오류발생
+[2025-12-23 16:17:37] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:17:46.066) already exists.
+
+[2025-12-23 16:17:56] insert_violation() 오류발생
+[2025-12-23 16:17:56] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:18:25.156) already exists.
+
+[2025-12-23 16:18:06] insert_violation() 오류발생
+[2025-12-23 16:18:06] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:18:25.193) already exists.
+
+[2025-12-23 16:18:16] insert_violation() 오류발생
+[2025-12-23 16:18:16] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:18:25.229) already exists.
+
+[2025-12-23 16:18:35] insert_violation() 오류발생
+[2025-12-23 16:18:35] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:19:04.346) already exists.
+
+[2025-12-23 16:18:45] insert_violation() 오류발생
+[2025-12-23 16:18:45] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:19:04.394) already exists.
+
+[2025-12-23 16:18:55] insert_violation() 오류발생
+[2025-12-23 16:18:55] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:19:04.436) already exists.
+
+[2025-12-23 16:19:15] insert_violation() 오류발생
+[2025-12-23 16:19:15] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:19:43.513) already exists.
+
+[2025-12-23 16:19:24] insert_violation() 오류발생
+[2025-12-23 16:19:24] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:19:43.557) already exists.
+
+[2025-12-23 16:19:34] insert_violation() 오류발생
+[2025-12-23 16:19:34] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:19:43.6) already exists.
+
+[2025-12-23 16:19:54] insert_violation() 오류발생
+[2025-12-23 16:19:54] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:20:22.68) already exists.
+
+[2025-12-23 16:20:03] insert_violation() 오류발생
+[2025-12-23 16:20:03] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:20:22.723) already exists.
+
+[2025-12-23 16:20:14] insert_violation() 오류발생
+[2025-12-23 16:20:14] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:20:22.764) already exists.
+
+[2025-12-23 16:20:33] insert_violation() 오류발생
+[2025-12-23 16:20:33] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:21:01.945) already exists.
+
+[2025-12-23 16:20:42] insert_violation() 오류발생
+[2025-12-23 16:20:42] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:21:02.055) already exists.
+
+[2025-12-23 16:20:52] insert_violation() 오류발생
+[2025-12-23 16:20:52] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:21:02.139) already exists.
+
+[2025-12-23 16:21:12] insert_violation() 오류발생
+[2025-12-23 16:21:12] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:21:41.228) already exists.
+
+[2025-12-23 16:21:22] insert_violation() 오류발생
+[2025-12-23 16:21:22] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:21:41.269) already exists.
+
+[2025-12-23 16:21:32] insert_violation() 오류발생
+[2025-12-23 16:21:32] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:21:41.312) already exists.
+
+[2025-12-23 16:21:52] insert_violation() 오류발생
+[2025-12-23 16:21:52] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:22:20.395) already exists.
+
+[2025-12-23 16:22:02] insert_violation() 오류발생
+[2025-12-23 16:22:02] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:22:20.434) already exists.
+
+[2025-12-23 16:22:12] insert_violation() 오류발생
+[2025-12-23 16:22:12] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:22:20.476) already exists.
+
+[2025-12-23 16:22:31] insert_violation() 오류발생
+[2025-12-23 16:22:31] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:22:59.559) already exists.
+
+[2025-12-23 16:22:41] insert_violation() 오류발생
+[2025-12-23 16:22:41] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:22:59.6) already exists.
+
+[2025-12-23 16:22:51] insert_violation() 오류발생
+[2025-12-23 16:22:51] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:22:59.639) already exists.
+
+[2025-12-23 16:23:10] insert_violation() 오류발생
+[2025-12-23 16:23:10] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:23:38.719) already exists.
+
+[2025-12-23 16:23:20] insert_violation() 오류발생
+[2025-12-23 16:23:20] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:23:38.758) already exists.
+
+[2025-12-23 16:23:30] insert_violation() 오류발생
+[2025-12-23 16:23:30] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:23:38.799) already exists.
+
+[2025-12-23 16:23:49] insert_violation() 오류발생
+[2025-12-23 16:23:49] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:24:17.856) already exists.
+
+[2025-12-23 16:23:59] insert_violation() 오류발생
+[2025-12-23 16:23:59] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:24:17.897) already exists.
+
+[2025-12-23 16:24:09] insert_violation() 오류발생
+[2025-12-23 16:24:09] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:24:17.938) already exists.
+
+[2025-12-23 16:24:28] insert_violation() 오류발생
+[2025-12-23 16:24:28] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:24:57.004) already exists.
+
+[2025-12-23 16:24:38] insert_violation() 오류발생
+[2025-12-23 16:24:38] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:24:57.038) already exists.
+
+[2025-12-23 16:24:48] insert_violation() 오류발생
+[2025-12-23 16:24:48] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:24:57.076) already exists.
+
+[2025-12-23 16:25:07] insert_violation() 오류발생
+[2025-12-23 16:25:07] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:25:36.15) already exists.
+
+[2025-12-23 16:25:17] insert_violation() 오류발생
+[2025-12-23 16:25:17] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:25:36.192) already exists.
+
+[2025-12-23 16:25:27] insert_violation() 오류발생
+[2025-12-23 16:25:27] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:25:36.232) already exists.
+
+[2025-12-23 16:25:46] insert_violation() 오류발생
+[2025-12-23 16:25:46] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:26:15.307) already exists.
+
+[2025-12-23 16:25:56] insert_violation() 오류발생
+[2025-12-23 16:25:56] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:26:15.348) already exists.
+
+[2025-12-23 16:26:06] insert_violation() 오류발생
+[2025-12-23 16:26:06] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:26:15.393) already exists.
+
+[2025-12-23 16:26:25] insert_violation() 오류발생
+[2025-12-23 16:26:25] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:26:54.544) already exists.
+
+[2025-12-23 16:26:35] insert_violation() 오류발생
+[2025-12-23 16:26:35] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:26:54.592) already exists.
+
+[2025-12-23 16:26:45] insert_violation() 오류발생
+[2025-12-23 16:26:45] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:26:54.633) already exists.
+
+[2025-12-23 16:27:04] insert_violation() 오류발생
+[2025-12-23 16:27:04] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:27:33.746) already exists.
+
+[2025-12-23 16:27:14] insert_violation() 오류발생
+[2025-12-23 16:27:14] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:27:33.844) already exists.
+
+[2025-12-23 16:27:24] insert_violation() 오류발생
+[2025-12-23 16:27:24] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:27:33.886) already exists.
+
+[2025-12-23 16:27:43] insert_violation() 오류발생
+[2025-12-23 16:27:43] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:28:13.003) already exists.
+
+[2025-12-23 16:27:53] insert_violation() 오류발생
+[2025-12-23 16:27:53] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:28:13.048) already exists.
+
+[2025-12-23 16:28:03] insert_violation() 오류발생
+[2025-12-23 16:28:03] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:28:13.087) already exists.
+
+[2025-12-23 16:28:23] insert_violation() 오류발생
+[2025-12-23 16:28:23] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:28:52.168) already exists.
+
+[2025-12-23 16:28:34] insert_violation() 오류발생
+[2025-12-23 16:28:34] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:28:52.212) already exists.
+
+[2025-12-23 16:28:43] insert_violation() 오류발생
+[2025-12-23 16:28:43] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:28:52.274) already exists.
+
+[2025-12-23 16:29:02] insert_violation() 오류발생
+[2025-12-23 16:29:02] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:29:31.377) already exists.
+
+[2025-12-23 16:29:13] insert_violation() 오류발생
+[2025-12-23 16:29:13] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:29:31.452) already exists.
+
+[2025-12-23 16:29:22] insert_violation() 오류발생
+[2025-12-23 16:29:22] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:29:31.487) already exists.
+
+[2025-12-23 16:29:42] insert_violation() 오류발생
+[2025-12-23 16:29:42] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:30:10.555) already exists.
+
+[2025-12-23 16:29:52] insert_violation() 오류발생
+[2025-12-23 16:29:52] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:30:10.596) already exists.
+
+[2025-12-23 16:30:02] insert_violation() 오류발생
+[2025-12-23 16:30:02] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:30:10.633) already exists.
+
+[2025-12-23 16:30:21] insert_violation() 오류발생
+[2025-12-23 16:30:21] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:30:49.712) already exists.
+
+[2025-12-23 16:30:31] insert_violation() 오류발생
+[2025-12-23 16:30:31] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:30:49.754) already exists.
+
+[2025-12-23 16:30:41] insert_violation() 오류발생
+[2025-12-23 16:30:41] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:30:49.792) already exists.
+
+[2025-12-23 16:31:00] insert_violation() 오류발생
+[2025-12-23 16:31:00] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:31:28.868) already exists.
+
+[2025-12-23 16:31:10] insert_violation() 오류발생
+[2025-12-23 16:31:10] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:31:28.963) already exists.
+
+[2025-12-23 16:31:20] insert_violation() 오류발생
+[2025-12-23 16:31:20] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:31:28.999) already exists.
+
+[2025-12-23 16:31:39] insert_violation() 오류발생
+[2025-12-23 16:31:39] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:32:08.079) already exists.
+
+[2025-12-23 16:31:49] insert_violation() 오류발생
+[2025-12-23 16:31:49] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:32:08.122) already exists.
+
+[2025-12-23 16:31:59] insert_violation() 오류발생
+[2025-12-23 16:31:59] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:32:08.168) already exists.
+
+[2025-12-23 16:32:18] insert_violation() 오류발생
+[2025-12-23 16:32:18] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:32:47.326) already exists.
+
+[2025-12-23 16:32:28] insert_violation() 오류발생
+[2025-12-23 16:32:28] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:32:47.368) already exists.
+
+[2025-12-23 16:32:38] insert_violation() 오류발생
+[2025-12-23 16:32:38] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:32:47.412) already exists.
+
+[2025-12-23 16:32:57] insert_violation() 오류발생
+[2025-12-23 16:32:57] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:33:26.551) already exists.
+
+[2025-12-23 16:33:07] insert_violation() 오류발생
+[2025-12-23 16:33:07] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:33:26.596) already exists.
+
+[2025-12-23 16:33:17] insert_violation() 오류발생
+[2025-12-23 16:33:17] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:33:26.638) already exists.
+
+[2025-12-23 16:33:36] insert_violation() 오류발생
+[2025-12-23 16:33:36] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:34:05.718) already exists.
+
+[2025-12-23 16:33:46] insert_violation() 오류발생
+[2025-12-23 16:33:46] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:34:05.758) already exists.
+
+[2025-12-23 16:33:56] insert_violation() 오류발생
+[2025-12-23 16:33:56] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:34:05.799) already exists.
+
+[2025-12-23 16:34:16] insert_violation() 오류발생
+[2025-12-23 16:34:16] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:34:44.895) already exists.
+
+[2025-12-23 16:34:26] insert_violation() 오류발생
+[2025-12-23 16:34:26] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:34:44.958) already exists.
+
+[2025-12-23 16:34:36] insert_violation() 오류발생
+[2025-12-23 16:34:36] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:34:45) already exists.
+
+[2025-12-23 16:34:55] insert_violation() 오류발생
+[2025-12-23 16:34:55] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:35:24.076) already exists.
+
+[2025-12-23 16:35:05] insert_violation() 오류발생
+[2025-12-23 16:35:05] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:35:24.118) already exists.
+
+[2025-12-23 16:35:15] insert_violation() 오류발생
+[2025-12-23 16:35:15] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:35:24.173) already exists.
+
+[2025-12-23 16:35:34] insert_violation() 오류발생
+[2025-12-23 16:35:34] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:36:03.246) already exists.
+
+[2025-12-23 16:35:44] insert_violation() 오류발생
+[2025-12-23 16:35:44] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:36:03.29) already exists.
+
+[2025-12-23 16:35:54] insert_violation() 오류발생
+[2025-12-23 16:35:54] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:36:03.327) already exists.
+
+[2025-12-23 16:36:13] insert_violation() 오류발생
+[2025-12-23 16:36:13] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:36:42.393) already exists.
+
+[2025-12-23 16:36:23] insert_violation() 오류발생
+[2025-12-23 16:36:23] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:36:42.429) already exists.
+
+[2025-12-23 16:36:33] insert_violation() 오류발생
+[2025-12-23 16:36:33] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:36:42.468) already exists.
+
+[2025-12-23 16:36:53] insert_violation() 오류발생
+[2025-12-23 16:36:53] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:37:21.539) already exists.
+
+[2025-12-23 16:37:02] insert_violation() 오류발생
+[2025-12-23 16:37:02] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:37:21.579) already exists.
+
+[2025-12-23 16:37:12] insert_violation() 오류발생
+[2025-12-23 16:37:12] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:37:21.67) already exists.
+
+[2025-12-23 16:37:32] insert_violation() 오류발생
+[2025-12-23 16:37:32] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:38:00.754) already exists.
+
+[2025-12-23 16:37:41] insert_violation() 오류발생
+[2025-12-23 16:37:41] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:38:00.799) already exists.
+
+[2025-12-23 16:37:51] insert_violation() 오류발생
+[2025-12-23 16:37:51] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:38:00.844) already exists.
+
+[2025-12-23 16:38:11] insert_violation() 오류발생
+[2025-12-23 16:38:11] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:38:39.925) already exists.
+
+[2025-12-23 16:38:21] insert_violation() 오류발생
+[2025-12-23 16:38:21] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:38:40.045) already exists.
+
+[2025-12-23 16:38:30] insert_violation() 오류발생
+[2025-12-23 16:38:30] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:38:40.159) already exists.
+
+[2025-12-23 16:38:50] insert_violation() 오류발생
+[2025-12-23 16:38:50] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:39:19.245) already exists.
+
+[2025-12-23 16:39:00] insert_violation() 오류발생
+[2025-12-23 16:39:00] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:39:19.29) already exists.
+
+[2025-12-23 16:39:10] insert_violation() 오류발생
+[2025-12-23 16:39:10] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:39:19.335) already exists.
+
+[2025-12-23 16:39:29] insert_violation() 오류발생
+[2025-12-23 16:39:29] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:39:58.421) already exists.
+
+[2025-12-23 16:39:39] insert_violation() 오류발생
+[2025-12-23 16:39:39] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:39:58.465) already exists.
+
+[2025-12-23 16:39:50] insert_violation() 오류발생
+[2025-12-23 16:39:50] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:39:58.547) already exists.
+
+[2025-12-23 16:40:09] insert_violation() 오류발생
+[2025-12-23 16:40:09] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:40:37.631) already exists.
+
+[2025-12-23 16:40:19] insert_violation() 오류발생
+[2025-12-23 16:40:19] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:40:37.676) already exists.
+
+[2025-12-23 16:40:29] insert_violation() 오류발생
+[2025-12-23 16:40:29] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:40:37.715) already exists.
+
+[2025-12-23 16:40:48] insert_violation() 오류발생
+[2025-12-23 16:40:48] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:41:16.799) already exists.
+
+[2025-12-23 16:40:58] insert_violation() 오류발생
+[2025-12-23 16:40:58] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:41:16.839) already exists.
+
+[2025-12-23 16:41:08] insert_violation() 오류발생
+[2025-12-23 16:41:08] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:41:16.875) already exists.
+
+[2025-12-23 16:41:27] insert_violation() 오류발생
+[2025-12-23 16:41:27] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:41:55.943) already exists.
+
+[2025-12-23 16:41:37] insert_violation() 오류발생
+[2025-12-23 16:41:37] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:41:55.984) already exists.
+
+[2025-12-23 16:41:47] insert_violation() 오류발생
+[2025-12-23 16:41:47] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:41:56.026) already exists.
+
+[2025-12-23 16:42:06] insert_violation() 오류발생
+[2025-12-23 16:42:06] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:42:35.093) already exists.
+
+[2025-12-23 16:42:16] insert_violation() 오류발생
+[2025-12-23 16:42:16] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:42:35.213) already exists.
+
+[2025-12-23 16:42:26] insert_violation() 오류발생
+[2025-12-23 16:42:26] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:42:35.311) already exists.
+
+[2025-12-23 16:42:45] insert_violation() 오류발생
+[2025-12-23 16:42:45] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:43:14.424) already exists.
+
+[2025-12-23 16:42:55] insert_violation() 오류발생
+[2025-12-23 16:42:55] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:43:14.463) already exists.
+
+[2025-12-23 16:43:05] insert_violation() 오류발생
+[2025-12-23 16:43:05] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:43:14.541) already exists.
+
+[2025-12-23 16:43:24] insert_violation() 오류발생
+[2025-12-23 16:43:24] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:43:53.66) already exists.
+
+[2025-12-23 16:43:34] insert_violation() 오류발생
+[2025-12-23 16:43:34] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:43:53.705) already exists.
+
+[2025-12-23 16:43:44] insert_violation() 오류발생
+[2025-12-23 16:43:44] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:43:53.811) already exists.
+
+[2025-12-23 16:44:03] insert_violation() 오류발생
+[2025-12-23 16:44:03] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:44:32.894) already exists.
+
+[2025-12-23 16:44:13] insert_violation() 오류발생
+[2025-12-23 16:44:13] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:44:32.934) already exists.
+
+[2025-12-23 16:44:23] insert_violation() 오류발생
+[2025-12-23 16:44:23] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:44:32.975) already exists.
+
+[2025-12-23 16:44:42] insert_violation() 오류발생
+[2025-12-23 16:44:42] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:45:12.056) already exists.
+
+[2025-12-23 16:44:52] insert_violation() 오류발생
+[2025-12-23 16:44:52] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:45:12.096) already exists.
+
+[2025-12-23 16:45:03] insert_violation() 오류발생
+[2025-12-23 16:45:03] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:45:12.136) already exists.
+
+[2025-12-23 16:45:22] insert_violation() 오류발생
+[2025-12-23 16:45:22] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:45:51.216) already exists.
+
+[2025-12-23 16:45:32] insert_violation() 오류발생
+[2025-12-23 16:45:32] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:45:51.256) already exists.
+
+[2025-12-23 16:45:42] insert_violation() 오류발생
+[2025-12-23 16:45:42] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:45:51.3) already exists.
+
+[2025-12-23 16:46:02] insert_violation() 오류발생
+[2025-12-23 16:46:02] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:46:30.393) already exists.
+
+[2025-12-23 16:46:11] insert_violation() 오류발생
+[2025-12-23 16:46:11] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:46:30.435) already exists.
+
+[2025-12-23 16:46:22] insert_violation() 오류발생
+[2025-12-23 16:46:22] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:46:30.473) already exists.
+
+[2025-12-23 16:46:41] insert_violation() 오류발생
+[2025-12-23 16:46:41] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:47:09.55) already exists.
+
+[2025-12-23 16:46:51] insert_violation() 오류발생
+[2025-12-23 16:46:51] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:47:09.591) already exists.
+
+[2025-12-23 16:47:01] insert_violation() 오류발생
+[2025-12-23 16:47:01] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:47:09.627) already exists.
+
+[2025-12-23 16:47:20] insert_violation() 오류발생
+[2025-12-23 16:47:20] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:47:48.701) already exists.
+
+[2025-12-23 16:47:30] insert_violation() 오류발생
+[2025-12-23 16:47:30] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:47:48.738) already exists.
+
+[2025-12-23 16:47:40] insert_violation() 오류발생
+[2025-12-23 16:47:40] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:47:48.815) already exists.
+
+[2025-12-23 16:47:59] insert_violation() 오류발생
+[2025-12-23 16:47:59] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:48:27.887) already exists.
+
+[2025-12-23 16:48:09] insert_violation() 오류발생
+[2025-12-23 16:48:09] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:48:27.932) already exists.
+
+[2025-12-23 16:48:19] insert_violation() 오류발생
+[2025-12-23 16:48:19] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:48:27.998) already exists.
+
+[2025-12-23 16:48:38] insert_violation() 오류발생
+[2025-12-23 16:48:38] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:49:07.078) already exists.
+
+[2025-12-23 16:48:48] insert_violation() 오류발생
+[2025-12-23 16:48:48] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:49:07.122) already exists.
+
+[2025-12-23 16:48:58] insert_violation() 오류발생
+[2025-12-23 16:48:58] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:49:07.17) already exists.
+
+[2025-12-23 16:49:17] insert_violation() 오류발생
+[2025-12-23 16:49:17] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:49:46.248) already exists.
+
+[2025-12-23 16:49:27] insert_violation() 오류발생
+[2025-12-23 16:49:27] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:49:46.288) already exists.
+
+[2025-12-23 16:49:37] insert_violation() 오류발생
+[2025-12-23 16:49:37] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:49:46.332) already exists.
+
+[2025-12-23 16:49:56] insert_violation() 오류발생
+[2025-12-23 16:49:56] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:50:25.411) already exists.
+
+[2025-12-23 16:50:06] insert_violation() 오류발생
+[2025-12-23 16:50:06] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:50:25.487) already exists.
+
+[2025-12-23 16:50:16] insert_violation() 오류발생
+[2025-12-23 16:50:16] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:50:25.528) already exists.
+
+[2025-12-23 16:50:35] insert_violation() 오류발생
+[2025-12-23 16:50:35] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:51:04.691) already exists.
+
+[2025-12-23 16:50:45] insert_violation() 오류발생
+[2025-12-23 16:50:45] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:51:04.734) already exists.
+
+[2025-12-23 16:50:55] insert_violation() 오류발생
+[2025-12-23 16:50:55] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:51:04.815) already exists.
+
+[2025-12-23 16:51:15] insert_violation() 오류발생
+[2025-12-23 16:51:15] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:51:43.915) already exists.
+
+[2025-12-23 16:51:25] insert_violation() 오류발생
+[2025-12-23 16:51:25] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:51:43.959) already exists.
+
+[2025-12-23 16:51:35] insert_violation() 오류발생
+[2025-12-23 16:51:35] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:51:44.003) already exists.
+
+[2025-12-23 16:51:54] insert_violation() 오류발생
+[2025-12-23 16:51:54] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:52:23.082) already exists.
+
+[2025-12-23 16:52:04] insert_violation() 오류발생
+[2025-12-23 16:52:04] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:52:23.123) already exists.
+
+[2025-12-23 16:52:14] insert_violation() 오류발생
+[2025-12-23 16:52:14] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:52:23.167) already exists.
+
+[2025-12-23 16:52:33] insert_violation() 오류발생
+[2025-12-23 16:52:33] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:53:02.242) already exists.
+
+[2025-12-23 16:52:43] insert_violation() 오류발생
+[2025-12-23 16:52:43] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:53:02.279) already exists.
+
+[2025-12-23 16:52:53] insert_violation() 오류발생
+[2025-12-23 16:52:53] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:53:02.318) already exists.
+
+[2025-12-23 16:53:13] insert_violation() 오류발생
+[2025-12-23 16:53:13] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:53:41.447) already exists.
+
+[2025-12-23 16:53:22] insert_violation() 오류발생
+[2025-12-23 16:53:22] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:53:41.485) already exists.
+
+[2025-12-23 16:53:32] insert_violation() 오류발생
+[2025-12-23 16:53:32] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:53:41.528) already exists.
+
+[2025-12-23 16:53:52] insert_violation() 오류발생
+[2025-12-23 16:53:52] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:54:20.613) already exists.
+
+[2025-12-23 16:54:01] insert_violation() 오류발생
+[2025-12-23 16:54:01] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:54:20.655) already exists.
+
+[2025-12-23 16:54:11] insert_violation() 오류발생
+[2025-12-23 16:54:11] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:54:20.697) already exists.
+
+[2025-12-23 16:54:30] insert_violation() 오류발생
+[2025-12-23 16:54:30] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:54:59.878) already exists.
+
+[2025-12-23 16:54:41] insert_violation() 오류발생
+[2025-12-23 16:54:41] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:54:59.966) already exists.
+
+[2025-12-23 16:54:50] insert_violation() 오류발생
+[2025-12-23 16:54:50] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:55:00.009) already exists.
+
+[2025-12-23 16:55:10] insert_violation() 오류발생
+[2025-12-23 16:55:10] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:55:39.079) already exists.
+
+[2025-12-23 16:55:20] insert_violation() 오류발생
+[2025-12-23 16:55:20] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:55:39.122) already exists.
+
+[2025-12-23 16:55:30] insert_violation() 오류발생
+[2025-12-23 16:55:30] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:55:39.193) already exists.
+
+[2025-12-23 16:55:49] insert_violation() 오류발생
+[2025-12-23 16:55:49] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:56:18.27) already exists.
+
+[2025-12-23 16:55:59] insert_violation() 오류발생
+[2025-12-23 16:55:59] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:56:18.311) already exists.
+
+[2025-12-23 16:56:09] insert_violation() 오류발생
+[2025-12-23 16:56:09] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:56:18.352) already exists.
+
+[2025-12-23 16:56:28] insert_violation() 오류발생
+[2025-12-23 16:56:28] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:56:57.435) already exists.
+
+[2025-12-23 16:56:38] insert_violation() 오류발생
+[2025-12-23 16:56:38] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:56:57.476) already exists.
+
+[2025-12-23 16:56:48] insert_violation() 오류발생
+[2025-12-23 16:56:48] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:56:57.516) already exists.
+
+[2025-12-23 16:57:08] insert_violation() 오류발생
+[2025-12-23 16:57:08] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:57:36.601) already exists.
+
+[2025-12-23 16:57:18] insert_violation() 오류발생
+[2025-12-23 16:57:18] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:57:36.644) already exists.
+
+[2025-12-23 16:57:28] insert_violation() 오류발생
+[2025-12-23 16:57:28] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:57:36.686) already exists.
+
+[2025-12-23 16:57:47] insert_violation() 오류발생
+[2025-12-23 16:57:47] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:58:15.776) already exists.
+
+[2025-12-23 16:57:57] insert_violation() 오류발생
+[2025-12-23 16:57:57] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:58:15.817) already exists.
+
+[2025-12-23 16:58:07] insert_violation() 오류발생
+[2025-12-23 16:58:07] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:58:15.87) already exists.
+
+[2025-12-23 16:58:26] insert_violation() 오류발생
+[2025-12-23 16:58:26] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:58:54.958) already exists.
+
+[2025-12-23 16:58:36] insert_violation() 오류발생
+[2025-12-23 16:58:36] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:58:54.991) already exists.
+
+[2025-12-23 16:58:46] insert_violation() 오류발생
+[2025-12-23 16:58:46] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:58:55.03) already exists.
+
+[2025-12-23 16:59:05] insert_violation() 오류발생
+[2025-12-23 16:59:05] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:59:34.103) already exists.
+
+[2025-12-23 16:59:15] insert_violation() 오류발생
+[2025-12-23 16:59:15] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:59:34.137) already exists.
+
+[2025-12-23 16:59:25] insert_violation() 오류발생
+[2025-12-23 16:59:25] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 16:59:34.213) already exists.
+
+[2025-12-23 16:59:44] insert_violation() 오류발생
+[2025-12-23 16:59:44] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:00:13.292) already exists.
+
+[2025-12-23 16:59:54] insert_violation() 오류발생
+[2025-12-23 16:59:54] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:00:13.336) already exists.
+
+[2025-12-23 17:00:04] insert_violation() 오류발생
+[2025-12-23 17:00:04] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:00:13.38) already exists.
+
+[2025-12-23 17:00:23] insert_violation() 오류발생
+[2025-12-23 17:00:23] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:00:52.462) already exists.
+
+[2025-12-23 17:00:33] insert_violation() 오류발생
+[2025-12-23 17:00:33] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:00:52.507) already exists.
+
+[2025-12-23 17:00:43] insert_violation() 오류발생
+[2025-12-23 17:00:43] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:00:52.547) already exists.
+
+[2025-12-23 17:01:02] insert_violation() 오류발생
+[2025-12-23 17:01:02] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:01:31.63) already exists.
+
+[2025-12-23 17:01:12] insert_violation() 오류발생
+[2025-12-23 17:01:12] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:01:31.667) already exists.
+
+[2025-12-23 17:01:22] insert_violation() 오류발생
+[2025-12-23 17:01:22] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:01:31.71) already exists.
+
+[2025-12-23 17:01:41] insert_violation() 오류발생
+[2025-12-23 17:01:41] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:02:10.788) already exists.
+
+[2025-12-23 17:01:51] insert_violation() 오류발생
+[2025-12-23 17:01:51] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:02:10.831) already exists.
+
+[2025-12-23 17:02:01] insert_violation() 오류발생
+[2025-12-23 17:02:01] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:02:10.905) already exists.
+
+[2025-12-23 17:02:20] insert_violation() 오류발생
+[2025-12-23 17:02:20] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:02:50.024) already exists.
+
+[2025-12-23 17:02:30] insert_violation() 오류발생
+[2025-12-23 17:02:30] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:02:50.069) already exists.
+
+[2025-12-23 17:02:41] insert_violation() 오류발생
+[2025-12-23 17:02:41] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:02:50.111) already exists.
+
+[2025-12-23 17:03:00] insert_violation() 오류발생
+[2025-12-23 17:03:00] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:03:29.191) already exists.
+
+[2025-12-23 17:03:10] insert_violation() 오류발생
+[2025-12-23 17:03:10] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:03:29.268) already exists.
+
+[2025-12-23 17:03:21] insert_violation() 오류발생
+[2025-12-23 17:03:21] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:03:29.315) already exists.
+
+[2025-12-23 17:03:40] insert_violation() 오류발생
+[2025-12-23 17:03:40] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:04:08.395) already exists.
+
+[2025-12-23 17:03:50] insert_violation() 오류발생
+[2025-12-23 17:03:50] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:04:08.436) already exists.
+
+[2025-12-23 17:04:00] insert_violation() 오류발생
+[2025-12-23 17:04:00] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:04:08.475) already exists.
+
+[2025-12-23 17:04:19] insert_violation() 오류발생
+[2025-12-23 17:04:19] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:04:47.56) already exists.
+
+[2025-12-23 17:04:29] insert_violation() 오류발생
+[2025-12-23 17:04:29] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:04:47.602) already exists.
+
+[2025-12-23 17:04:39] insert_violation() 오류발생
+[2025-12-23 17:04:39] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:04:47.643) already exists.
+
+[2025-12-23 17:04:58] insert_violation() 오류발생
+[2025-12-23 17:04:58] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:05:26.72) already exists.
+
+[2025-12-23 17:05:08] insert_violation() 오류발생
+[2025-12-23 17:05:08] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:05:26.759) already exists.
+
+[2025-12-23 17:05:18] insert_violation() 오류발생
+[2025-12-23 17:05:18] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:05:26.798) already exists.
+
+[2025-12-23 17:05:37] insert_violation() 오류발생
+[2025-12-23 17:05:37] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:06:05.874) already exists.
+
+[2025-12-23 17:05:47] insert_violation() 오류발생
+[2025-12-23 17:05:47] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:06:05.93) already exists.
+
+[2025-12-23 17:05:57] insert_violation() 오류발생
+[2025-12-23 17:05:57] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:06:05.966) already exists.
+
+[2025-12-23 17:06:16] insert_violation() 오류발생
+[2025-12-23 17:06:16] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:06:45.148) already exists.
+
+[2025-12-23 17:06:26] insert_violation() 오류발생
+[2025-12-23 17:06:26] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:06:45.195) already exists.
+
+[2025-12-23 17:06:36] insert_violation() 오류발생
+[2025-12-23 17:06:36] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:06:45.236) already exists.
+
+[2025-12-23 17:06:55] insert_violation() 오류발생
+[2025-12-23 17:06:55] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:07:24.325) already exists.
+
+[2025-12-23 17:07:05] insert_violation() 오류발생
+[2025-12-23 17:07:05] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:07:24.371) already exists.
+
+[2025-12-23 17:07:15] insert_violation() 오류발생
+[2025-12-23 17:07:15] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:07:24.413) already exists.
+
+[2025-12-23 17:07:34] insert_violation() 오류발생
+[2025-12-23 17:07:34] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:08:03.499) already exists.
+
+[2025-12-23 17:07:44] insert_violation() 오류발생
+[2025-12-23 17:07:44] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:08:03.54) already exists.
+
+[2025-12-23 17:07:54] insert_violation() 오류발생
+[2025-12-23 17:07:54] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:08:03.58) already exists.
+
+[2025-12-23 17:08:13] insert_violation() 오류발생
+[2025-12-23 17:08:13] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:08:42.667) already exists.
+
+[2025-12-23 17:08:23] insert_violation() 오류발생
+[2025-12-23 17:08:23] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:08:42.709) already exists.
+
+[2025-12-23 17:08:33] insert_violation() 오류발생
+[2025-12-23 17:08:33] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:08:42.752) already exists.
+
+[2025-12-23 17:08:52] insert_violation() 오류발생
+[2025-12-23 17:08:52] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:09:21.831) already exists.
+
+[2025-12-23 17:09:02] insert_violation() 오류발생
+[2025-12-23 17:09:02] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:09:21.876) already exists.
+
+[2025-12-23 17:09:12] insert_violation() 오류발생
+[2025-12-23 17:09:12] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:09:21.951) already exists.
+
+[2025-12-23 17:09:31] insert_violation() 오류발생
+[2025-12-23 17:09:31] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:10:01.033) already exists.
+
+[2025-12-23 17:09:42] insert_violation() 오류발생
+[2025-12-23 17:09:42] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:10:01.076) already exists.
+
+[2025-12-23 17:09:52] insert_violation() 오류발생
+[2025-12-23 17:09:52] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:10:01.12) already exists.
+
+[2025-12-23 17:10:11] insert_violation() 오류발생
+[2025-12-23 17:10:11] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:10:40.199) already exists.
+
+[2025-12-23 17:10:22] insert_violation() 오류발생
+[2025-12-23 17:10:22] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:10:40.242) already exists.
+
+[2025-12-23 17:10:31] insert_violation() 오류발생
+[2025-12-23 17:10:31] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:10:40.284) already exists.
+
+[2025-12-23 17:10:50] insert_violation() 오류발생
+[2025-12-23 17:10:50] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:11:19.379) already exists.
+
+[2025-12-23 17:11:01] insert_violation() 오류발생
+[2025-12-23 17:11:01] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:11:19.419) already exists.
+
+[2025-12-23 17:11:10] insert_violation() 오류발생
+[2025-12-23 17:11:10] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:11:19.455) already exists.
+
+[2025-12-23 17:11:30] insert_violation() 오류발생
+[2025-12-23 17:11:30] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:11:58.523) already exists.
+
+[2025-12-23 17:11:40] insert_violation() 오류발생
+[2025-12-23 17:11:40] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:11:58.56) already exists.
+
+[2025-12-23 17:11:50] insert_violation() 오류발생
+[2025-12-23 17:11:50] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:11:58.6) already exists.
+
+[2025-12-23 17:12:09] insert_violation() 오류발생
+[2025-12-23 17:12:09] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:12:37.669) already exists.
+
+[2025-12-23 17:12:19] insert_violation() 오류발생
+[2025-12-23 17:12:19] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:12:37.707) already exists.
+
+[2025-12-23 17:12:29] insert_violation() 오류발생
+[2025-12-23 17:12:29] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:12:37.746) already exists.
+
+[2025-12-23 17:12:48] insert_violation() 오류발생
+[2025-12-23 17:12:48] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:13:16.822) already exists.
+
+[2025-12-23 17:12:58] insert_violation() 오류발생
+[2025-12-23 17:12:58] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:13:16.863) already exists.
+
+[2025-12-23 17:13:08] insert_violation() 오류발생
+[2025-12-23 17:13:08] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:13:16.908) already exists.
+
+[2025-12-23 17:13:27] insert_violation() 오류발생
+[2025-12-23 17:13:27] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:13:55.984) already exists.
+
+[2025-12-23 17:13:37] insert_violation() 오류발생
+[2025-12-23 17:13:37] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:13:56.028) already exists.
+
+[2025-12-23 17:13:47] insert_violation() 오류발생
+[2025-12-23 17:13:47] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:13:56.068) already exists.
+
+[2025-12-23 17:14:06] insert_violation() 오류발생
+[2025-12-23 17:14:06] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:14:35.147) already exists.
+
+[2025-12-23 17:14:16] insert_violation() 오류발생
+[2025-12-23 17:14:16] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:14:35.231) already exists.
+
+[2025-12-23 17:14:26] insert_violation() 오류발생
+[2025-12-23 17:14:26] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:14:35.274) already exists.
+
+[2025-12-23 17:14:45] insert_violation() 오류발생
+[2025-12-23 17:14:45] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:15:14.351) already exists.
+
+[2025-12-23 17:14:55] insert_violation() 오류발생
+[2025-12-23 17:14:55] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:15:14.391) already exists.
+
+[2025-12-23 17:15:05] insert_violation() 오류발생
+[2025-12-23 17:15:05] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:15:14.436) already exists.
+
+[2025-12-23 17:15:24] insert_violation() 오류발생
+[2025-12-23 17:15:24] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:15:53.514) already exists.
+
+[2025-12-23 17:15:34] insert_violation() 오류발생
+[2025-12-23 17:15:34] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:15:53.555) already exists.
+
+[2025-12-23 17:15:44] insert_violation() 오류발생
+[2025-12-23 17:15:44] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:15:53.599) already exists.
+
+[2025-12-23 17:16:03] insert_violation() 오류발생
+[2025-12-23 17:16:03] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:16:32.676) already exists.
+
+[2025-12-23 17:16:13] insert_violation() 오류발생
+[2025-12-23 17:16:13] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:16:32.716) already exists.
+
+[2025-12-23 17:16:23] insert_violation() 오류발생
+[2025-12-23 17:16:23] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:16:32.835) already exists.
+
+[2025-12-23 17:16:43] insert_violation() 오류발생
+[2025-12-23 17:16:43] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:17:11.956) already exists.
+
+[2025-12-23 17:16:53] insert_violation() 오류발생
+[2025-12-23 17:16:53] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:17:12.004) already exists.
+
+[2025-12-23 17:17:03] insert_violation() 오류발생
+[2025-12-23 17:17:03] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:17:12.045) already exists.
+
+[2025-12-23 17:17:22] insert_violation() 오류발생
+[2025-12-23 17:17:22] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:17:51.128) already exists.
+
+[2025-12-23 17:17:32] insert_violation() 오류발생
+[2025-12-23 17:17:32] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:17:51.172) already exists.
+
+[2025-12-23 17:17:42] insert_violation() 오류발생
+[2025-12-23 17:17:42] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:17:51.207) already exists.
+
+[2025-12-23 17:18:01] insert_violation() 오류발생
+[2025-12-23 17:18:01] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:18:30.282) already exists.
+
+[2025-12-23 17:18:11] insert_violation() 오류발생
+[2025-12-23 17:18:11] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:18:30.323) already exists.
+
+[2025-12-23 17:18:21] insert_violation() 오류발생
+[2025-12-23 17:18:21] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:18:30.358) already exists.
+
+[2025-12-23 17:18:41] insert_violation() 오류발생
+[2025-12-23 17:18:41] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:19:09.435) already exists.
+
+[2025-12-23 17:18:50] insert_violation() 오류발생
+[2025-12-23 17:18:50] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:19:09.506) already exists.
+
+[2025-12-23 17:19:01] insert_violation() 오류발생
+[2025-12-23 17:19:01] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:19:09.547) already exists.
+
+[2025-12-23 17:19:20] insert_violation() 오류발생
+[2025-12-23 17:19:20] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:19:48.62) already exists.
+
+[2025-12-23 17:19:29] insert_violation() 오류발생
+[2025-12-23 17:19:29] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:19:48.661) already exists.
+
+[2025-12-23 17:19:39] insert_violation() 오류발생
+[2025-12-23 17:19:39] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:19:48.704) already exists.
+
+[2025-12-23 17:19:59] insert_violation() 오류발생
+[2025-12-23 17:19:59] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:20:27.787) already exists.
+
+[2025-12-23 17:20:08] insert_violation() 오류발생
+[2025-12-23 17:20:08] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:20:27.829) already exists.
+
+[2025-12-23 17:20:18] insert_violation() 오류발생
+[2025-12-23 17:20:18] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:20:27.874) already exists.
+
+[2025-12-23 17:20:38] insert_violation() 오류발생
+[2025-12-23 17:20:38] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:21:07.031) already exists.
+
+[2025-12-23 17:20:48] insert_violation() 오류발생
+[2025-12-23 17:20:48] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:21:07.076) already exists.
+
+[2025-12-23 17:20:58] insert_violation() 오류발생
+[2025-12-23 17:20:58] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:21:07.152) already exists.
+
+[2025-12-23 17:21:17] insert_violation() 오류발생
+[2025-12-23 17:21:17] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:21:46.228) already exists.
+
+[2025-12-23 17:21:27] insert_violation() 오류발생
+[2025-12-23 17:21:27] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:21:46.342) already exists.
+
+[2025-12-23 17:21:37] insert_violation() 오류발생
+[2025-12-23 17:21:37] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:21:46.384) already exists.
+
+[2025-12-23 17:21:56] insert_violation() 오류발생
+[2025-12-23 17:21:56] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:22:25.466) already exists.
+
+[2025-12-23 17:22:06] insert_violation() 오류발생
+[2025-12-23 17:22:06] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:22:25.508) already exists.
+
+[2025-12-23 17:22:16] insert_violation() 오류발생
+[2025-12-23 17:22:16] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:22:25.551) already exists.
+
+[2025-12-23 17:22:36] insert_violation() 오류발생
+[2025-12-23 17:22:36] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:23:04.634) already exists.
+
+[2025-12-23 17:22:46] insert_violation() 오류발생
+[2025-12-23 17:22:46] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:23:04.676) already exists.
+
+[2025-12-23 17:22:56] insert_violation() 오류발생
+[2025-12-23 17:22:56] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:23:04.723) already exists.
+
+[2025-12-23 17:23:15] insert_violation() 오류발생
+[2025-12-23 17:23:15] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:23:43.811) already exists.
+
+[2025-12-23 17:23:25] insert_violation() 오류발생
+[2025-12-23 17:23:25] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:23:43.855) already exists.
+
+[2025-12-23 17:23:35] insert_violation() 오류발생
+[2025-12-23 17:23:35] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:23:43.895) already exists.
+
+[2025-12-23 17:23:54] insert_violation() 오류발생
+[2025-12-23 17:23:54] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:24:22.968) already exists.
+
+[2025-12-23 17:24:04] insert_violation() 오류발생
+[2025-12-23 17:24:04] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:24:23.016) already exists.
+
+[2025-12-23 17:24:14] insert_violation() 오류발생
+[2025-12-23 17:24:14] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:24:23.059) already exists.
+
+[2025-12-23 17:24:33] insert_violation() 오류발생
+[2025-12-23 17:24:33] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:25:02.131) already exists.
+
+[2025-12-23 17:24:43] insert_violation() 오류발생
+[2025-12-23 17:24:43] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:25:02.167) already exists.
+
+[2025-12-23 17:24:53] insert_violation() 오류발생
+[2025-12-23 17:24:53] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:25:02.202) already exists.
+
+[2025-12-23 17:25:12] insert_violation() 오류발생
+[2025-12-23 17:25:12] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:25:41.276) already exists.
+
+[2025-12-23 17:25:22] insert_violation() 오류발생
+[2025-12-23 17:25:22] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:25:41.315) already exists.
+
+[2025-12-23 17:25:32] insert_violation() 오류발생
+[2025-12-23 17:25:32] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:25:41.353) already exists.
+
+[2025-12-23 17:25:51] insert_violation() 오류발생
+[2025-12-23 17:25:51] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:26:20.429) already exists.
+
+[2025-12-23 17:26:01] insert_violation() 오류발생
+[2025-12-23 17:26:01] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:26:20.469) already exists.
+
+[2025-12-23 17:26:11] insert_violation() 오류발생
+[2025-12-23 17:26:11] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:26:20.513) already exists.
+
+[2025-12-23 17:26:30] insert_violation() 오류발생
+[2025-12-23 17:26:30] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:26:59.595) already exists.
+
+[2025-12-23 17:26:40] insert_violation() 오류발생
+[2025-12-23 17:26:40] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:26:59.636) already exists.
+
+[2025-12-23 17:26:50] insert_violation() 오류발생
+[2025-12-23 17:26:50] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:26:59.679) already exists.
+
+[2025-12-23 17:27:09] insert_violation() 오류발생
+[2025-12-23 17:27:09] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:27:38.764) already exists.
+
+[2025-12-23 17:27:20] insert_violation() 오류발생
+[2025-12-23 17:27:20] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:27:38.808) already exists.
+
+[2025-12-23 17:27:29] insert_violation() 오류발생
+[2025-12-23 17:27:29] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:27:38.847) already exists.
+
+[2025-12-23 17:27:48] insert_violation() 오류발생
+[2025-12-23 17:27:48] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:28:17.924) already exists.
+
+[2025-12-23 17:27:59] insert_violation() 오류발생
+[2025-12-23 17:27:59] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:28:17.964) already exists.
+
+[2025-12-23 17:28:08] insert_violation() 오류발생
+[2025-12-23 17:28:08] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:28:18.005) already exists.
+
+[2025-12-23 17:28:28] insert_violation() 오류발생
+[2025-12-23 17:28:28] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:28:57.08) already exists.
+
+[2025-12-23 17:28:38] insert_violation() 오류발생
+[2025-12-23 17:28:38] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:28:57.122) already exists.
+
+[2025-12-23 17:28:48] insert_violation() 오류발생
+[2025-12-23 17:28:48] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:28:57.167) already exists.
+
+[2025-12-23 17:29:07] insert_violation() 오류발생
+[2025-12-23 17:29:07] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:29:36.267) already exists.
+
+[2025-12-23 17:29:17] insert_violation() 오류발생
+[2025-12-23 17:29:17] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:29:36.342) already exists.
+
+[2025-12-23 17:29:27] insert_violation() 오류발생
+[2025-12-23 17:29:27] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:29:36.379) already exists.
+
+[2025-12-23 17:29:47] insert_violation() 오류발생
+[2025-12-23 17:29:47] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:30:15.46) already exists.
+
+[2025-12-23 17:29:57] insert_violation() 오류발생
+[2025-12-23 17:29:57] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:30:15.504) already exists.
+
+[2025-12-23 17:30:07] insert_violation() 오류발생
+[2025-12-23 17:30:07] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:30:15.548) already exists.
+
+[2025-12-23 17:30:26] insert_violation() 오류발생
+[2025-12-23 17:30:26] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:30:54.631) already exists.
+
+[2025-12-23 17:30:36] insert_violation() 오류발생
+[2025-12-23 17:30:36] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:30:54.672) already exists.
+
+[2025-12-23 17:30:46] insert_violation() 오류발생
+[2025-12-23 17:30:46] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:30:54.716) already exists.
+
+[2025-12-23 17:31:05] insert_violation() 오류발생
+[2025-12-23 17:31:05] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:31:33.787) already exists.
+
+[2025-12-23 17:31:15] insert_violation() 오류발생
+[2025-12-23 17:31:15] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:31:33.824) already exists.
+
+[2025-12-23 17:31:25] insert_violation() 오류발생
+[2025-12-23 17:31:25] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:31:33.863) already exists.
+
+[2025-12-23 17:31:44] insert_violation() 오류발생
+[2025-12-23 17:31:44] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:32:12.933) already exists.
+
+[2025-12-23 17:31:54] insert_violation() 오류발생
+[2025-12-23 17:31:54] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:32:12.975) already exists.
+
+[2025-12-23 17:32:04] insert_violation() 오류발생
+[2025-12-23 17:32:04] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:32:13.047) already exists.
+
+[2025-12-23 17:32:23] insert_violation() 오류발생
+[2025-12-23 17:32:23] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:32:52.159) already exists.
+
+[2025-12-23 17:32:33] insert_violation() 오류발생
+[2025-12-23 17:32:33] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:32:52.238) already exists.
+
+[2025-12-23 17:32:43] insert_violation() 오류발생
+[2025-12-23 17:32:43] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:32:52.359) already exists.
+
+[2025-12-23 17:33:02] insert_violation() 오류발생
+[2025-12-23 17:33:02] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:33:31.48) already exists.
+
+[2025-12-23 17:33:12] insert_violation() 오류발생
+[2025-12-23 17:33:12] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:33:31.519) already exists.
+
+[2025-12-23 17:33:22] insert_violation() 오류발생
+[2025-12-23 17:33:22] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:33:31.563) already exists.
+
+[2025-12-23 17:33:41] insert_violation() 오류발생
+[2025-12-23 17:33:41] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:34:10.642) already exists.
+
+[2025-12-23 17:33:51] insert_violation() 오류발생
+[2025-12-23 17:33:51] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:34:10.684) already exists.
+
+[2025-12-23 17:34:01] insert_violation() 오류발생
+[2025-12-23 17:34:01] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:34:10.762) already exists.
+
+[2025-12-23 17:34:20] insert_violation() 오류발생
+[2025-12-23 17:34:20] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:34:49.879) already exists.
+
+[2025-12-23 17:34:30] insert_violation() 오류발생
+[2025-12-23 17:34:30] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:34:49.922) already exists.
+
+[2025-12-23 17:34:40] insert_violation() 오류발생
+[2025-12-23 17:34:40] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:34:49.964) already exists.
+
+[2025-12-23 17:35:00] insert_violation() 오류발생
+[2025-12-23 17:35:00] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:35:29.043) already exists.
+
+[2025-12-23 17:35:09] insert_violation() 오류발생
+[2025-12-23 17:35:09] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:35:29.083) already exists.
+
+[2025-12-23 17:35:20] insert_violation() 오류발생
+[2025-12-23 17:35:20] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:35:29.239) already exists.
+
+[2025-12-23 17:35:40] insert_violation() 오류발생
+[2025-12-23 17:35:40] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:36:08.327) already exists.
+
+[2025-12-23 17:35:49] insert_violation() 오류발생
+[2025-12-23 17:35:49] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:36:08.365) already exists.
+
+[2025-12-23 17:35:59] insert_violation() 오류발생
+[2025-12-23 17:35:59] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:36:08.395) already exists.
+
+[2025-12-23 17:36:19] insert_violation() 오류발생
+[2025-12-23 17:36:19] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:36:47.47) already exists.
+
+[2025-12-23 17:36:28] insert_violation() 오류발생
+[2025-12-23 17:36:28] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:36:47.509) already exists.
+
+[2025-12-23 17:36:39] insert_violation() 오류발생
+[2025-12-23 17:36:39] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:36:47.544) already exists.
+
+[2025-12-23 17:36:58] insert_violation() 오류발생
+[2025-12-23 17:36:58] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:37:26.618) already exists.
+
+[2025-12-23 17:37:07] insert_violation() 오류발생
+[2025-12-23 17:37:07] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:37:26.659) already exists.
+
+[2025-12-23 17:37:17] insert_violation() 오류발생
+[2025-12-23 17:37:17] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:37:26.7) already exists.
+
+[2025-12-23 17:37:37] insert_violation() 오류발생
+[2025-12-23 17:37:37] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:38:05.85) already exists.
+
+[2025-12-23 17:37:47] insert_violation() 오류발생
+[2025-12-23 17:37:47] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:38:05.931) already exists.
+
+[2025-12-23 17:37:57] insert_violation() 오류발생
+[2025-12-23 17:37:57] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:38:06.01) already exists.
+
+[2025-12-23 17:38:16] insert_violation() 오류발생
+[2025-12-23 17:38:16] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:38:45.098) already exists.
+
+[2025-12-23 17:38:26] insert_violation() 오류발생
+[2025-12-23 17:38:26] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:38:45.145) already exists.
+
+[2025-12-23 17:38:36] insert_violation() 오류발생
+[2025-12-23 17:38:36] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:38:45.19) already exists.
+
+[2025-12-23 17:38:55] insert_violation() 오류발생
+[2025-12-23 17:38:55] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:39:24.273) already exists.
+
+[2025-12-23 17:39:05] insert_violation() 오류발생
+[2025-12-23 17:39:05] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:39:24.319) already exists.
+
+[2025-12-23 17:39:15] insert_violation() 오류발생
+[2025-12-23 17:39:15] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:39:24.357) already exists.
+
+[2025-12-23 17:39:34] insert_violation() 오류발생
+[2025-12-23 17:39:34] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:40:03.443) already exists.
+
+[2025-12-23 17:39:44] insert_violation() 오류발생
+[2025-12-23 17:39:44] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:40:03.488) already exists.
+
+[2025-12-23 17:39:54] insert_violation() 오류발생
+[2025-12-23 17:39:54] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:40:03.53) already exists.
+
+[2025-12-23 17:40:13] insert_violation() 오류발생
+[2025-12-23 17:40:13] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:40:42.611) already exists.
+
+[2025-12-23 17:40:23] insert_violation() 오류발생
+[2025-12-23 17:40:23] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:40:42.69) already exists.
+
+[2025-12-23 17:40:33] insert_violation() 오류발생
+[2025-12-23 17:40:33] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:40:42.734) already exists.
+
+[2025-12-23 17:40:53] insert_violation() 오류발생
+[2025-12-23 17:40:53] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:41:21.848) already exists.
+
+[2025-12-23 17:41:03] insert_violation() 오류발생
+[2025-12-23 17:41:03] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:41:21.888) already exists.
+
+[2025-12-23 17:41:13] insert_violation() 오류발생
+[2025-12-23 17:41:13] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:41:21.928) already exists.
+
+[2025-12-23 17:41:32] insert_violation() 오류발생
+[2025-12-23 17:41:32] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:42:01.007) already exists.
+
+[2025-12-23 17:41:42] insert_violation() 오류발생
+[2025-12-23 17:41:42] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:42:01.049) already exists.
+
+[2025-12-23 17:41:52] insert_violation() 오류발생
+[2025-12-23 17:41:52] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:42:01.092) already exists.
+
+[2025-12-23 17:42:11] insert_violation() 오류발생
+[2025-12-23 17:42:11] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:42:40.163) already exists.
+
+[2025-12-23 17:42:21] insert_violation() 오류발생
+[2025-12-23 17:42:21] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:42:40.203) already exists.
+
+[2025-12-23 17:42:31] insert_violation() 오류발생
+[2025-12-23 17:42:31] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:42:40.24) already exists.
+
+[2025-12-23 17:42:50] insert_violation() 오류발생
+[2025-12-23 17:42:50] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:43:19.311) already exists.
+
+[2025-12-23 17:43:00] insert_violation() 오류발생
+[2025-12-23 17:43:00] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:43:19.349) already exists.
+
+[2025-12-23 17:43:10] insert_violation() 오류발생
+[2025-12-23 17:43:10] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:43:19.388) already exists.
+
+[2025-12-23 17:43:29] insert_violation() 오류발생
+[2025-12-23 17:43:29] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:43:58.466) already exists.
+
+[2025-12-23 17:43:40] insert_violation() 오류발생
+[2025-12-23 17:43:40] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:43:58.503) already exists.
+
+[2025-12-23 17:43:49] insert_violation() 오류발생
+[2025-12-23 17:43:49] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:43:58.544) already exists.
+
+[2025-12-23 17:44:08] insert_violation() 오류발생
+[2025-12-23 17:44:08] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:44:37.619) already exists.
+
+[2025-12-23 17:44:18] insert_violation() 오류발생
+[2025-12-23 17:44:18] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:44:37.659) already exists.
+
+[2025-12-23 17:44:29] insert_violation() 오류발생
+[2025-12-23 17:44:29] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:44:37.697) already exists.
+
+[2025-12-23 17:44:47] insert_violation() 오류발생
+[2025-12-23 17:44:47] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:45:16.776) already exists.
+
+[2025-12-23 17:44:57] insert_violation() 오류발생
+[2025-12-23 17:44:57] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:45:16.816) already exists.
+
+[2025-12-23 17:45:08] insert_violation() 오류발생
+[2025-12-23 17:45:08] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:45:16.86) already exists.
+
+[2025-12-23 17:45:27] insert_violation() 오류발생
+[2025-12-23 17:45:27] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:45:55.942) already exists.
+
+[2025-12-23 17:45:37] insert_violation() 오류발생
+[2025-12-23 17:45:37] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:45:55.982) already exists.
+
+[2025-12-23 17:45:47] insert_violation() 오류발생
+[2025-12-23 17:45:47] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:45:56.023) already exists.
+
+[2025-12-23 17:46:06] insert_violation() 오류발생
+[2025-12-23 17:46:06] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:46:35.103) already exists.
+
+[2025-12-23 17:46:16] insert_violation() 오류발생
+[2025-12-23 17:46:16] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:46:35.143) already exists.
+
+[2025-12-23 17:46:26] insert_violation() 오류발생
+[2025-12-23 17:46:26] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:46:35.183) already exists.
+
+[2025-12-23 17:46:45] insert_violation() 오류발생
+[2025-12-23 17:46:45] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:47:14.264) already exists.
+
+[2025-12-23 17:46:55] insert_violation() 오류발생
+[2025-12-23 17:46:55] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:47:14.308) already exists.
+
+[2025-12-23 17:47:05] insert_violation() 오류발생
+[2025-12-23 17:47:05] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:47:14.389) already exists.
+
+[2025-12-23 17:47:24] insert_violation() 오류발생
+[2025-12-23 17:47:24] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:47:53.466) already exists.
+
+[2025-12-23 17:47:34] insert_violation() 오류발생
+[2025-12-23 17:47:34] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:47:53.512) already exists.
+
+[2025-12-23 17:47:44] insert_violation() 오류발생
+[2025-12-23 17:47:44] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:47:53.553) already exists.
+
+[2025-12-23 17:48:04] insert_violation() 오류발생
+[2025-12-23 17:48:04] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:48:32.64) already exists.
+
+[2025-12-23 17:48:14] insert_violation() 오류발생
+[2025-12-23 17:48:14] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:48:32.683) already exists.
+
+[2025-12-23 17:48:24] insert_violation() 오류발생
+[2025-12-23 17:48:24] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:48:32.724) already exists.
+
+[2025-12-23 17:48:43] insert_violation() 오류발생
+[2025-12-23 17:48:43] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:49:11.804) already exists.
+
+[2025-12-23 17:48:53] insert_violation() 오류발생
+[2025-12-23 17:48:53] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:49:11.853) already exists.
+
+[2025-12-23 17:49:03] insert_violation() 오류발생
+[2025-12-23 17:49:03] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:49:11.896) already exists.
+
+[2025-12-23 17:49:22] insert_violation() 오류발생
+[2025-12-23 17:49:22] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:49:50.971) already exists.
+
+[2025-12-23 17:49:32] insert_violation() 오류발생
+[2025-12-23 17:49:32] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:49:51.01) already exists.
+
+[2025-12-23 17:49:42] insert_violation() 오류발생
+[2025-12-23 17:49:42] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:49:51.051) already exists.
+
+[2025-12-23 17:50:01] insert_violation() 오류발생
+[2025-12-23 17:50:01] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:50:30.124) already exists.
+
+[2025-12-23 17:50:11] insert_violation() 오류발생
+[2025-12-23 17:50:11] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:50:30.204) already exists.
+
+[2025-12-23 17:50:21] insert_violation() 오류발생
+[2025-12-23 17:50:21] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:50:30.276) already exists.
+
+[2025-12-23 17:50:40] insert_violation() 오류발생
+[2025-12-23 17:50:40] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:51:09.396) already exists.
+
+[2025-12-23 17:50:50] insert_violation() 오류발생
+[2025-12-23 17:50:50] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:51:09.437) already exists.
+
+[2025-12-23 17:51:00] insert_violation() 오류발생
+[2025-12-23 17:51:00] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:51:09.521) already exists.
+
+[2025-12-23 17:51:19] insert_violation() 오류발생
+[2025-12-23 17:51:19] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:51:48.642) already exists.
+
+[2025-12-23 17:51:29] insert_violation() 오류발생
+[2025-12-23 17:51:29] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:51:48.683) already exists.
+
+[2025-12-23 17:51:39] insert_violation() 오류발생
+[2025-12-23 17:51:39] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:51:48.724) already exists.
+
+[2025-12-23 17:51:59] insert_violation() 오류발생
+[2025-12-23 17:51:59] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:52:27.801) already exists.
+
+[2025-12-23 17:52:08] insert_violation() 오류발생
+[2025-12-23 17:52:08] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:52:27.844) already exists.
+
+[2025-12-23 17:52:18] insert_violation() 오류발생
+[2025-12-23 17:52:18] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:52:27.925) already exists.
+
+[2025-12-23 17:52:38] insert_violation() 오류발생
+[2025-12-23 17:52:38] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:53:07.008) already exists.
+
+[2025-12-23 17:52:47] insert_violation() 오류발생
+[2025-12-23 17:52:47] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:53:07.049) already exists.
+
+[2025-12-23 17:52:57] insert_violation() 오류발생
+[2025-12-23 17:52:57] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:53:07.093) already exists.
+
+[2025-12-23 17:53:17] insert_violation() 오류발생
+[2025-12-23 17:53:17] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:53:46.248) already exists.
+
+[2025-12-23 17:53:28] insert_violation() 오류발생
+[2025-12-23 17:53:28] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:53:46.32) already exists.
+
+[2025-12-23 17:53:37] insert_violation() 오류발생
+[2025-12-23 17:53:37] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:53:46.361) already exists.
+
+[2025-12-23 17:53:57] insert_violation() 오류발생
+[2025-12-23 17:53:57] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:54:25.445) already exists.
+
+[2025-12-23 17:54:07] insert_violation() 오류발생
+[2025-12-23 17:54:07] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:54:25.491) already exists.
+
+[2025-12-23 17:54:16] insert_violation() 오류발생
+[2025-12-23 17:54:16] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:54:25.535) already exists.
+
+[2025-12-23 17:54:36] insert_violation() 오류발생
+[2025-12-23 17:54:36] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:55:04.611) already exists.
+
+[2025-12-23 17:54:46] insert_violation() 오류발생
+[2025-12-23 17:54:46] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:55:04.647) already exists.
+
+[2025-12-23 17:54:56] insert_violation() 오류발생
+[2025-12-23 17:54:56] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:55:04.68) already exists.
+
+[2025-12-23 17:55:15] insert_violation() 오류발생
+[2025-12-23 17:55:15] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:55:43.758) already exists.
+
+[2025-12-23 17:55:25] insert_violation() 오류발생
+[2025-12-23 17:55:25] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:55:43.796) already exists.
+
+[2025-12-23 17:55:35] insert_violation() 오류발생
+[2025-12-23 17:55:35] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:55:43.839) already exists.
+
+[2025-12-23 17:55:54] insert_violation() 오류발생
+[2025-12-23 17:55:54] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:56:22.915) already exists.
+
+[2025-12-23 17:56:04] insert_violation() 오류발생
+[2025-12-23 17:56:04] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:56:22.948) already exists.
+
+[2025-12-23 17:56:14] insert_violation() 오류발생
+[2025-12-23 17:56:14] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:56:22.987) already exists.
+
+[2025-12-23 17:56:33] insert_violation() 오류발생
+[2025-12-23 17:56:33] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:57:02.063) already exists.
+
+[2025-12-23 17:56:43] insert_violation() 오류발생
+[2025-12-23 17:56:43] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:57:02.104) already exists.
+
+[2025-12-23 17:56:53] insert_violation() 오류발생
+[2025-12-23 17:56:53] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:57:02.148) already exists.
+
+[2025-12-23 17:57:12] insert_violation() 오류발생
+[2025-12-23 17:57:12] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:57:41.229) already exists.
+
+[2025-12-23 17:57:22] insert_violation() 오류발생
+[2025-12-23 17:57:22] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:57:41.272) already exists.
+
+[2025-12-23 17:57:32] insert_violation() 오류발생
+[2025-12-23 17:57:32] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:57:41.311) already exists.
+
+[2025-12-23 17:57:51] insert_violation() 오류발생
+[2025-12-23 17:57:51] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:58:20.394) already exists.
+
+[2025-12-23 17:58:01] insert_violation() 오류발생
+[2025-12-23 17:58:01] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:58:20.434) already exists.
+
+[2025-12-23 17:58:11] insert_violation() 오류발생
+[2025-12-23 17:58:11] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:58:20.478) already exists.
+
+[2025-12-23 17:58:30] insert_violation() 오류발생
+[2025-12-23 17:58:30] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:58:59.559) already exists.
+
+[2025-12-23 17:58:40] insert_violation() 오류발생
+[2025-12-23 17:58:40] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:58:59.604) already exists.
+
+[2025-12-23 17:58:50] insert_violation() 오류발생
+[2025-12-23 17:58:50] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:58:59.682) already exists.
+
+[2025-12-23 17:59:09] insert_violation() 오류발생
+[2025-12-23 17:59:09] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:59:38.764) already exists.
+
+[2025-12-23 17:59:19] insert_violation() 오류발생
+[2025-12-23 17:59:19] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:59:38.808) already exists.
+
+[2025-12-23 17:59:29] insert_violation() 오류발생
+[2025-12-23 17:59:29] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 17:59:38.851) already exists.
+
+[2025-12-23 17:59:48] insert_violation() 오류발생
+[2025-12-23 17:59:48] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 18:00:17.944) already exists.
+
+[2025-12-23 17:59:58] insert_violation() 오류발생
+[2025-12-23 17:59:58] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 18:00:17.987) already exists.
+
+[2025-12-23 18:00:08] insert_violation() 오류발생
+[2025-12-23 18:00:08] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 18:00:18.028) already exists.
+
+[2025-12-23 18:00:28] insert_violation() 오류발생
+[2025-12-23 18:00:28] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 18:00:57.11) already exists.
+
+[2025-12-23 18:00:38] insert_violation() 오류발생
+[2025-12-23 18:00:38] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 18:00:57.151) already exists.
+
+[2025-12-23 18:00:48] insert_violation() 오류발생
+[2025-12-23 18:00:48] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 18:00:57.208) already exists.
+
+[2025-12-23 18:01:07] insert_violation() 오류발생
+[2025-12-23 18:01:07] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 18:01:36.289) already exists.
+
+[2025-12-23 18:01:17] insert_violation() 오류발생
+[2025-12-23 18:01:17] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 18:01:36.332) already exists.
+
+[2025-12-23 18:01:28] insert_violation() 오류발생
+[2025-12-23 18:01:28] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 18:01:36.379) already exists.
+
+[2025-12-23 18:01:46] insert_violation() 오류발생
+[2025-12-23 18:01:46] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 18:02:15.467) already exists.
+
+[2025-12-23 18:01:57] insert_violation() 오류발생
+[2025-12-23 18:01:57] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 18:02:15.504) already exists.
+
+[2025-12-23 18:02:07] insert_violation() 오류발생
+[2025-12-23 18:02:07] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 18:02:15.541) already exists.
+
+[2025-12-23 18:02:26] insert_violation() 오류발생
+[2025-12-23 18:02:26] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 18:02:54.619) already exists.
+
+[2025-12-23 18:02:36] insert_violation() 오류발생
+[2025-12-23 18:02:36] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 18:02:54.655) already exists.
+
+[2025-12-23 18:02:46] insert_violation() 오류발생
+[2025-12-23 18:02:46] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 18:02:54.696) already exists.
+
+[2025-12-23 18:03:05] insert_violation() 오류발생
+[2025-12-23 18:03:05] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 18:03:33.767) already exists.
+
+[2025-12-23 18:03:15] insert_violation() 오류발생
+[2025-12-23 18:03:15] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 18:03:33.807) already exists.
+
+[2025-12-23 18:03:25] insert_violation() 오류발생
+[2025-12-23 18:03:25] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 18:03:33.906) already exists.
+
+[2025-12-23 18:03:44] insert_violation() 오류발생
+[2025-12-23 18:03:44] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 18:04:13.062) already exists.
+
+[2025-12-23 18:03:54] insert_violation() 오류발생
+[2025-12-23 18:03:54] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 18:04:13.104) already exists.
+
+[2025-12-23 18:04:04] insert_violation() 오류발생
+[2025-12-23 18:04:04] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 18:04:13.146) already exists.
+
+[2025-12-23 18:04:23] insert_violation() 오류발생
+[2025-12-23 18:04:23] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 18:04:52.228) already exists.
+
+[2025-12-23 18:04:33] insert_violation() 오류발생
+[2025-12-23 18:04:33] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 18:04:52.271) already exists.
+
+[2025-12-23 18:04:43] insert_violation() 오류발생
+[2025-12-23 18:04:43] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 18:04:52.312) already exists.
+
+[2025-12-23 18:05:02] insert_violation() 오류발생
+[2025-12-23 18:05:02] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 18:05:31.393) already exists.
+
+[2025-12-23 18:05:12] insert_violation() 오류발생
+[2025-12-23 18:05:12] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 18:05:31.431) already exists.
+
+[2025-12-23 18:05:22] insert_violation() 오류발생
+[2025-12-23 18:05:22] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 18:05:31.472) already exists.
+
+[2025-12-23 18:05:41] insert_violation() 오류발생
+[2025-12-23 18:05:41] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 18:06:10.642) already exists.
+
+[2025-12-23 18:05:51] insert_violation() 오류발생
+[2025-12-23 18:05:51] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 18:06:10.685) already exists.
+
+[2025-12-23 18:06:01] insert_violation() 오류발생
+[2025-12-23 18:06:01] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 18:06:10.724) already exists.
+
+[2025-12-23 18:06:20] insert_violation() 오류발생
+[2025-12-23 18:06:20] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 18:06:49.797) already exists.
+
+[2025-12-23 18:06:31] insert_violation() 오류발생
+[2025-12-23 18:06:31] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 18:06:49.842) already exists.
+
+[2025-12-23 18:06:41] insert_violation() 오류발생
+[2025-12-23 18:06:41] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 18:06:49.884) already exists.
+
+[2025-12-23 18:07:00] insert_violation() 오류발생
+[2025-12-23 18:07:00] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 18:07:28.963) already exists.
+
+[2025-12-23 18:07:10] insert_violation() 오류발생
+[2025-12-23 18:07:10] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 18:07:29.005) already exists.
+
+[2025-12-23 18:07:20] insert_violation() 오류발생
+[2025-12-23 18:07:20] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 18:07:29.052) already exists.
+
+[2025-12-23 18:07:39] insert_violation() 오류발생
+[2025-12-23 18:07:39] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 18:08:08.137) already exists.
+
+[2025-12-23 18:07:49] insert_violation() 오류발생
+[2025-12-23 18:07:49] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 18:08:08.176) already exists.
+
+[2025-12-23 18:07:59] insert_violation() 오류발생
+[2025-12-23 18:07:59] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 18:08:08.222) already exists.
+
+[2025-12-23 18:08:18] insert_violation() 오류발생
+[2025-12-23 18:08:18] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 18:08:47.299) already exists.
+
+[2025-12-23 18:08:28] insert_violation() 오류발생
+[2025-12-23 18:08:28] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 18:08:47.339) already exists.
+
+[2025-12-23 18:08:38] insert_violation() 오류발생
+[2025-12-23 18:08:38] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 18:08:47.378) already exists.
+
+[2025-12-23 18:08:57] insert_violation() 오류발생
+[2025-12-23 18:08:57] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 18:09:26.485) already exists.
+
+[2025-12-23 18:09:08] insert_violation() 오류발생
+[2025-12-23 18:09:08] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 18:09:26.525) already exists.
+
+[2025-12-23 18:09:17] insert_violation() 오류발생
+[2025-12-23 18:09:17] duplicate key value violates unique constraint "realtime_violation_log_pkey"
+DETAIL:  Key ("Timestamp")=(2025-12-23 18:09:26.568) already exists.
+
