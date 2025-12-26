@@ -670,14 +670,29 @@ async function fetchLogs() {
                 const key = buildLogKey(log);
                 const payload = parseLogPayload(log.message);
                 const violationTime = formatPayloadTime(payload['시간'] || payload.time || payload.timestamp || payload.end || payload.start, ts);
-                const limitTypeRaw = payload['이상종류'] || payload.limit_type || payload.type || '이상';
+                
+                // 새로운 메시지 형식 지원: limit_type, upper_value, lower_value
+                const limitTypeRaw = log.limit_type || payload['이상종류'] || payload.limit_type || payload.type || '이상';
                 const limitType = formatLimitType(limitTypeRaw);
-                const predictedVal = payload['예측값'] ?? payload.predicted_value ?? payload.predicted ?? payload.actual_value;
-                const thresholdVal = payload['임계값'] ?? payload.threshold ?? payload.max ?? payload.min;
-                const predText = typeof predictedVal === 'number' ? predictedVal.toFixed(3) : (predictedVal ?? '-');
-                const thrText = typeof thresholdVal === 'number' ? thresholdVal : (thresholdVal ?? '-');
-                const summary = `[${displayParam(param)}] ${limitType} 침범 예상`;
-                const detail = `예측값: ${predText}, 임계값: ${thrText}`;
+                
+                // 실제값 (actual_value)
+                const actualVal = log.actual_value ?? payload.actual_value ?? payload['실제값'];
+                
+                // 상한값 또는 하한값 (limit_type에 따라)
+                let thresholdVal = null;
+                if (limitTypeRaw === 'u' || limitTypeRaw === '상한' || String(limitTypeRaw).toLowerCase().includes('upper') || String(limitTypeRaw).toLowerCase().includes('max')) {
+                    thresholdVal = log.upper_value ?? payload.upper_value ?? payload['임계값'] ?? payload.threshold ?? payload.max;
+                } else if (limitTypeRaw === 'l' || limitTypeRaw === '하한' || String(limitTypeRaw).toLowerCase().includes('lower') || String(limitTypeRaw).toLowerCase().includes('min')) {
+                    thresholdVal = log.lower_value ?? payload.lower_value ?? payload['임계값'] ?? payload.threshold ?? payload.min;
+                } else {
+                    // limit_type이 없으면 upper_value 또는 lower_value 중 하나 사용
+                    thresholdVal = log.upper_value ?? log.lower_value ?? payload.upper_value ?? payload.lower_value ?? payload['임계값'] ?? payload.threshold ?? payload.max ?? payload.min;
+                }
+                
+                const actualText = typeof actualVal === 'number' ? actualVal.toFixed(3) : (actualVal ?? '-');
+                const thrText = typeof thresholdVal === 'number' ? thresholdVal.toFixed(3) : (thresholdVal ?? '-');
+                const summary = `[${displayParam(param)}] ${limitType} 침범`;
+                const detail = `실제값: ${actualText}, ${limitType}: ${thrText}`;
                 const entry = document.createElement('div');
                 entry.className = 'timeline-entry';
                 entry.dataset.param = param;

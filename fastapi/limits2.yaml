@@ -1,0 +1,24 @@
+MFC1_N2-1:
+  all:
+    max: 2.4
+    min: -0.5
+MFC2_N2-2:
+  all:
+    max: 0.5
+    min: -0.3
+MFC3_N2-3:
+  all:
+    max: 1.5
+    min: -0.5
+MFC4_N2-4:
+  all:
+    max: 1.8
+    min: -0.5
+MFC7_DCS:
+  all:
+    max: 1.7
+    min: -0.5
+MFC8_NH3:
+  all:
+    max: 6.5
+    min: -0.5

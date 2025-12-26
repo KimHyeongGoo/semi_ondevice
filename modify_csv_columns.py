@@ -16,20 +16,26 @@ from datetime import datetime
 
 
 # 수정할 컬럼 목록
-TARGET_COLUMNS = ['MFC1_N2-1', 'MFC3_N2-3', 'MFC4_N2-4', 'MFC7_DCS', 'MFC8_NH3']
+TARGET_COLUMNS = ['MFC1_N2-1', 'MFC1_N2-2', 'MFC3_N2-3', 'MFC4_N2-4', 'MFC7_DCS', 'MFC8_NH3']
 
 # 각 컬럼별 수정 규칙
 COLUMN_RULES = {
     'MFC1_N2-1': {
         'target_value': 1.5,
         'target_length': (9, 13),  # 9~13라인 연속
-        'replace_values': [2.323, 0.853],  # 랜덤 선택
+        'replace_values': [2.323, -0.3],  # 랜덤 선택
         'tolerance': 0.01  # 값 비교 허용 오차
+    },
+    'MFC3_N2-2': {
+        'target_value': 0,
+        'target_length': 8,  # 10라인 연속
+        'replace_values': [0.4, -0.323],  # 랜덤 선택
+        'tolerance': 0.01
     },
     'MFC3_N2-3': {
         'target_value': 0.996,
         'target_length': 10,  # 10라인 연속
-        'replace_values': [1.923, 0.423],  # 랜덤 선택
+        'replace_values': [1.623, -0.423],  # 랜덤 선택
         'tolerance': 0.01
     },
     'MFC4_N2-4': {
@@ -44,12 +50,12 @@ COLUMN_RULES = {
         'replace_values': None,  # 1.99xx 또는 0.69xx로 변경
         'tolerance': None,
         'pattern': (1.19, 1.20),  # 1.19xx 범위
-        'replace_patterns': [(1.99, 2.00), (0.59, 0.60)]  # 랜덤 선택
+        'replace_patterns': [(1.99, 2.00), (-0.345, 0.60)]  # 랜덤 선택
     },
     'MFC8_NH3': {
         'target_value': 4.492,
         'target_length': 9,  # 9라인 연속
-        'replace_values': [7.492, 2.492],  # 랜덤 선택
+        'replace_values': [5.592, -0.492],  # 랜덤 선택
         'tolerance': 0.01
     }
 }
@@ -148,7 +154,7 @@ def find_continuous_sequence(
 
 def select_columns_to_modify() -> List[str]:
     """확률로 0개(30%), 1개(40%), 2개(20%), 3개(10%) 컬럼 선택"""
-    num_columns = random.choices([0, 1, 2, 3], weights=[30, 40, 20, 10])[0]
+    num_columns = random.choices([0, 1, 2, 3], weights=[15, 40, 30, 15])[0]
     if num_columns == 0:
         return []
     

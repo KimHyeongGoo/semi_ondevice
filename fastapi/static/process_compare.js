@@ -103,7 +103,8 @@ function buildLogDescription(log) {
     const diffVal = parsed?.diff_percent ?? parsed?.diff;
     const actualVal = parsed?.actual_value;
     const predictedVal = parsed?.predicted_value;
-    const diff = Number.isFinite(Number(diffVal)) ? Math.abs(Number(diffVal)).toFixed(0) : '0';
+    const diffRaw = Number.isFinite(Number(diffVal)) ? Math.abs(Number(diffVal)) : 0;
+    const diff = (diffRaw / 10).toFixed(1);
 
     let direction = 0;
     if (Number.isFinite(Number(actualVal)) && Number.isFinite(Number(predictedVal))) {

@@ -150,6 +150,170 @@
             transform: translateY(-1px);
         }
 
+        #open-settings,
+        #open-interlock-settings {
+            background: #9DC3E6;
+            border: 1px solid #1F4E79;
+            color: #000;
+            font-weight: 600;
+            padding: 8px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 15px;
+        }
+
+        #open-settings:hover,
+        #open-interlock-settings:hover {
+            background: #8ab7df;
+        }
+
+        #settings-modal,
+        #interlock-settings-modal {
+            display: none;
+            position: fixed;
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            padding: 24px;
+            z-index: 100;
+            top: 10%;
+            left: 10%;
+            width: 80%;
+            max-height: 80%;
+            overflow: visible;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .settings-row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+            align-items: center;
+        }
+
+        .category-btn,
+        .param-btn {
+            padding: 8px 14px;
+            border: 1px solid #1F4E79;
+            background: #ffffff;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            color: #1F4E79;
+            transition: background 0.2s, color 0.2s;
+        }
+
+        .category-btn.active,
+        .param-btn.active {
+            background: #9DC3E6;
+            color: #000;
+        }
+
+        .param-btn {
+            border-style: dashed;
+            font-weight: 500;
+        }
+
+        .settings-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            margin-bottom: 12px;
+        }
+
+        .settings-btn {
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-weight: 600;
+            border: 1px solid transparent;
+            cursor: pointer;
+            min-width: 110px;
+        }
+
+        .settings-btn.primary {
+            background: #9DC3E6;
+            border-color: #16395a;
+            color: #000000;
+        }
+
+        .settings-btn.primary:hover {
+            background: #16395a;
+        }
+
+        .settings-btn.secondary {
+            background: #ebe7e5;
+            border-color: #16395a;
+            color: #000000;
+        }
+
+        .settings-btn.secondary:hover {
+            background: #d6d9df;
+        }
+
+        .settings-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+
+        .settings-table-wrap {
+            max-height: 50vh;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 6px;
+            background: #fff;
+        }
+
+        .tab {
+            display: inline-block;
+            margin-right: 8px;
+            margin-bottom: 8px;
+            padding: 6px 12px;
+            border: 1px solid #bbb;
+            border-radius: 5px;
+            cursor: pointer;
+            background: #eee;
+            transition: background 0.2s;
+        }
+
+        .tab:hover {
+            background-color: #ddd;
+        }
+
+        .tab.active {
+            background: #4caf50;
+            color: white;
+            font-weight: bold;
+        }
+
+        .step-table {
+            margin-top: 16px;
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .step-table th,
+        .step-table td {
+            border: 1px solid #ccc;
+            padding: 6px;
+            text-align: center;
+        }
+
+        .step-table th {
+            background-color: #f2f2f2;
+        }
+
+        .step-table input {
+            width: 70px;
+            padding: 4px;
+            border-radius: 4px;
+            border: 1px solid #aaa;
+        }
+
         .chart-row {
             display: flex;
             gap: 4px;
@@ -660,15 +824,14 @@
 
         .sales-layout {
             display: flex;
-            gap: 12px;
             height: 100%;
             min-height: 0;
             flex: 1 1 auto;
         }
 
         .sales-image-container {
-            flex: 0 0 66%;
-            min-width: 0;
+            flex: 1 1 auto;
+            width: 100%;
             height: 100%;
             display: flex;
             align-items: center;
@@ -682,10 +845,8 @@
         }
 
         .sales-image {
-            max-width: 100%;
-            max-height: 100%;
-            width: auto;
-            height: auto;
+            width: 100%;
+            height: 100%;
             object-fit: contain;
             border-radius: 8px;
         }
@@ -1089,12 +1250,18 @@
         }
 
         .process-layout .parts-text-cols .parts-text-content {
-            flex: 1 1 auto;
+            flex: 0 0 auto;
             min-height: 0;
-            overflow-y: auto;
+            overflow: hidden;
             display: flex;
             flex-direction: column;
             gap: 10px;
+            width: 100%;
+        }
+
+        /* 부품정보 탭에서 parts-section-title이 없을 때 가운데 정렬 */
+        .process-layout .parts-text-cols.parts-info-center {
+            justify-content: center;
         }
 
         @media (max-width: 1100px) {
@@ -1443,7 +1610,8 @@
         <div class="step-info">
             <span>STEP ID: <strong id="current-step-id">-</strong></span>
             <span>STEP NAME: <strong id="current-step-name">DEPO</strong></span>
-            <span>데이터 출력: <button id="toggle-datasets"></button></span>
+            <button id="open-settings">파라미터별 상/하한 설정</button>
+            <button id="open-interlock-settings">Interlock 상/하한 설정</button>
             <span class="time-range-selector">
                 <label for="time-range-select" style="margin-right: 8px;">차트 표시 기간:</label>
                 <select id="time-range-select"
@@ -1480,7 +1648,6 @@
             <div id="charts-container">
                 <div class="chart-header-row">
                     <div style="width: 120px;"></div>
-                    <div class="chart-header">차트 데이터</div>
                 </div>
                 {% for col in columns %}
                 {% set safe = col.replace(' ', '_').replace('.', '_').replace('-', '_') %}
@@ -1541,6 +1708,54 @@
                     <button class="confirm-btn-yes" id="confirm-yes">YES</button>
                 </div>
                 <div class="warning-stripe"></div>
+            </div>
+        </div>
+        <div id="settings-modal">
+            <div class="settings-header">
+                <h3 style="margin: 0;">파라미터별 상/하한 설정</h3>
+                <div class="settings-actions">
+                    <button id="save-settings" class="settings-btn primary">저장 및 적용</button>
+                    <button id="close-settings" class="settings-btn secondary"
+                        onclick="document.getElementById('settings-modal').style.display='none'">닫기</button>
+                </div>
+            </div>
+            <div class="settings-row" style="margin-top: 4px;">
+                <h4>Parameter 선택</h4>
+            </div>
+            <div class="settings-row">
+                <strong>분류</strong>
+                <div id="category-buttons" class="settings-row"></div>
+            </div>
+            <div class="settings-row">
+                <strong>Parameter</strong>
+                <div id="param-buttons" class="settings-row"></div>
+            </div>
+            <div class="settings-table-wrap">
+                <div id="settings-form"></div>
+            </div>
+        </div>
+        <div id="interlock-settings-modal">
+            <div class="settings-header">
+                <h3 style="margin: 0;">Interlock 상/하한 설정</h3>
+                <div class="settings-actions">
+                    <button id="save-interlock-settings" class="settings-btn primary">저장 및 적용</button>
+                    <button id="close-interlock-settings" class="settings-btn secondary"
+                        onclick="document.getElementById('interlock-settings-modal').style.display='none'">닫기</button>
+                </div>
+            </div>
+            <div class="settings-row" style="margin-top: 4px;">
+                <h4>Parameter 선택</h4>
+            </div>
+            <div class="settings-row">
+                <strong>분류</strong>
+                <div id="interlock-category-buttons" class="settings-row"></div>
+            </div>
+            <div class="settings-row">
+                <strong>Parameter</strong>
+                <div id="interlock-param-buttons" class="settings-row"></div>
+            </div>
+            <div class="settings-table-wrap">
+                <div id="interlock-settings-form"></div>
             </div>
         </div>
         <div id="chart-modal">

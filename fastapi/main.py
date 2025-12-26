@@ -182,6 +182,47 @@ def ensure_realtime_abnormal_log_table(cur):
         """
     )
 
+def ensure_realtime_abnormal_log2_table(cur):
+    cur.execute(
+        """
+        CREATE TABLE IF NOT EXISTS realtime_abnormal_log2 (
+            id SERIAL PRIMARY KEY,
+            start_time TIMESTAMP NOT NULL,
+            end_time TIMESTAMP NOT NULL,
+            parameter TEXT NOT NULL,
+            duration_seconds DOUBLE PRECISION,
+            avg_diff_percent DOUBLE PRECISION,
+            max_diff_percent DOUBLE PRECISION,
+            peak_time TIMESTAMP,
+            actual_value DOUBLE PRECISION,
+            limit_type TEXT,
+            upper_value DOUBLE PRECISION,
+            lower_value DOUBLE PRECISION,
+            is_interrupted INT,
+            violation_type INT,
+            message TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT NOW(),
+            updated_at TIMESTAMP DEFAULT NOW(),
+            UNIQUE (parameter, start_time)
+        );
+        """
+    )
+    # 기존 테이블에 violation_type 칼럼이 없으면 추가
+    cur.execute(
+        """
+        DO $$
+        BEGIN
+            IF NOT EXISTS (
+                SELECT 1 FROM information_schema.columns 
+                WHERE table_name = 'realtime_abnormal_log2' 
+                AND column_name = 'violation_type'
+            ) THEN
+                ALTER TABLE realtime_abnormal_log2 ADD COLUMN violation_type INT;
+            END IF;
+        END $$;
+        """
+    )
+
 def ensure_realtime_violation_log_table(cur):
     cur.execute(
         """
@@ -221,6 +262,7 @@ predict_columns = [
 ]
 
 LIMIT_PATH = "limits.yaml"
+LIMIT_PATH2 = "limits2.yaml"
 SETTINGS_PATH = "settings.yaml"
 
 
@@ -238,7 +280,7 @@ def _read_generator_status():
             return {"status": "DOWN", "last_tick": None}
         now = datetime.now()
         delta = now - last_dt
-        status = "RUN" if delta <= timedelta(seconds=5) else "DOWN"
+        status = "RUN" if delta <= timedelta(seconds=3) else "DOWN"
         return {"status": status, "last_tick": last_dt.isoformat()}
     except Exception:
         return {"status": "DOWN", "last_tick": None}
@@ -445,7 +487,7 @@ async def get_alarm_history(
     process_start_time: str = Query(...),
     process_end_time: str = Query(...)
 ):
-    """realtime_abnormal_log 테이블에서 ProcessStartTime과 ProcessEndTime 사이의 알람 이력 조회"""
+    """realtime_abnormal_log2 테이블에서 ProcessStartTime과 ProcessEndTime 사이의 알람 이력 조회"""
     # 서버 재시작을 위한 주석
     conn = psycopg2.connect(
         dbname="postgres",
@@ -457,7 +499,7 @@ async def get_alarm_history(
     cur = conn.cursor()
     
     try:
-        ensure_realtime_abnormal_log_table(cur)
+        ensure_realtime_abnormal_log2_table(cur)
         conn.commit()
         
         # 시간 문자열을 datetime으로 변환
@@ -472,10 +514,11 @@ async def get_alarm_history(
             except Exception:
                 return JSONResponse({"error": "Invalid timestamp format"}, status_code=400)
         
-        # realtime_abnormal_log에서 start_time이 ProcessStartTime과 ProcessEndTime 사이에 있는 데이터 조회
+        # realtime_abnormal_log2에서 start_time이 ProcessStartTime과 ProcessEndTime 사이에 있는 데이터 조회
         query = """
-            SELECT parameter, start_time, end_time, avg_diff_percent, violation_type, message, duration_seconds
-            FROM realtime_abnormal_log
+            SELECT parameter, start_time, end_time, avg_diff_percent, violation_type, message, duration_seconds,
+                   limit_type, upper_value, lower_value, is_interrupted, actual_value
+            FROM realtime_abnormal_log2
             WHERE start_time >= %s AND start_time <= %s
             ORDER BY start_time DESC
         """
@@ -484,16 +527,22 @@ async def get_alarm_history(
         rows = cur.fetchall()
         
         result = []
-        for idx, (param, start_ts, end_ts, diff_percent, violation_type, message, duration_seconds) in enumerate(rows, 1):
+        for idx, (param, start_ts, end_ts, diff_percent, violation_type, message, duration_seconds,
+                  limit_type, upper_value, lower_value, is_interrupted, actual_value) in enumerate(rows, 1):
             result.append({
                 "no": idx,
                 "parameter": param or "",
                 "start_time": start_ts.strftime("%Y-%m-%d %H:%M:%S") if start_ts else "",
                 "end_time": end_ts.strftime("%Y-%m-%d %H:%M:%S") if end_ts else "",
                 "diff_percent": round(diff_percent, 2) if diff_percent is not None else 0.0,
-                "violation_type": violation_type if violation_type is not None else 0,
+                "violation_type": violation_type if violation_type is not None else None,
                 "message": message or "",
-                "duration_seconds": duration_seconds if duration_seconds is not None else None
+                "duration_seconds": duration_seconds if duration_seconds is not None else None,
+                "limit_type": limit_type,
+                "upper_value": round(upper_value, 3) if upper_value is not None else None,
+                "lower_value": round(lower_value, 3) if lower_value is not None else None,
+                "is_interrupted": is_interrupted if is_interrupted is not None else 2,
+                "actual_value": round(actual_value, 3) if actual_value is not None else None
             })
     except Exception as e:
         print(f"[get_alarm_history ERROR] {e}")
@@ -631,7 +680,23 @@ async def api_limits():
             lim = yaml.safe_load(f) or {}
     else:
         lim = {}
-    return JSONResponse(lim)
+    return JSONResponse({"limits": lim})
+
+@app.get("/api/interlock_limits")
+async def api_interlock_limits():
+    if os.path.exists(LIMIT_PATH2):
+        with open(LIMIT_PATH2, 'r') as f:
+            lim = yaml.safe_load(f) or {}
+    else:
+        lim = {}
+    return JSONResponse({"limits": lim})
+
+@app.post("/api/save_interlock_limits")
+async def save_interlock_limits(request: Request):
+    body = await request.json()
+    with open(LIMIT_PATH2, "w") as f:
+        yaml.dump(body, f)
+    return JSONResponse({"status": "saved"})
 
 @app.get("/api/process_range")
 async def api_process_range(time: str = Query(...)):
@@ -697,6 +762,7 @@ async def api_model_columns():
 
 @app.get("/api/logs")
 async def get_logs():
+    """실시간 이상감지 화면(index2)용: realtime_abnormal_log2에서 최근 로그 조회"""
     conn = psycopg2.connect(
         dbname="postgres",
         user="keti",
@@ -705,52 +771,13 @@ async def get_logs():
         port=5432
     )
     cur = conn.cursor()
-    ensure_realtime_violation_log_table(cur)
+    ensure_realtime_abnormal_log2_table(cur)
     conn.commit()
 
     cur.execute(
         """
-        SELECT "Timestamp", parameter, message
-        FROM realtime_violation_log
-        ORDER BY "Timestamp" DESC
-        LIMIT 50
-        """
-    )
-    rows = cur.fetchall()
-    cur.close()
-    conn.close()
-
-    result = []
-    for ts, param, msg in rows:
-        result.append({
-            "timestamp": ts.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3],
-            "parameter": param,
-            "message": msg,
-            "start_time": ts.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3],
-            "end_time": ts.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3],
-            "violation_type": None,
-        })
-
-    return JSONResponse(result)
-
-@app.get("/api/anomaly_logs")
-async def get_anomaly_logs():
-    """실시간 이상감지 화면(index4)용: realtime_abnormal_log에서 최근 로그 조회"""
-    conn = psycopg2.connect(
-        dbname="postgres",
-        user="keti",
-        password="keti1234!",
-        host="localhost",
-        port=5432
-    )
-    cur = conn.cursor()
-    ensure_realtime_abnormal_log_table(cur)
-    conn.commit()
-
-    cur.execute(
-        """
-        SELECT start_time, end_time, parameter, message, violation_type
-        FROM realtime_abnormal_log
+        SELECT start_time, end_time, parameter, message, limit_type, is_interrupted, violation_type
+        FROM realtime_abnormal_log2
         ORDER BY end_time DESC
         LIMIT 50
         """
@@ -760,14 +787,57 @@ async def get_anomaly_logs():
     conn.close()
 
     result = []
-    for start_ts, end_ts, param, msg, vtype in rows:
+    for start_ts, end_ts, param, msg, limit_type, is_interrupted, violation_type in rows:
         result.append({
             "timestamp": end_ts.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3],
             "parameter": param,
             "message": msg,
             "start_time": start_ts.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3],
             "end_time": end_ts.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3],
-            "violation_type": vtype,
+            "limit_type": limit_type,
+            "is_interrupted": is_interrupted,
+            "violation_type": violation_type,
+        })
+
+    return JSONResponse(result)
+
+@app.get("/api/anomaly_logs")
+async def get_anomaly_logs():
+    """실시간 이상감지 화면(index4)용: realtime_abnormal_log2에서 최근 로그 조회"""
+    conn = psycopg2.connect(
+        dbname="postgres",
+        user="keti",
+        password="keti1234!",
+        host="localhost",
+        port=5432
+    )
+    cur = conn.cursor()
+    ensure_realtime_abnormal_log2_table(cur)
+    conn.commit()
+
+    cur.execute(
+        """
+        SELECT start_time, end_time, parameter, message, limit_type, is_interrupted, violation_type
+        FROM realtime_abnormal_log2
+        ORDER BY end_time DESC
+        LIMIT 50
+        """
+    )
+    rows = cur.fetchall()
+    cur.close()
+    conn.close()
+
+    result = []
+    for start_ts, end_ts, param, msg, limit_type, is_interrupted, violation_type in rows:
+        result.append({
+            "timestamp": end_ts.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3],
+            "parameter": param,
+            "message": msg,
+            "start_time": start_ts.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3],
+            "end_time": end_ts.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3],
+            "limit_type": limit_type,
+            "is_interrupted": is_interrupted,
+            "violation_type": violation_type,
         })
 
     return JSONResponse(result)
@@ -795,12 +865,12 @@ async def get_history_logs(
     cur = conn.cursor()
 
     try:
-        ensure_realtime_abnormal_log_table(cur)
+        ensure_realtime_abnormal_log2_table(cur)
         conn.commit()
 
         query = """
-            SELECT start_time, end_time, parameter, message, violation_type
-            FROM realtime_abnormal_log
+            SELECT start_time, end_time, parameter, message, violation_type, limit_type, is_interrupted
+            FROM realtime_abnormal_log2
             WHERE start_time BETWEEN %s::timestamp AND %s::timestamp
         """
         params = [start_dt, end_dt]
@@ -823,8 +893,10 @@ async def get_history_logs(
             "parameter": param,
             "message": msg,
             "violation_type": vtype,
+            "limit_type": limit_type,
+            "is_interrupted": is_interrupted,
         }
-        for start_ts, end_ts, param, msg, vtype in rows
+        for start_ts, end_ts, param, msg, vtype, limit_type, is_interrupted in rows
     ])
 
 @app.post("/api/logs")
@@ -1100,6 +1172,25 @@ async def stop_equipment():
         if not generate_running_final and not insert_running_final:
             msg = f"장비가 DOWN되었습니다. (종료된 프로세스: {len(killed_pids)}개)" if killed_pids else "장비가 DOWN되었습니다."
             print(f"SUCCESS: {msg}")
+            
+            # 텔레그램 알림 전송
+            try:
+                import requests
+                TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "8426533458:AAFw6pNm5xGa7ponvmasrYs_i8AicT66tIg")
+                TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "-1003454160562")
+                TELEGRAM_ENABLED = os.getenv("TELEGRAM_ENABLED", "true").lower() == "true"
+                
+                if TELEGRAM_ENABLED:
+                    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+                    payload = {
+                        "chat_id": TELEGRAM_CHAT_ID,
+                        "text": "🔴 장비가 DOWN 되었습니다.",
+                        "parse_mode": "HTML"
+                    }
+                    requests.post(url, json=payload, timeout=5)
+            except Exception as e:
+                print(f"[텔레그램 알림 전송 실패] {e}")
+            
             return JSONResponse({
                 "status": "stopped",
                 "message": msg,
@@ -1215,6 +1306,19 @@ async def start_equipment():
                 stderr=subprocess.DEVNULL
             )
             started.append("insert_real_time.py")
+        
+        # 장비 시작 시간을 generator_health.json에 기록
+        try:
+            equipment_start_time = datetime.now().isoformat()
+            if GEN_HEALTH_FILE.exists():
+                data = json.loads(GEN_HEALTH_FILE.read_text(encoding="utf-8"))
+            else:
+                data = {}
+            data["equipment_start_time"] = equipment_start_time
+            GEN_HEALTH_FILE.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+            print(f"[장비 시작 시간 기록] {equipment_start_time}")
+        except Exception as e:
+            print(f"[장비 시작 시간 기록 실패] {e}")
         
         return JSONResponse({
             "status": "started", 

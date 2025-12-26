@@ -52,6 +52,31 @@ let reportChart = null;
 const mfcParams = new Set(['MFC7_DCS', 'MFC8_NH3', 'MFC1_N2-1', 'MFC2_N2-2', 'MFC3_N2-3', 'MFC4_N2-4']);
 let threeViewer = null;
 const htmlCache = new Map();
+let limits = {};
+let interlockLimits = {};
+
+const categoryMap = {
+    MFC: ["MFC7_DCS", "MFC8_NH3", "MFC1_N2-1", "MFC2_N2-2", "MFC3_N2-3", "MFC4_N2-4"],
+    Pressure: ["VG11 Press value", "VG12 Press value", "VG13 Press value"],
+    Temperature: ["Temp_Act_U", "Temp_Act_CU", "Temp_Act_C", "Temp_Act_CL", "Temp_Act_L"],
+    Actuator: ["MFC26_F.PWR", "MFC27_L.POS", "MFC28_R.POS"]
+};
+const stepNames = {
+    2: 'END', 0: 'STANDBY/IDLE', 1: 'START', 17: 'B.UP', 3: 'WAIT',
+    74: 'S.P-1', 75: 'S.P-2', 25: 'R.UP1', 22: 'STAB1', 76: 'S.P-3',
+    81: 'M.P-3', 72: 'L.CHK', 44: 'PREPRG1', 99: 'EVAC1', 100: 'EVAC2',
+    111: 'N-EVA1', 128: 'CLOSE1', 119: 'SI-FL1', 117: 'SI-EVA1', 152: 'CHANGE',
+    113: 'N-PRE1', 115: 'N-FL1', 116: 'N-FL2', 110: 'pre-NH3P', 49: 'DEPO1',
+    135: 'post_NH3P', 103: 'N2PRG1', 149: 'SI-EVA4', 85: 'A.VAC2', 90: 'A.PRG2',
+    84: 'A.VAC1', 89: 'A.PRG1', 104: 'N2PRG2', 105: 'N2PRG3', 86: 'A.VAC3',
+    91: 'A.PRG3', 87: 'A.VAC4', 92: 'A.PRG4', 130: 'CYCLE1', 93: 'A.PRG5',
+    31: 'R.DOWN1', 94: 'B.FILL1', 95: 'B.FILL2', 96: 'B.FILL3', 97: 'B.FILL4',
+    98: 'B.FILL5', 18: 'B.DOWN'
+};
+
+function hasColumn(col) {
+    return columns.includes(col);
+}
 const partsCatalog = {
     default: {
         title: '부품 정보',
@@ -74,6 +99,13 @@ const partsCatalog = {
             vendors: [
                 { name: '제우스', biz: '2298105323', link: 'https://www.globalzeus.com/kr/index.asp', contact: 'TEL: 031-5187-1774 E MAIL: vacuum_2@globalzeus.com' },
                 { name: '다이나믹 세미텍', biz: '5658800577', link: 'https://dynamicsemi.co.kr/?act=main', contact: 'TEL: 054-437-2061' }
+            ],
+            // 수정 전 목록 (violation_type 1일 때 사용)
+            oldVendors: [
+                { name: 'MKS', biz: '1268179956', link: 'https://www.mks.com', contact: 'TEL: 031-695-9200' },
+                { name: '브이시스', biz: '1428144975', link: 'http://www.vsyskor.com', contact: 'TEL: 031-8067-7750' },
+                { name: 'ZEUS', biz: '2298105323', link: 'https://www.globalzeus.com', contact: 'TEL: 031-5187-1774' },
+                { name: '다이나믹세미텍', biz: '5658800577', link: 'https://dynamicsemi.co.kr', contact: 'TEL: 054-437-2062' }
             ]
         },
         2: {
@@ -108,6 +140,13 @@ const partsCatalog = {
             vendors: [
                 { name: '서울테크', biz: '8248100138', link: 'https://www.seoul-tech.kr/eng/', contact: 'TEL : +82-32-661-1888 E MAIL: soulteclky@naver.com' },
                 { name: '한성테크', biz: '6758601622', link: 'https://www.sealhs.co.kr/', contact: 'TEL : 051-319-2211 EMAIL : info@sealhs.com' }
+            ],
+            // 수정 전 목록 (violation_type 3일 때 사용)
+            oldVendors: [
+                { name: '마그넥스', biz: '1248610394', link: 'https://www.magnex.co.kr', contact: 'TEL: 043-276-8598' },
+                { name: '디노솔루션', biz: '1358632836', link: 'https://dinosolution.co.kr', contact: 'TEL: 031-206-6406' },
+                { name: 'LOTCES', biz: '1358628690', link: 'https://lotces.com', contact: 'TEL: 041-548-6540' },
+                { name: 'KSM', biz: '1378607202', link: 'https://www.ksm.co.kr', contact: 'TEL: 031-983-7700' }
             ]
         },
         4: {
@@ -121,6 +160,13 @@ const partsCatalog = {
             },
             vendors: [
                 { name: 'CKD Korea', biz: '1208609538', link: 'https://www.ckdkorea.co.kr/', contact: 'TEL: 02-783-5201 E MAIL: ckdkorea@ckd-k.co.kr' }
+            ],
+            // 수정 전 목록 (violation_type 4일 때 사용)
+            oldVendors: [
+                { name: '삼인CKD', biz: '1388106721', link: 'http://www.samin4u.com', contact: 'TEL: 031-433-9922' },
+                { name: 'NAT', biz: '1288119363', link: 'http://www.nat21.co.kr', contact: 'TEL: 02-2676-4483' },
+                { name: '한국도키멕유공압', biz: '1188103618', link: 'http://www.tokimec.co.kr', contact: 'TEL: 070-7123-4603' },
+                { name: 'Inatech&CORP', biz: '1068142171', link: 'https://www.inacorp.co.kr', contact: 'TEL: 02-2026-0660' }
             ]
         }
     }
@@ -446,7 +492,11 @@ function createCharts() {
             data: {
                 datasets: [
                     { label: '예측값', borderColor: 'red', tension: 0.25, borderWidth: 3, pointRadius: 0, data: [] },
-                    { label: '실제값', borderColor: 'blue', tension: 0.25, borderWidth: 3, pointRadius: 0, data: [] }
+                    { label: '실제값', borderColor: 'blue', tension: 0.25, borderWidth: 3, pointRadius: 0, data: [] },
+                    { label: '상한선', borderColor: 'green', borderDash: [5, 5], borderWidth: 2, pointRadius: 0, data: [], hidden: true },
+                    { label: '하한선', borderColor: 'orange', borderDash: [5, 5], borderWidth: 2, pointRadius: 0, data: [], hidden: true },
+                    { label: 'Interlock 상한선', borderColor: 'red', borderDash: [3, 3], borderWidth: 2, pointRadius: 0, data: [], hidden: true },
+                    { label: 'Interlock 하한선', borderColor: 'red', borderDash: [3, 3], borderWidth: 2, pointRadius: 0, data: [], hidden: true }
                 ]
             },
             options: {
@@ -478,7 +528,8 @@ function formatTimelineTime(ts) {
 }
 
 function buildLogText(param, entry) {
-    const diff = entry.diff != null ? Math.abs(entry.diff).toFixed(0) : '0';
+    const diffRaw = entry.diff != null ? Math.abs(entry.diff) : 0;
+    const diff = (diffRaw / 10).toFixed(1);
     let direction = 0;
     if (entry.actual_value != null && entry.predicted_value != null) {
         direction = entry.actual_value - entry.predicted_value;
@@ -740,6 +791,127 @@ function updateCharts(col, data) {
     chart.data.datasets[0].data = predicted;
     chart.data.datasets[1].data = actual;
 
+    // 경고팝업토글 ON시 상한선/하한선 표시
+    if (warningEnabled && limits && limits[col]) {
+        const upperLimit = [];
+        const lowerLimit = [];
+        const allData = actual.concat(predicted);
+
+        // allData가 비어있으면 시간 범위로 생성
+        let timePoints = [];
+        if (allData.length > 0) {
+            timePoints = allData.map(d => d.x);
+        } else {
+            // 데이터가 없어도 시간 범위는 표시
+            const now = Date.now();
+            const timeRangeMs = selectedTimeRange * 60 * 1000;
+            const startTime = now - timeRangeMs;
+            timePoints = [new Date(startTime), new Date(now)];
+        }
+
+        // 가장 최근 데이터의 step_id를 사용하거나, 없으면 'all' 사용
+        let currentStep = 'all';
+        if (actual.length > 0 && actual[actual.length - 1].step_id !== undefined) {
+            currentStep = actual[actual.length - 1].step_id?.toString() || 'all';
+        } else if (predicted.length > 0 && predicted[predicted.length - 1].step_id !== undefined) {
+            currentStep = predicted[predicted.length - 1].step_id?.toString() || 'all';
+        }
+
+        // limits[col]이 존재하는지 확인
+        const colLimits = limits[col];
+        if (!colLimits) {
+            // limits.yaml에 없는 파라미터는 경고 없이 넘어감 (정상적인 경우)
+            chart.data.datasets[2].data = [];
+            chart.data.datasets[3].data = [];
+            chart.data.datasets[2].hidden = true;
+            chart.data.datasets[3].hidden = true;
+            return;
+        }
+
+        // currentStep의 limit을 먼저 확인하고, 없거나 빈 객체이거나 max/min이 없으면 'all' 사용
+        let limit = colLimits[currentStep];
+        // currentStep의 limit이 없거나, 빈 객체이거나, max/min이 모두 없으면 'all' 사용
+        if (!limit || Object.keys(limit).length === 0 || (limit.max === undefined && limit.min === undefined)) {
+            limit = colLimits['all'];
+        }
+
+        if (limit && (limit.max !== undefined || limit.min !== undefined)) {
+            timePoints.forEach(x => {
+                if (limit.max !== undefined && limit.max !== null) {
+                    upperLimit.push({ x: x, y: limit.max });
+                }
+                if (limit.min !== undefined && limit.min !== null) {
+                    lowerLimit.push({ x: x, y: limit.min });
+                }
+            });
+
+            // 성공적으로 상한선/하한선 데이터 생성됨
+        } else {
+            // 'all'도 없거나 max/min이 없는 경우
+            console.warn(`[상한선/하한선] ${col} - limit이 없거나 max/min이 없습니다. limit:`, limit, `currentStep:`, currentStep, `colLimits keys:`, Object.keys(colLimits));
+        }
+
+        chart.data.datasets[2].data = upperLimit;
+        chart.data.datasets[3].data = lowerLimit;
+        chart.data.datasets[2].hidden = !warningEnabled || upperLimit.length === 0;
+        chart.data.datasets[3].hidden = !warningEnabled || lowerLimit.length === 0;
+    } else {
+        if (!warningEnabled) {
+            console.log(`[상한선/하한선] ${col} - 경고팝업이 OFF입니다.`);
+        } else if (!limits) {
+            console.warn(`[상한선/하한선] ${col} - limits가 로드되지 않았습니다.`);
+        } else if (!limits[col]) {
+            // limits.yaml에 없는 파라미터는 경고 없이 넘어감
+        }
+        chart.data.datasets[2].data = [];
+        chart.data.datasets[3].data = [];
+        chart.data.datasets[2].hidden = true;
+        chart.data.datasets[3].hidden = true;
+    }
+
+    // Interlock 상한선/하한선 표시 (빨간색)
+    if (warningEnabled && interlockLimits && interlockLimits[col]) {
+        const interlockUpperLimit = [];
+        const interlockLowerLimit = [];
+        const allData = actual.concat(predicted);
+
+        // allData가 비어있으면 시간 범위로 생성
+        let timePoints = [];
+        if (allData.length > 0) {
+            timePoints = allData.map(d => d.x);
+        } else {
+            // 데이터가 없어도 시간 범위는 표시
+            const now = Date.now();
+            const timeRangeMs = selectedTimeRange * 60 * 1000;
+            const startTime = now - timeRangeMs;
+            timePoints = [new Date(startTime), new Date(now)];
+        }
+
+        // Interlock은 'all'만 사용
+        const interlockLimit = interlockLimits[col]['all'];
+
+        if (interlockLimit && (interlockLimit.max !== undefined || interlockLimit.min !== undefined)) {
+            timePoints.forEach(x => {
+                if (interlockLimit.max !== undefined && interlockLimit.max !== null) {
+                    interlockUpperLimit.push({ x: x, y: interlockLimit.max });
+                }
+                if (interlockLimit.min !== undefined && interlockLimit.min !== null) {
+                    interlockLowerLimit.push({ x: x, y: interlockLimit.min });
+                }
+            });
+        }
+
+        chart.data.datasets[4].data = interlockUpperLimit;
+        chart.data.datasets[5].data = interlockLowerLimit;
+        chart.data.datasets[4].hidden = !warningEnabled || interlockUpperLimit.length === 0;
+        chart.data.datasets[5].hidden = !warningEnabled || interlockLowerLimit.length === 0;
+    } else {
+        chart.data.datasets[4].data = [];
+        chart.data.datasets[5].data = [];
+        chart.data.datasets[4].hidden = true;
+        chart.data.datasets[5].hidden = true;
+    }
+
     // X축 범위 설정: 현재 시간까지 표시되도록
     const now = Date.now();
     const timeRangeMs = selectedTimeRange * 60 * 1000; // 분을 밀리초로 변환
@@ -779,6 +951,18 @@ function updateCharts(col, data) {
     }
 
     setDatasetVisibility(chart, visibilityMode);
+
+    // 상한선/하한선이 추가되었는지 확인
+    if (chart.data.datasets.length >= 4) {
+        const upperHidden = chart.data.datasets[2].hidden;
+        const lowerHidden = chart.data.datasets[3].hidden;
+        const upperData = chart.data.datasets[2].data.length;
+        const lowerData = chart.data.datasets[3].data.length;
+        if (warningEnabled && (upperData > 0 || lowerData > 0)) {
+            console.log(`[상한선/하한선] ${col} - 차트 업데이트 전: 상한선 숨김=${upperHidden}, 데이터=${upperData}, 하한선 숨김=${lowerHidden}, 데이터=${lowerData}`);
+        }
+    }
+
     chart.update();
 
     refreshModalIfNeeded(col);
@@ -1664,6 +1848,8 @@ async function createThreeViewer(container, modelUrl, entry = null) {
         modelGroup.rotation.y = 0;
         size = box?.getSize(new THREE.Vector3()).length() || 100;
         target = box?.getCenter(new THREE.Vector3()) || new THREE.Vector3();
+        // 회전축을 아래로 조정 (y 값을 줄여서 회전 중심을 아래로 이동)
+        target.y -= size * 0.2;
 
         // 초기 시야를 정면-약간 위쪽에서 바라보도록 설정 (항상 정면부터 시작)
         const frontDistance = size * 1.1;
@@ -1869,11 +2055,12 @@ async function createThreeViewer(container, modelUrl, entry = null) {
         if (resizeObserver) resizeObserver.disconnect();
     };
 
-    threeViewer = { renderer, scene, camera, rafId: requestAnimationFrame(animate), cleanup: enhancedCleanup };
+    threeViewer = { renderer, scene, camera, modelGroup, rafId: requestAnimationFrame(animate), cleanup: enhancedCleanup };
 }
 
 function buildCauseHeadline(entry) {
-    const diff = entry.diff != null ? Math.abs(entry.diff).toFixed(0) : '0';
+    const diffRaw = entry.diff != null ? Math.abs(entry.diff) : 0;
+    const diff = (diffRaw / 10).toFixed(1);
     const direction = (entry.actual_value ?? 0) - (entry.predicted_value ?? 0);
     if (direction > 0.0001) return `유량 +${diff}% 변화 상승 감지`;
     if (direction < -0.0001) return `유량 -${diff}% 변화 하강 감지`;
@@ -2059,10 +2246,16 @@ async function drawReportChart(entry, canvas, timeWindow) {
         { label: '실제값', borderColor: 'blue', tension: 0.25, borderWidth: 3, pointRadius: 0, data: actual, hidden: false }
     ];
 
-    // 상한선(UCU) - 초록색
+    // 상한선(UCU) - 초록색 (차트 전체에 표시)
     if (ucu !== null && ucu !== undefined && Number.isFinite(Number(ucu))) {
         const ucuValue = Number(ucu);
-        const ucuLine = actual.map(d => ({ x: d.x, y: ucuValue }));
+        // 차트 전체 시간 범위에 상한선 표시
+        const chartStart = parseTimestamp(startIso);
+        const chartEnd = parseTimestamp(endIso);
+        const ucuLine = [
+            { x: chartStart, y: ucuValue },
+            { x: chartEnd, y: ucuValue }
+        ];
         datasets.push({
             label: 'UCU (상한값)',
             borderColor: 'green',
@@ -2072,15 +2265,21 @@ async function drawReportChart(entry, canvas, timeWindow) {
             data: ucuLine,
             tension: 0
         });
-        console.log('Added UCU line with value:', ucuValue);
+        console.log('Added UCU line with value:', ucuValue, 'points:', ucuLine.length);
     } else {
         console.warn('UCU not added - value:', ucu, 'isFinite:', ucu !== null && ucu !== undefined ? Number.isFinite(Number(ucu)) : false);
     }
 
-    // 하한선(LCL) - 주황색
+    // 하한선(LCL) - 주황색 (차트 전체에 표시)
     if (lcl !== null && lcl !== undefined && Number.isFinite(Number(lcl))) {
         const lclValue = Number(lcl);
-        const lclLine = actual.map(d => ({ x: d.x, y: lclValue }));
+        // 차트 전체 시간 범위에 하한선 표시
+        const chartStart = parseTimestamp(startIso);
+        const chartEnd = parseTimestamp(endIso);
+        const lclLine = [
+            { x: chartStart, y: lclValue },
+            { x: chartEnd, y: lclValue }
+        ];
         datasets.push({
             label: 'LCL (하한값)',
             borderColor: 'orange',
@@ -2090,7 +2289,7 @@ async function drawReportChart(entry, canvas, timeWindow) {
             data: lclLine,
             tension: 0
         });
-        console.log('Added LCL line with value:', lclValue);
+        console.log('Added LCL line with value:', lclValue, 'points:', lclLine.length);
     } else {
         console.warn('LCL not added - value:', lcl, 'isFinite:', lcl !== null && lcl !== undefined ? Number.isFinite(Number(lcl)) : false);
     }
@@ -2224,16 +2423,53 @@ function renderMfcActionTab(entry) {
 function findAllCoverMeshes(scene) {
     if (!scene) return [];
     const coverMeshes = [];
+    const coverGroups = [];
     const coverNames = ['대칭_복사cover_1', 'cover', 'Cover', 'COVER'];
+    const modelGroup = threeViewer?.modelGroup; // modelGroup 참조 가져오기
+
     scene.traverse((child) => {
-        if (child instanceof THREE.Mesh && child.name) {
+        // modelGroup 자체는 제외
+        if (child === modelGroup) return;
+
+        if (child.name) {
             const nameLower = child.name.toLowerCase();
-            if (coverNames.some(n => nameLower.includes(n.toLowerCase())) || nameLower.includes('cover')) {
+            const isCoverName = coverNames.some(n => nameLower.includes(n.toLowerCase())) || nameLower.includes('cover');
+
+            if (child instanceof THREE.Mesh && isCoverName) {
                 coverMeshes.push(child);
+                // 부모 그룹도 찾기 (modelGroup 제외)
+                let parent = child.parent;
+                while (parent && parent !== scene) {
+                    // modelGroup은 제외
+                    if (parent === modelGroup) break;
+
+                    if (parent instanceof THREE.Group && !coverGroups.includes(parent)) {
+                        const parentNameLower = (parent.name || '').toLowerCase();
+                        if (parentNameLower.includes('cover') || isCoverName) {
+                            // 그룹의 자식 수가 너무 많으면 전체 모델 그룹일 가능성이 있으므로 제외
+                            let childCount = 0;
+                            parent.traverse(() => childCount++);
+                            // 자식이 100개 이상이면 전체 모델 그룹일 가능성이 높으므로 제외
+                            if (childCount < 100) {
+                                coverGroups.push(parent);
+                            }
+                        }
+                    }
+                    parent = parent.parent;
+                }
+            } else if (child instanceof THREE.Group && isCoverName && !coverGroups.includes(child)) {
+                // 그룹의 자식 수가 너무 많으면 전체 모델 그룹일 가능성이 있으므로 제외
+                let childCount = 0;
+                child.traverse(() => childCount++);
+                // 자식이 100개 이상이면 전체 모델 그룹일 가능성이 높으므로 제외
+                if (childCount < 100) {
+                    coverGroups.push(child);
+                }
             }
         }
     });
-    return coverMeshes;
+    // 그룹과 메쉬를 모두 반환
+    return { meshes: coverMeshes, groups: coverGroups };
 }
 
 function controlCover(action) {
@@ -2242,8 +2478,11 @@ function controlCover(action) {
         return;
     }
 
-    const coverMeshes = findAllCoverMeshes(threeViewer.scene);
-    if (coverMeshes.length === 0) {
+    const coverData = findAllCoverMeshes(threeViewer.scene);
+    const coverMeshes = coverData.meshes || [];
+    const coverGroups = coverData.groups || [];
+
+    if (coverMeshes.length === 0 && coverGroups.length === 0) {
         console.warn('Cover 메쉬를 찾을 수 없습니다.');
         // 모든 메쉬 이름 출력 (디버깅)
         const allNames = [];
@@ -2254,7 +2493,10 @@ function controlCover(action) {
         return;
     }
 
-    console.log(`Cover 메쉬 ${coverMeshes.length}개 발견:`, coverMeshes.map(m => m.name));
+    console.log(`Cover 메쉬 ${coverMeshes.length}개, 그룹 ${coverGroups.length}개 발견:`, {
+        meshes: coverMeshes.map(m => m.name),
+        groups: coverGroups.map(g => g.name)
+    });
 
     // 모든 Cover 메쉬에 대해 동일한 작업 수행
     coverMeshes.forEach((coverMesh) => {
@@ -2323,7 +2565,32 @@ function controlCover(action) {
         }
     });
 
-    console.log(`Cover ${action} 처리 완료 (${coverMeshes.length}개 메쉬)`);
+    // Cover 그룹도 처리
+    coverGroups.forEach((coverGroup) => {
+        if (action === 'hide') {
+            // 원본 상태 저장
+            if (coverGroup.userData.originalVisibility === undefined) {
+                coverGroup.userData.originalVisibility = coverGroup.visible;
+            }
+            coverGroup.visible = false;
+        } else if (action === 'show') {
+            // 원본 상태로 복원
+            if (coverGroup.userData.originalVisibility !== undefined) {
+                coverGroup.visible = coverGroup.userData.originalVisibility;
+            } else {
+                coverGroup.visible = true;
+            }
+        } else if (action === 'transparent') {
+            // 투명 처리를 위해서는 Cover 그룹을 보이게 해야 함
+            if (coverGroup.userData.originalVisibility === undefined) {
+                coverGroup.userData.originalVisibility = coverGroup.visible;
+            }
+            coverGroup.visible = true;
+        }
+        // reset 액션은 그룹에 대해서는 메쉬만 처리하면 됨
+    });
+
+    console.log(`Cover ${action} 처리 완료 (메쉬 ${coverMeshes.length}개, 그룹 ${coverGroups.length}개)`);
 }
 
 function renderMfcDrawingTab(entry) {
@@ -2343,7 +2610,6 @@ function renderMfcDrawingTab(entry) {
                     <button id="cover-hide-btn" style="padding: 6px 12px; background: #3b82f6; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; min-width: 110px; width: 110px; text-align: center;">Cover 숨기기</button>
                     <button id="cover-show-btn" style="padding: 6px 12px; background: #3b82f6; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; display: none; min-width: 110px; width: 110px; text-align: center;">Cover 보이기</button>
                     <button id="cover-transparent-btn" style="padding: 6px 12px; background: #9333ea; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; min-width: 110px; width: 110px; text-align: center;">Cover 투명하게</button>
-                    <span style="font-size:13px; color:#475569;">파일: ALD Batch Type Assy9.gltf</span>
                 </div>
             </div>
             <div class="report-3d-canvas" id="report-3d-container">로딩 중...</div>
@@ -2397,7 +2663,8 @@ function renderMfcDrawingTab(entry) {
             coverTransparent = false;
             // 불투명 처리 후 원래 visible 상태로 복원
             if (threeViewer && threeViewer.scene) {
-                const coverMeshes = findAllCoverMeshes(threeViewer.scene);
+                const coverData = findAllCoverMeshes(threeViewer.scene);
+                const coverMeshes = coverData.meshes || [];
                 if (coverMeshes.length > 0 && coverMeshes[0].userData.originalVisibility !== undefined) {
                     // 첫 번째 메쉬의 원래 상태를 기준으로 설정
                     coverVisible = coverMeshes[0].userData.originalVisibility;
@@ -2424,9 +2691,14 @@ function renderMfcDrawingTab(entry) {
     // 모델 로드 완료 후 Cover 메쉬 확인 (약간의 지연 후)
     setTimeout(() => {
         if (threeViewer && threeViewer.scene) {
-            const coverMeshes = findAllCoverMeshes(threeViewer.scene);
-            if (coverMeshes.length > 0) {
-                console.log(`Cover 메쉬 ${coverMeshes.length}개 찾음:`, coverMeshes.map(m => m.name));
+            const coverData = findAllCoverMeshes(threeViewer.scene);
+            const coverMeshes = coverData.meshes || [];
+            const coverGroups = coverData.groups || [];
+            if (coverMeshes.length > 0 || coverGroups.length > 0) {
+                console.log(`Cover 메쉬 ${coverMeshes.length}개, 그룹 ${coverGroups.length}개 찾음:`, {
+                    meshes: coverMeshes.map(m => m.name),
+                    groups: coverGroups.map(g => g.name)
+                });
             } else {
                 console.warn('Cover 메쉬를 찾을 수 없습니다.');
             }
@@ -2441,7 +2713,19 @@ function getPartsData(entry) {
     console.log('getPartsData - 변환된 vt:', vt);
     if (partsCatalog.byViolation[vt]) {
         console.log('getPartsData - 선택된 부품 정보:', partsCatalog.byViolation[vt].title);
-        return partsCatalog.byViolation[vt];
+        const data = partsCatalog.byViolation[vt];
+
+        // violation_type이 1, 3, 4일 때는 수정 전 목록(oldVendors) 사용
+        if ((vt === 1 || vt === 3 || vt === 4) && data.oldVendors) {
+            console.log('getPartsData - 수정 전 목록 사용 (violation_type:', vt, ')');
+            // oldVendors를 사용하는 새로운 객체 반환
+            return {
+                ...data,
+                vendors: data.oldVendors
+            };
+        }
+
+        return data;
     }
     console.log('getPartsData - 기본 부품 정보 사용');
     return partsCatalog.default;
@@ -2563,12 +2847,6 @@ function renderPartsTab(entry) {
                 <div class="sales-image-container">
                     ${imageUrl ? `<img src="${imageUrl}" alt="상품 이미지" class="sales-image" onclick="window.open('${data.sales.iframeUrl}', '_blank')" style="cursor: pointer;">` : ''}
                 </div>
-                <div class="sales-info-container">
-                    <div class="sales-info-content">
-                        <div class="sales-info-text">${salesTextHtml}</div>
-                        <button class="sales-buy-btn" onclick="window.open('${data.sales.iframeUrl}', '_blank')">바로 구매하기</button>
-                    </div>
-                </div>
             </div>
         `;
     }
@@ -2580,9 +2858,13 @@ function renderPartsTab(entry) {
         </div>
         <div class="parts-panel active" data-sub="info" role="tabpanel">
             <div class="parts-section">
-                ${imageHtml}
-                <div class="parts-text-cols">
-                    ${descriptionHtml || '<div class="parts-note">부품 정보가 없습니다.</div>'}
+                <div class="parts-info-layout process-layout">
+                    ${imageHtml}
+                    <div class="parts-text-cols">
+                        <div class="parts-text-content">
+                            ${descriptionHtml || '<div class="parts-note">부품 정보가 없습니다.</div>'}
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -2660,6 +2942,19 @@ function renderPartsTab(entry) {
     const vendorPanel = body.querySelector('.parts-panel[data-sub="vendor"]');
     if (vendorPanel && vendorPanel.classList.contains('active')) {
         setTimeout(() => adjustPartsTableHeight(), 100);
+    }
+
+    // 부품정보 탭의 글씨 크기 동적 조정 및 가운데 정렬
+    const infoPanel = body.querySelector('.parts-panel[data-sub="info"]');
+    if (infoPanel && infoPanel.classList.contains('active')) {
+        setTimeout(() => {
+            adjustPartsInfoTextSize();
+            // 부품정보 탭에서 parts-section-title이 없으면 가운데 정렬
+            const textCols = infoPanel.querySelector('.parts-text-cols');
+            if (textCols && !textCols.querySelector('.parts-section-title')) {
+                textCols.classList.add('parts-info-center');
+            }
+        }, 100);
     }
 }
 
@@ -2762,6 +3057,141 @@ function renderProcessTab() {
             </div>
         </div>
     `;
+
+    // 화면 크기에 따라 글씨 크기 동적 조정
+    adjustProcessTextSize();
+}
+
+function adjustProcessTextSize() {
+    const textContent = document.querySelector('.process-layout .parts-text-content');
+    if (!textContent) return;
+
+    const textBlocks = textContent.querySelectorAll('.parts-text-block');
+    if (textBlocks.length === 0) return;
+
+    // 초기 글씨 크기
+    let fontSize = 14;
+    let labelFontSize = 15;
+    const minFontSize = 9;
+    const minLabelFontSize = 10;
+
+    // 컨테이너 높이 확인
+    const container = textContent.closest('.parts-text-cols');
+    if (!container) return;
+
+    const checkFit = () => {
+        // 현재 글씨 크기 적용
+        textBlocks.forEach(block => {
+            block.style.fontSize = fontSize + 'px';
+            const label = block.querySelector('.label');
+            if (label) {
+                label.style.fontSize = labelFontSize + 'px';
+            }
+        });
+
+        // 내용이 넘치는지 확인
+        const isOverflowing = textContent.scrollHeight > textContent.clientHeight;
+
+        if (isOverflowing && fontSize > minFontSize) {
+            // 글씨 크기 줄이기
+            fontSize = Math.max(minFontSize, fontSize - 1);
+            labelFontSize = Math.max(minLabelFontSize, labelFontSize - 1);
+
+            // 재귀적으로 다시 확인
+            setTimeout(checkFit, 0);
+        }
+    };
+
+    // 이미지 로드 후 확인
+    const img = document.querySelector('.process-layout .parts-figure img');
+    if (img && !img.complete) {
+        img.addEventListener('load', () => {
+            setTimeout(checkFit, 100);
+        });
+    } else {
+        setTimeout(checkFit, 100);
+    }
+
+    // 창 크기 변경 시 재조정
+    let resizeTimeout;
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(() => {
+            fontSize = 14;
+            labelFontSize = 15;
+            checkFit();
+        }, 200);
+    });
+}
+
+function adjustPartsInfoTextSize() {
+    const textContent = document.querySelector('.parts-panel[data-sub="info"] .parts-text-content');
+    if (!textContent) return;
+
+    const textBlocks = textContent.querySelectorAll('.parts-text-block');
+    const descriptionList = textContent.querySelector('.parts-description-list');
+    if (textBlocks.length === 0 && !descriptionList) return;
+
+    // 초기 글씨 크기
+    let fontSize = 14;
+    const minFontSize = 9;
+
+    const checkFit = () => {
+        // 현재 글씨 크기 적용
+        textBlocks.forEach(block => {
+            block.style.fontSize = fontSize + 'px';
+        });
+
+        if (descriptionList) {
+            descriptionList.style.fontSize = fontSize + 'px';
+        }
+
+        // 내용이 넘치는지 확인
+        const isOverflowing = textContent.scrollHeight > textContent.clientHeight;
+
+        if (isOverflowing && fontSize > minFontSize) {
+            // 글씨 크기 줄이기
+            fontSize = Math.max(minFontSize, fontSize - 1);
+
+            // 재귀적으로 다시 확인
+            setTimeout(checkFit, 0);
+        }
+    };
+
+    // 이미지 로드 후 확인
+    const img = document.querySelector('.parts-panel[data-sub="info"] .parts-figure img');
+    if (img && !img.complete) {
+        img.addEventListener('load', () => {
+            setTimeout(checkFit, 100);
+        });
+    } else {
+        setTimeout(checkFit, 100);
+    }
+
+    // 창 크기 변경 시 재조정
+    let resizeTimeout;
+    const resizeHandler = () => {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(() => {
+            fontSize = 14;
+            checkFit();
+        }, 200);
+    };
+
+    window.addEventListener('resize', resizeHandler);
+
+    // 탭 전환 시에도 재조정
+    const tabs = document.querySelectorAll('.parts-subtab');
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            if (tab.dataset.sub === 'info') {
+                setTimeout(() => {
+                    fontSize = 14;
+                    checkFit();
+                }, 100);
+            }
+        });
+    });
 }
 
 async function setActiveReportTab(tabKey) {
@@ -2940,9 +3370,6 @@ async function openReportModal(entry) {
         `- 이상 감지 시간 : ${timeText}`,
         `- 이상 유형 : ${logText}`
     ];
-    if (entry.violation_type !== null && entry.violation_type !== undefined) {
-        summaryLines.push(`- 위반 유형 : ${entry.violation_type}`);
-    }
     reportElements.reportSummary.textContent = summaryLines.join('\n');
     setActiveReportTab('cause');
     reportElements.reportModal.style.display = 'flex';
@@ -2958,15 +3385,20 @@ function closeReportModal() {
 async function fetchAbnormalLogs() {
     try {
         const res = await fetch('/api/anomaly_logs');
-        if (!res.ok) throw new Error('bad response');
+        if (!res.ok) {
+            const errorText = await res.text();
+            console.error('failed to fetch abnormal logs - bad response:', res.status, res.statusText, errorText);
+            throw new Error(`bad response: ${res.status} ${res.statusText}`);
+        }
         const data = await res.json();
+        console.log('fetchAbnormalLogs - received data:', data?.length || 0, 'items');
         setServerLogs(Array.isArray(data) ? data : []);
     } catch (e) {
         console.error('failed to fetch abnormal logs', e);
     }
 }
 
-function fetchData() {
+async function fetchData() {
     if (!processStart) return;
     if (chartHoldEnabled) return; // HOLD가 켜져있으면 업데이트 중지
     const now = new Date();
@@ -2977,11 +3409,44 @@ function fetchData() {
     const startIso = new Date(windowStartMs).toISOString();
     const nowIso = new Date(windowEndMs).toISOString();
     updateTimeRangeLabel(windowStartMs, windowEndMs);
-    columns.forEach(col => {
-        fetch(`/api/event_chart?param=${encodeURIComponent(col)}&start=${encodeURIComponent(startIso)}&end=${encodeURIComponent(nowIso)}`)
-            .then(res => res.json())
-            .then(json => updateCharts(col, json));
+
+    // limits가 비어있으면 로드
+    if (Object.keys(limits).length === 0) {
+        try {
+            const res = await fetch('/api/limits');
+            if (res.ok) {
+                const json = await res.json();
+                limits = json.limits || json || {};
+            }
+        } catch (e) {
+            console.error('failed to load limits', e);
+        }
+    }
+
+    // interlockLimits가 비어있으면 로드
+    if (Object.keys(interlockLimits).length === 0) {
+        try {
+            const res = await fetch('/api/interlock_limits');
+            if (res.ok) {
+                const json = await res.json();
+                interlockLimits = json.limits || json || {};
+            }
+        } catch (e) {
+            console.error('failed to load interlock limits', e);
+        }
+    }
+
+    // 모든 차트 데이터를 가져온 후 업데이트
+    const chartPromises = columns.map(async col => {
+        try {
+            const res = await fetch(`/api/event_chart?param=${encodeURIComponent(col)}&start=${encodeURIComponent(startIso)}&end=${encodeURIComponent(nowIso)}`);
+            const json = await res.json();
+            updateCharts(col, json);
+        } catch (e) {
+            console.error(`failed to fetch chart data for ${col}`, e);
+        }
     });
+    await Promise.all(chartPromises);
 }
 
 function checkProcess() {
@@ -3020,22 +3485,297 @@ window.addEventListener('DOMContentLoaded', () => {
     updateLogPanelHeight();
     checkProcess();
     //setInterval(checkProcess, 20000);
-    setInterval(fetchData, 1000);
+    // limits 로드 후 첫 데이터 가져오기
+    loadLimits().then(() => {
+        console.log('[상한선/하한선] limits 로드 완료 후 fetchData 호출. limits 키:', Object.keys(limits));
+        fetchData();
+        setInterval(fetchData, 1000);
+    });
     fetchAbnormalLogs();
     setInterval(fetchAbnormalLogs, 2000);
     pollGeneratorStatus();
     setInterval(pollGeneratorStatus, 3000);
     fetchCurrentStepFallback(true);
     setInterval(() => fetchCurrentStepFallback(false), 5000);
-    const btn = document.getElementById('toggle-datasets');
-    const updateBtn = () => { btn.textContent = visibilityLabels[visibilityMode]; };
-    updateBtn();
-    btn.addEventListener('click', () => {
-        visibilityMode = visibilityMode === 'both' ? 'actual' : visibilityMode === 'actual' ? 'predicted' : 'both';
-        localStorage.setItem(visibilityKey, visibilityMode);
-        updateBtn();
-        applyVisibilityAll();
+    // 상/하한값 설정 기능
+    async function loadLimits() {
+        try {
+            const res = await fetch('/api/limits');
+            if (!res.ok) return;
+            const json = await res.json();
+            limits = json.limits || json || {};
+            console.log('[상한선/하한선] loadLimits 완료. 파라미터 수:', Object.keys(limits).length);
+            if (Object.keys(limits).length > 0) {
+                const firstKey = Object.keys(limits)[0];
+                console.log('[상한선/하한선] 첫 번째 파라미터:', firstKey, 'all:', limits[firstKey]?.all);
+            }
+        } catch (e) {
+            console.error('failed to load limits', e);
+        }
+    }
+
+    function createSettingsUI() {
+        const catWrap = document.getElementById("category-buttons");
+        const paramWrap = document.getElementById("param-buttons");
+        const form = document.getElementById("settings-form");
+        if (!catWrap || !paramWrap || !form) return;
+        catWrap.innerHTML = '';
+        paramWrap.innerHTML = '';
+        form.innerHTML = '';
+
+        const categories = Object.keys(categoryMap).filter(cat => categoryMap[cat].some(hasColumn));
+        if (categories.length === 0) return;
+        let activeCat = categories[0];
+        let activeParam = categoryMap[activeCat].find(hasColumn) || columns[0];
+
+        function renderCategories() {
+            catWrap.innerHTML = '';
+            categories.forEach(cat => {
+                const btn = document.createElement("button");
+                btn.className = "category-btn" + (cat === activeCat ? " active" : "");
+                btn.textContent = cat;
+                btn.onclick = () => {
+                    activeCat = cat;
+                    activeParam = categoryMap[cat].find(hasColumn) || activeParam;
+                    renderCategories();
+                    renderParams();
+                    renderStepTable(activeParam);
+                };
+                catWrap.appendChild(btn);
+            });
+        }
+
+        function renderParams() {
+            paramWrap.innerHTML = '';
+            categoryMap[activeCat].forEach(col => {
+                if (!hasColumn(col)) return;
+                const btn = document.createElement("button");
+                btn.className = "param-btn" + (col === activeParam ? " active" : "");
+                btn.textContent = displayParam(col);
+                btn.onclick = () => {
+                    activeParam = col;
+                    renderParams();
+                    renderStepTable(col);
+                };
+                paramWrap.appendChild(btn);
+            });
+        }
+
+        function renderStepTable(col) {
+            form.innerHTML = '';
+            const stepIds = Object.keys(stepNames).map(Number).sort((a, b) => a - b);
+            const table = document.createElement("table");
+            table.className = "step-table";
+            const thead = document.createElement("thead");
+            thead.innerHTML = `<tr><th>Step ID</th><th>Step Name</th><th>Min</th><th>Max</th></tr>`;
+            table.appendChild(thead);
+            const tbody = document.createElement("tbody");
+            const commonLim = limits?.[col]?.["all"] || {};
+            const commonRow = document.createElement("tr");
+            commonRow.innerHTML = `
+                <td><strong>All</strong></td>
+                <td><em>모든 Step 공통</em></td>
+                <td><input data-col="${col}" data-step="all" data-type="min" value="${commonLim.min ?? ''}" /></td>
+                <td><input data-col="${col}" data-step="all" data-type="max" value="${commonLim.max ?? ''}" /></td>
+            `;
+            tbody.appendChild(commonRow);
+            stepIds.forEach(id => {
+                const stepKey = id.toString();
+                const lim = limits?.[col]?.[stepKey] || {};
+                const tr = document.createElement("tr");
+                tr.innerHTML = `
+                    <td>${id}</td>
+                    <td>${stepNames[id] || "UNKNOWN"}</td>
+                    <td><input data-col="${col}" data-step="${stepKey}" data-type="min" value="${lim.min ?? ''}" /></td>
+                    <td><input data-col="${col}" data-step="${stepKey}" data-type="max" value="${lim.max ?? ''}" /></td>
+                `;
+                tbody.appendChild(tr);
+            });
+            table.appendChild(tbody);
+            form.appendChild(table);
+        }
+
+        renderCategories();
+        renderParams();
+        renderStepTable(activeParam);
+    }
+
+    function collectLimits() {
+        const inputs = document.querySelectorAll("#settings-form input");
+        const newLimits = {};
+        inputs.forEach(inp => {
+            const col = inp.dataset.col;
+            const step = inp.dataset.step;
+            const typ = inp.dataset.type;
+            const val = parseFloat(inp.value);
+            if (!newLimits[col]) newLimits[col] = {};
+            if (!newLimits[col][step]) newLimits[col][step] = {};
+            if (!isNaN(val)) newLimits[col][step][typ] = val;
+        });
+        return newLimits;
+    }
+
+    async function saveLimits() {
+        const updatedPart = collectLimits();
+        const merged = { ...limits };
+        Object.entries(updatedPart).forEach(([col, steps]) => {
+            if (!merged[col]) merged[col] = {};
+            Object.entries(steps).forEach(([step, val]) => {
+                merged[col][step] = val;
+            });
+        });
+        const res = await fetch("/api/save_limits", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(merged)
+        });
+        if (res.ok) {
+            limits = merged;
+            // 모달을 닫지 않고 유지
+            fetchData();
+        } else {
+            alert("저장 실패");
+        }
+    }
+
+    document.getElementById("open-settings")?.addEventListener("click", () => {
+        createSettingsUI();
+        document.getElementById("settings-modal").style.display = "block";
     });
+
+    document.getElementById("save-settings")?.addEventListener("click", saveLimits);
+
+    // Interlock 설정 UI 함수
+    function createInterlockSettingsUI() {
+        const catWrap = document.getElementById("interlock-category-buttons");
+        const paramWrap = document.getElementById("interlock-param-buttons");
+        const form = document.getElementById("interlock-settings-form");
+        if (!catWrap || !paramWrap || !form) return;
+        catWrap.innerHTML = '';
+        paramWrap.innerHTML = '';
+        form.innerHTML = '';
+
+        const categories = Object.keys(categoryMap).filter(cat => categoryMap[cat].some(hasColumn));
+        if (categories.length === 0) return;
+        let activeCat = categories[0];
+        let activeParam = categoryMap[activeCat].find(hasColumn) || columns[0];
+
+        function renderCategories() {
+            catWrap.innerHTML = '';
+            categories.forEach(cat => {
+                const btn = document.createElement("button");
+                btn.className = "category-btn" + (cat === activeCat ? " active" : "");
+                btn.textContent = cat;
+                btn.onclick = () => {
+                    activeCat = cat;
+                    activeParam = categoryMap[cat].find(hasColumn) || activeParam;
+                    renderCategories();
+                    renderParams();
+                    renderInterlockTable(activeParam);
+                };
+                catWrap.appendChild(btn);
+            });
+        }
+
+        function renderParams() {
+            paramWrap.innerHTML = '';
+            categoryMap[activeCat].forEach(col => {
+                if (!hasColumn(col)) return;
+                const btn = document.createElement("button");
+                btn.className = "param-btn" + (col === activeParam ? " active" : "");
+                btn.textContent = displayParam(col);
+                btn.onclick = () => {
+                    activeParam = col;
+                    renderParams();
+                    renderInterlockTable(col);
+                };
+                paramWrap.appendChild(btn);
+            });
+        }
+
+        function renderInterlockTable(col) {
+            form.innerHTML = '';
+            const table = document.createElement("table");
+            table.className = "step-table";
+            const thead = document.createElement("thead");
+            thead.innerHTML = `<tr><th>Parameter</th><th>Min</th><th>Max</th></tr>`;
+            table.appendChild(thead);
+            const tbody = document.createElement("tbody");
+            const interlockLim = interlockLimits?.[col]?.["all"] || {};
+            const row = document.createElement("tr");
+            row.innerHTML = `
+                <td><strong>${displayParam(col)}</strong></td>
+                <td><input data-col="${col}" data-step="all" data-type="min" value="${interlockLim.min ?? ''}" /></td>
+                <td><input data-col="${col}" data-step="all" data-type="max" value="${interlockLim.max ?? ''}" /></td>
+            `;
+            tbody.appendChild(row);
+            table.appendChild(tbody);
+            form.appendChild(table);
+        }
+
+        renderCategories();
+        renderParams();
+        renderInterlockTable(activeParam);
+    }
+
+    function collectInterlockLimits() {
+        const inputs = document.querySelectorAll("#interlock-settings-form input");
+        const newLimits = {};
+        inputs.forEach(inp => {
+            const col = inp.dataset.col;
+            const step = inp.dataset.step;
+            const typ = inp.dataset.type;
+            const val = parseFloat(inp.value);
+            if (!newLimits[col]) newLimits[col] = {};
+            if (!newLimits[col][step]) newLimits[col][step] = {};
+            if (!isNaN(val)) newLimits[col][step][typ] = val;
+        });
+        return newLimits;
+    }
+
+    async function saveInterlockLimits() {
+        const updatedPart = collectInterlockLimits();
+        const merged = { ...interlockLimits };
+        Object.entries(updatedPart).forEach(([col, steps]) => {
+            if (!merged[col]) merged[col] = {};
+            Object.entries(steps).forEach(([step, val]) => {
+                merged[col][step] = val;
+            });
+        });
+        const res = await fetch("/api/save_interlock_limits", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(merged)
+        });
+        if (res.ok) {
+            interlockLimits = merged;
+            // 모달을 닫지 않고 유지
+            fetchData();
+        } else {
+            alert("저장 실패");
+        }
+    }
+
+    async function loadInterlockLimits() {
+        try {
+            const res = await fetch('/api/interlock_limits');
+            if (!res.ok) return;
+            const json = await res.json();
+            interlockLimits = json.limits || {};
+        } catch (e) {
+            console.error('failed to load interlock limits', e);
+        }
+    }
+
+    document.getElementById("open-interlock-settings")?.addEventListener("click", () => {
+        createInterlockSettingsUI();
+        document.getElementById("interlock-settings-modal").style.display = "block";
+    });
+
+    document.getElementById("save-interlock-settings")?.addEventListener("click", saveInterlockLimits);
+
+    loadLimits();
+    loadInterlockLimits();
 
     document.querySelectorAll('.expand-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
@@ -3143,6 +3883,90 @@ window.addEventListener('DOMContentLoaded', () => {
             localStorage.setItem(warningToggleKey, String(warningEnabled));
             saveWarningSetting();
             if (!warningEnabled && warningModalOpen) closeWarningModal();
+            // 경고팝업토글 변경 시 차트 업데이트하여 상한선/하한선 표시 상태 변경
+            // 모든 차트의 상한선/하한선 표시 상태를 즉시 업데이트
+            Object.keys(mainCharts).forEach(col => {
+                const chart = mainCharts[col];
+                if (!chart) return;
+                if (warningEnabled && limits && limits[col]) {
+                    // limits가 있으면 상한선/하한선 데이터를 다시 계산하여 표시
+                    const actual = chart.data.datasets[1].data || [];
+                    const predicted = chart.data.datasets[0].data || [];
+                    const allData = actual.concat(predicted);
+
+                    let timePoints = [];
+                    if (allData.length > 0) {
+                        timePoints = allData.map(d => d.x);
+                    } else {
+                        const now = Date.now();
+                        const timeRangeMs = selectedTimeRange * 60 * 1000;
+                        const startTime = now - timeRangeMs;
+                        timePoints = [new Date(startTime), new Date(now)];
+                    }
+
+                    let currentStep = 'all';
+                    if (actual.length > 0 && actual[actual.length - 1].step_id !== undefined) {
+                        currentStep = actual[actual.length - 1].step_id?.toString() || 'all';
+                    } else if (predicted.length > 0 && predicted[predicted.length - 1].step_id !== undefined) {
+                        currentStep = predicted[predicted.length - 1].step_id?.toString() || 'all';
+                    }
+                    const limit = limits[col][currentStep] || limits[col]['all'];
+
+                    const upperLimit = [];
+                    const lowerLimit = [];
+                    if (limit && (limit.max !== undefined || limit.min !== undefined)) {
+                        timePoints.forEach(x => {
+                            if (limit.max !== undefined && limit.max !== null) {
+                                upperLimit.push({ x: x, y: limit.max });
+                            }
+                            if (limit.min !== undefined && limit.min !== null) {
+                                lowerLimit.push({ x: x, y: limit.min });
+                            }
+                        });
+                    }
+
+                    chart.data.datasets[2].data = upperLimit;
+                    chart.data.datasets[3].data = lowerLimit;
+                    chart.data.datasets[2].hidden = !warningEnabled || upperLimit.length === 0;
+                    chart.data.datasets[3].hidden = !warningEnabled || lowerLimit.length === 0;
+                } else {
+                    // limits가 없거나 warningEnabled가 false면 숨김
+                    chart.data.datasets[2].data = [];
+                    chart.data.datasets[3].data = [];
+                    chart.data.datasets[2].hidden = true;
+                    chart.data.datasets[3].hidden = true;
+                }
+
+                // Interlock 상한선/하한선 업데이트
+                if (warningEnabled && interlockLimits && interlockLimits[col]) {
+                    const interlockLimit = interlockLimits[col]['all'];
+                    const interlockUpperLimit = [];
+                    const interlockLowerLimit = [];
+
+                    if (interlockLimit && (interlockLimit.max !== undefined || interlockLimit.min !== undefined)) {
+                        timePoints.forEach(x => {
+                            if (interlockLimit.max !== undefined && interlockLimit.max !== null) {
+                                interlockUpperLimit.push({ x: x, y: interlockLimit.max });
+                            }
+                            if (interlockLimit.min !== undefined && interlockLimit.min !== null) {
+                                interlockLowerLimit.push({ x: x, y: interlockLimit.min });
+                            }
+                        });
+                    }
+
+                    chart.data.datasets[4].data = interlockUpperLimit;
+                    chart.data.datasets[5].data = interlockLowerLimit;
+                    chart.data.datasets[4].hidden = !warningEnabled || interlockUpperLimit.length === 0;
+                    chart.data.datasets[5].hidden = !warningEnabled || interlockLowerLimit.length === 0;
+                } else {
+                    chart.data.datasets[4].data = [];
+                    chart.data.datasets[5].data = [];
+                    chart.data.datasets[4].hidden = true;
+                    chart.data.datasets[5].hidden = true;
+                }
+
+                chart.update();
+            });
         });
     }
 
@@ -3196,6 +4020,16 @@ window.addEventListener('DOMContentLoaded', () => {
             if (res.ok) {
                 if (data.status === 'already_stopped') {
                     alert('⚠️ ' + data.message);
+                } else if (data.status === 'stopped') {
+                    // 장비가 성공적으로 DOWN되었을 때 텔레그램 알림 전송
+                    await sendTelegramNotification('🔴 장비가 DOWN 되었습니다.');
+
+                    const killedCount = data.killed_count || 0;
+                    if (killedCount > 0) {
+                        alert(`✅ 장비가 정지되었습니다.\n종료된 프로세스: ${killedCount}개`);
+                    } else {
+                        alert('✅ ' + (data.message || '프로세스가 종료되었습니다.'));
+                    }
                 } else {
                     const killedCount = data.killed_count || 0;
                     if (killedCount > 0) {

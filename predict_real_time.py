@@ -632,41 +632,44 @@ def ray_predict(proc_idx, selected_cols, predict_columns, window_size, predict_s
 
         insert_pred_data(pool, table_name, cols, predict_steps, pred_dates, all_pred_datas, last_step_ids, last_step_names)
 
-        for col_idx, p_col in enumerate(predict_columns):
-            for idx, predict_step in enumerate(predict_steps):
-                pred_date = pred_dates[idx]
-                pred_data = all_pred_datas[0, idx, col_idx]
-                last_step_id = last_step_ids[idx]
-                last_step_name = last_step_names[idx]
-                try:
-                    if last_step_id != -1 and pred_data is not None:
-                        limits = {}
-                        if os.path.exists("./fastapi/limits.yaml"):
-                            with open("./fastapi/limits.yaml", "r", encoding="utf-8") as f:
-                                limits = yaml.safe_load(f)
-                            step_limits = limits.get(p_col, {}).get(str(last_step_id))
-                            if step_limits:
-                                if "min" in step_limits and pred_data <= step_limits["min"]:
-                                    insert_violation(pool, str(pred_date), p_col, last_step_id, last_step_name, pred_data, 'min', step_limits["min"])
-                                elif "max" in step_limits and pred_data >= step_limits["max"]:
-                                    insert_violation(pool, str(pred_date), p_col, last_step_id, last_step_name, pred_data, 'max', step_limits["max"])
-                    elif pred_data is not None:
-                        limits = {}
-                        if os.path.exists("./fastapi/limits.yaml"):
-                            with open("./fastapi/limits.yaml", "r", encoding="utf-8") as f:
-                                limits = yaml.safe_load(f)
-                            step_limits = limits.get(p_col, {}).get('all')
-                            if step_limits:
-                                if "min" in step_limits and pred_data <= step_limits["min"]:
-                                    insert_violation(pool, str(pred_date), p_col, last_step_id, last_step_name, pred_data, 'min', step_limits["min"])
-                                elif "max" in step_limits and pred_data >= step_limits["max"]:
-                                    insert_violation(pool, str(pred_date), p_col, last_step_id, last_step_name, pred_data, 'max', step_limits["max"])
-                except Exception as e:
-                    logg(f"[PID|{proc_pid}].log", "ray_predict() : 상하한 터치 이벤트 처리시 오류발생")
-                    logg(f"[PID|{proc_pid}].log", str(e))
-                    time.sleep(0.1)
-                    continue            # 8. 오래된 데이터 삭제
-            if cnt%3600==0:
+        # 상한/하한 터치 및 realtime_violation_log 테이블 저장 기능 주석처리
+        # for col_idx, p_col in enumerate(predict_columns):
+        #     for idx, predict_step in enumerate(predict_steps):
+        #         pred_date = pred_dates[idx]
+        #         pred_data = all_pred_datas[0, idx, col_idx]
+        #         last_step_id = last_step_ids[idx]
+        #         last_step_name = last_step_names[idx]
+        #         try:
+        #             if last_step_id != -1 and pred_data is not None:
+        #                 limits = {}
+        #                 if os.path.exists("./fastapi/limits.yaml"):
+        #                     with open("./fastapi/limits.yaml", "r", encoding="utf-8") as f:
+        #                         limits = yaml.safe_load(f)
+        #                     step_limits = limits.get(p_col, {}).get(str(last_step_id))
+        #                     if step_limits:
+        #                         if "min" in step_limits and pred_data <= step_limits["min"]:
+        #                             insert_violation(pool, str(pred_date), p_col, last_step_id, last_step_name, pred_data, 'min', step_limits["min"])
+        #                         elif "max" in step_limits and pred_data >= step_limits["max"]:
+        #                             insert_violation(pool, str(pred_date), p_col, last_step_id, last_step_name, pred_data, 'max', step_limits["max"])
+        #             elif pred_data is not None:
+        #                 limits = {}
+        #                 if os.path.exists("./fastapi/limits.yaml"):
+        #                     with open("./fastapi/limits.yaml", "r", encoding="utf-8") as f:
+        #                         limits = yaml.safe_load(f)
+        #                     step_limits = limits.get(p_col, {}).get('all')
+        #                     if step_limits:
+        #                         if "min" in step_limits and pred_data <= step_limits["min"]:
+        #                             insert_violation(pool, str(pred_date), p_col, last_step_id, last_step_name, pred_data, 'min', step_limits["min"])
+        #                         elif "max" in step_limits and pred_data >= step_limits["max"]:
+        #                             insert_violation(pool, str(pred_date), p_col, last_step_id, last_step_name, pred_data, 'max', step_limits["max"])
+        #         except Exception as e:
+        #             logg(f"[PID|{proc_pid}].log", "ray_predict() : 상하한 터치 이벤트 처리시 오류발생")
+        #             logg(f"[PID|{proc_pid}].log", str(e))
+        #             time.sleep(0.1)
+        #             continue            # 8. 오래된 데이터 삭제
+        
+        # 8. 오래된 데이터 삭제
+        if cnt%3600==0:
                 conn = pool.getconn()
                 cur = None
                 try:
@@ -683,16 +686,17 @@ def ray_predict(proc_idx, selected_cols, predict_columns, window_size, predict_s
                             ''', (delete_before,))
                             conn.commit()
                         # 최신 Timestamp 조회
-                        violation_table = 'realtime_violation_log'
-                        cur.execute(f'SELECT "Timestamp" FROM "{violation_table}" ORDER BY "Timestamp" DESC LIMIT 1')
-                        latest_ts = cur.fetchone()[0]
-                        if latest_ts:
-                            delete_before = latest_ts - timedelta(hours=48)
-                            cur.execute(f'''
-                                DELETE FROM "{violation_table}"
-                                WHERE "Timestamp" < %s
-                            ''', (delete_before,))
-                            conn.commit()
+                        # realtime_violation_log 테이블 오래된 데이터 삭제 기능 주석처리
+                        # violation_table = 'realtime_violation_log'
+                        # cur.execute(f'SELECT "Timestamp" FROM "{violation_table}" ORDER BY "Timestamp" DESC LIMIT 1')
+                        # latest_ts = cur.fetchone()[0]
+                        # if latest_ts:
+                        #     delete_before = latest_ts - timedelta(hours=48)
+                        #     cur.execute(f'''
+                        #         DELETE FROM "{violation_table}"
+                        #         WHERE "Timestamp" < %s
+                        #     ''', (delete_before,))
+                        #     conn.commit()
                     except Exception as e:
                         logg(f"[PID|{os.getpid()}].log", f"insert_pred_data() 오래된 데이터 삭제 오류")
                         logg(f"[PID|{os.getpid()}].log", str(e))
@@ -719,15 +723,16 @@ if __name__ == '__main__':
     )
     cur = conn.cursor()
 
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS realtime_violation_log (
-            "Timestamp" TIMESTAMP  PRIMARY KEY,
-            parameter TEXT NOT NULL,
-            message TEXT NOT NULL,
-            UNIQUE ("Timestamp", parameter)
-        );
-    """)
-    conn.commit()
+    # realtime_violation_log 테이블 생성 기능 주석처리
+    # cur.execute("""
+    #     CREATE TABLE IF NOT EXISTS realtime_violation_log (
+    #         "Timestamp" TIMESTAMP  PRIMARY KEY,
+    #         parameter TEXT NOT NULL,
+    #         message TEXT NOT NULL,
+    #         UNIQUE ("Timestamp", parameter)
+    #     );
+    # """)
+    # conn.commit()
     cur.close()
     conn.close()
     

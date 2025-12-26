@@ -3,11 +3,9 @@ import json
 import os
 import random
 import re
-import yaml
 from collections import defaultdict
 from datetime import datetime, timedelta
 from itertools import chain
-from pathlib import Path
 
 import joblib
 import numpy as np
@@ -21,16 +19,14 @@ from insert_old_data import column_types as RAW_COLUMN_TYPES
 from insert_old_data import columns as RAW_COLUMNS
 from insert_old_data import transform_value
 
-# limits.yaml 파일 경로
-LIMITS_PATH = Path(__file__).parent / "fastapi" / "limits.yaml"
-LIMITS2_PATH = Path(__file__).parent / "fastapi" / "limits2.yaml"
-
 
 WINDOW_SIZE = 192
 PREDICT_STEPS = [10, 20, 30]
 PREDICT_STEP = 10
 
-# 이상감지 임계값 설정 (사용하지 않음 - limits.yaml의 상한/하한선 사용)
+# 이상감지 임계값 설정
+THRESHOLD_PERCENT = 10.0  # 10% 이상
+THRESHOLD_ABS = 0.4      # 절대값 0.4 이상
 MIN_DURATION_SEC = 5.0    # 이상 구간 최소 지속시간
 CLEAR_GAP_SEC = 2.0       # 2초 이상 정상 구간이면 종료
 
@@ -523,71 +519,16 @@ def insert_pred_rows(pool: SimpleConnectionPool, col_names: list[str], rows: lis
         pool.putconn(conn)
 
 
-def load_limits():
-    """limits.yaml 파일을 읽어서 파라미터별 상한/하한값 정보를 반환"""
-    limits_dict = {}
-    if LIMITS_PATH.exists():
-        try:
-            with open(LIMITS_PATH, 'r', encoding='utf-8') as f:
-                limits_data = yaml.safe_load(f) or {}
-            for param, steps in limits_data.items():
-                # 'all' 키의 값을 가져옴
-                if 'all' in steps and isinstance(steps['all'], dict):
-                    all_limits = steps['all']
-                    limits_dict[param] = {
-                        'upper': all_limits.get('max'),
-                        'lower': all_limits.get('min')
-                    }
-                else:
-                    limits_dict[param] = {
-                        'upper': None,
-                        'lower': None
-                    }
-        except Exception as e:
-            print(f"[경고] limits.yaml 로드 실패: {e}")
-    return limits_dict
-
-def load_interlock_limits():
-    """limits2.yaml 파일을 읽어서 파라미터별 Interlock 상한/하한값 정보를 반환"""
-    limits_dict = {}
-    if LIMITS2_PATH.exists():
-        try:
-            with open(LIMITS2_PATH, 'r', encoding='utf-8') as f:
-                limits_data = yaml.safe_load(f) or {}
-            for param, steps in limits_data.items():
-                # 'all' 키의 값을 가져옴
-                if 'all' in steps and isinstance(steps['all'], dict):
-                    all_limits = steps['all']
-                    limits_dict[param] = {
-                        'upper': all_limits.get('max'),
-                        'lower': all_limits.get('min')
-                    }
-                else:
-                    limits_dict[param] = {
-                        'upper': None,
-                        'lower': None
-                    }
-        except Exception as e:
-            print(f"[경고] limits2.yaml 로드 실패: {e}")
-    return limits_dict
-
 def weighted_violation_type():
-    """
-    이상감지마다 violation_type을 확률에 따라 지정
-    1: 40% (0.0 ~ 0.4)
-    2: 30% (0.4 ~ 0.7)
-    3: 20% (0.7 ~ 0.9)
-    4: 10% (0.9 ~ 1.0)
-    """
+    """위반 유형 가중치 랜덤 선택: 1:40%, 2:30%, 3:20%, 4:10%"""
     r = random.random()
     if r < 0.4:
-        return 1  # 40%
-    elif r < 0.7:
-        return 2  # 30%
-    elif r < 0.9:
-        return 3  # 20%
-    else:
-        return 4  # 10%
+        return 1
+    if r < 0.7:
+        return 2
+    if r < 0.9:
+        return 3
+    return 4
 
 
 def ensure_abnormal_log_table(conn):
@@ -595,7 +536,7 @@ def ensure_abnormal_log_table(conn):
     with conn.cursor() as cur:
         cur.execute(
             """
-            CREATE TABLE IF NOT EXISTS realtime_abnormal_log2 (
+            CREATE TABLE IF NOT EXISTS realtime_abnormal_log (
                 id SERIAL PRIMARY KEY,
                 start_time TIMESTAMP NOT NULL,
                 end_time TIMESTAMP NOT NULL,
@@ -605,31 +546,13 @@ def ensure_abnormal_log_table(conn):
                 max_diff_percent DOUBLE PRECISION,
                 peak_time TIMESTAMP,
                 actual_value DOUBLE PRECISION,
-                limit_type TEXT,
-                upper_value DOUBLE PRECISION,
-                lower_value DOUBLE PRECISION,
-                is_interrupted INT,
+                predicted_value DOUBLE PRECISION,
                 violation_type INT,
                 message TEXT NOT NULL,
                 created_at TIMESTAMP DEFAULT NOW(),
                 updated_at TIMESTAMP DEFAULT NOW(),
                 UNIQUE (parameter, start_time)
             );
-            """
-        )
-        # 기존 테이블에 violation_type 칼럼이 없으면 추가
-        cur.execute(
-            """
-            DO $$
-            BEGIN
-                IF NOT EXISTS (
-                    SELECT 1 FROM information_schema.columns 
-                    WHERE table_name = 'realtime_abnormal_log2' 
-                    AND column_name = 'violation_type'
-                ) THEN
-                    ALTER TABLE realtime_abnormal_log2 ADD COLUMN violation_type INT;
-                END IF;
-            END $$;
             """
         )
         conn.commit()
@@ -641,8 +564,6 @@ class BatchAnomalyDetector:
     def __init__(self, pool: SimpleConnectionPool):
         self.pool = pool
         self.state = defaultdict(dict)  # param -> event state
-        self.limits = load_limits()  # limits.yaml 데이터
-        self.interlock_limits = load_interlock_limits()  # limits2.yaml 데이터
         conn = pool.getconn()
         try:
             ensure_abnormal_log_table(conn)
@@ -668,23 +589,20 @@ class BatchAnomalyDetector:
                     "diff_percent": self._to_py(event["avg_diff"]),
                     "peak_time": event.get("peak_time").isoformat() if event.get("peak_time") else None,
                     "actual_value": self._to_py(event.get("peak_actual")),
-                    "limit_type": event.get("limit_type"),
-                    "upper_value": self._to_py(event.get("upper_value")),
-                    "lower_value": self._to_py(event.get("lower_value")),
-                    "is_interrupted": event.get("is_interrupted"),
-                    "violation_type": self._to_py(event.get("violation_type")),
+                    "predicted_value": self._to_py(event.get("peak_pred")),
                     "step_id": sorted(event.get("step_ids", [])),
                     "step_name": sorted(event.get("step_names", [])),
+                    "violation_type": self._to_py(event.get("violation_type")),
                 }
                 message_text = json.dumps(message_payload, ensure_ascii=False)
                 cur.execute(
                     """
-                    INSERT INTO realtime_abnormal_log2 (
+                    INSERT INTO realtime_abnormal_log (
                         start_time, end_time, parameter,
                         duration_seconds, avg_diff_percent, max_diff_percent,
-                        peak_time, actual_value, limit_type, upper_value, lower_value, is_interrupted, violation_type, message,
+                        peak_time, actual_value, predicted_value, violation_type, message,
                         created_at, updated_at
-                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW())
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW())
                     ON CONFLICT (parameter, start_time) DO UPDATE
                     SET end_time = EXCLUDED.end_time,
                         duration_seconds = EXCLUDED.duration_seconds,
@@ -692,10 +610,7 @@ class BatchAnomalyDetector:
                         max_diff_percent = EXCLUDED.max_diff_percent,
                         peak_time = EXCLUDED.peak_time,
                         actual_value = EXCLUDED.actual_value,
-                        limit_type = EXCLUDED.limit_type,
-                        upper_value = EXCLUDED.upper_value,
-                        lower_value = EXCLUDED.lower_value,
-                        is_interrupted = EXCLUDED.is_interrupted,
+                        predicted_value = EXCLUDED.predicted_value,
                         violation_type = EXCLUDED.violation_type,
                         message = EXCLUDED.message,
                         updated_at = NOW()
@@ -709,10 +624,7 @@ class BatchAnomalyDetector:
                         self._to_py(event["max_diff"]),
                         event.get("peak_time"),
                         self._to_py(event.get("peak_actual")),
-                        event.get("limit_type"),
-                        self._to_py(event.get("upper_value")),
-                        self._to_py(event.get("lower_value")),
-                        event.get("is_interrupted"),
+                        self._to_py(event.get("peak_pred")),
                         self._to_py(event.get("violation_type")),
                         message_text,
                     ),
@@ -739,76 +651,34 @@ class BatchAnomalyDetector:
             "max_diff": state["max_diff"],
             "peak_time": state.get("peak_time"),
             "peak_actual": state.get("peak_actual"),
-            "limit_type": state.get("limit_type"),
-            "upper_value": state.get("upper_value"),
-            "lower_value": state.get("lower_value"),
-            "is_interrupted": state.get("is_interrupted"),
-            "violation_type": state.get("violation_type"),
+            "peak_pred": state.get("peak_pred"),
             "step_ids": state.get("step_ids", set()),
             "step_names": state.get("step_names", set()),
+            "violation_type": state.get("violation_type"),
         }
         self.upsert_event(param, event)
         self.state[param] = {}
     
     def handle_sample(self, param, ts, actual_val, pred_val, step_id=None, step_name=None):
-        """샘플 데이터 처리 및 이상감지 - 실제값이 limits.yaml의 상한/하한선을 침범하는지 확인"""
+        """샘플 데이터 처리 및 이상감지"""
         if param not in ALLOWED_PARAMS:
             return
         
         state = self.state.setdefault(param, {})
-        if actual_val is None:
-            # missing actual value
+        if pred_val is None or actual_val is None:
+            # missing prediction or actual
             if state.get("active"):
                 # check if should close
                 if (ts - state["last_anomaly"]).total_seconds() >= CLEAR_GAP_SEC:
                     self.finalize_event(param)
             return
 
-        # limits.yaml에서 해당 파라미터의 상한/하한값 가져오기
-        param_limits = self.limits.get(param, {})
-        upper_limit = param_limits.get('upper')
-        lower_limit = param_limits.get('lower')
-        
-        # limits.yaml에 해당 파라미터가 없으면 스킵
-        if upper_limit is None and lower_limit is None:
-            if state.get("active"):
-                if (ts - state["last_anomaly"]).total_seconds() >= CLEAR_GAP_SEC:
-                    self.finalize_event(param)
-            return
-        
-        # 실제값이 상한/하한선을 침범하는지 확인
-        is_upper_violation = upper_limit is not None and actual_val > upper_limit
-        is_lower_violation = lower_limit is not None and actual_val < lower_limit
-        is_anomaly = is_upper_violation or is_lower_violation
-        
-        # limit_type 결정
-        limit_type = None
-        if is_upper_violation:
-            limit_type = 'u'
-        elif is_lower_violation:
-            limit_type = 'l'
-        
-        # limits2.yaml에서 Interlock 상한/하한값 확인
-        interlock_param_limits = self.interlock_limits.get(param, {})
-        interlock_upper = interlock_param_limits.get('upper')
-        interlock_lower = interlock_param_limits.get('lower')
-        is_interrupted = 2  # 기본값: 2 (Interlock 침범 안함)
-        if (interlock_upper is not None and actual_val > interlock_upper) or \
-           (interlock_lower is not None and actual_val < interlock_lower):
-            is_interrupted = 1  # Interlock 침범
-        
-        # 실제값과 상한/하한값과의 차이 percentage 계산
-        diff_pct = 0.0
-        if is_upper_violation and upper_limit is not None:
-            try:
-                diff_pct = abs(actual_val - upper_limit) / (abs(upper_limit) or 1.0) * 100.0
-            except Exception:
-                diff_pct = 0.0
-        elif is_lower_violation and lower_limit is not None:
-            try:
-                diff_pct = abs(actual_val - lower_limit) / (abs(lower_limit) or 1.0) * 100.0
-            except Exception:
-                diff_pct = 0.0
+        try:
+            diff_pct = abs(actual_val - pred_val) / (abs(actual_val) or 1.0) * 100.0
+        except Exception:
+            diff_pct = 0.0
+        diff_abs = abs(actual_val - pred_val)
+        is_anomaly = diff_pct > THRESHOLD_PERCENT and diff_abs > THRESHOLD_ABS
 
         if is_anomaly:
             if not state.get("active"):
@@ -820,10 +690,7 @@ class BatchAnomalyDetector:
                 state["max_diff"] = diff_pct
                 state["peak_time"] = ts
                 state["peak_actual"] = actual_val
-                state["limit_type"] = limit_type
-                state["upper_value"] = upper_limit
-                state["lower_value"] = lower_limit
-                state["is_interrupted"] = is_interrupted
+                state["peak_pred"] = pred_val
                 state["step_ids"] = set()
                 state["step_names"] = set()
             else:
@@ -833,11 +700,7 @@ class BatchAnomalyDetector:
                     state["max_diff"] = diff_pct
                     state["peak_time"] = ts
                     state["peak_actual"] = actual_val
-                    state["limit_type"] = limit_type
-                    state["upper_value"] = upper_limit
-                    state["lower_value"] = lower_limit
-                # is_interrupted는 가장 최근 값으로 업데이트
-                state["is_interrupted"] = is_interrupted
+                    state["peak_pred"] = pred_val
             state["last_anomaly"] = ts
             if step_id is not None:
                 state.setdefault("step_ids", set()).add(step_id)
@@ -857,10 +720,7 @@ class BatchAnomalyDetector:
                         "max_diff": state.get("max_diff"),
                         "peak_time": state.get("peak_time"),
                         "peak_actual": state.get("peak_actual"),
-                        "limit_type": state.get("limit_type"),
-                        "upper_value": state.get("upper_value"),
-                        "lower_value": state.get("lower_value"),
-                        "is_interrupted": state.get("is_interrupted"),
+                        "peak_pred": state.get("peak_pred"),
                         "step_ids": state.get("step_ids", set()),
                         "step_names": state.get("step_names", set()),
                         "violation_type": state.get("violation_type"),
