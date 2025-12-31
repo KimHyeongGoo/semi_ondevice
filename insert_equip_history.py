@@ -164,18 +164,22 @@ def process_pjob_folder(pjob_folder_path):
 
 def insert_equipment_history_data():
     """equipment_history 테이블에 데이터 삽입"""
-    base_path = "/home/goo4168/semi_platform/traceData/2025"
+    base_path = "../traceData/2025"
     
     if not os.path.exists(base_path):
         print(f"❌ 경로가 존재하지 않습니다: {base_path}")
         return
     
-    # KE-PJ000000000XX 형식의 폴더 찾기
+    # KE-PJ000000000XX 형식의 폴더 찾기 (월 폴더를 순회)
     pjob_folders = []
-    for item in os.listdir(base_path):
-        item_path = os.path.join(base_path, item)
-        if os.path.isdir(item_path) and item.startswith("KE-PJ"):
-            pjob_folders.append(item_path)
+    for month_item in os.listdir(base_path):
+        month_path = os.path.join(base_path, month_item)
+        if os.path.isdir(month_path):
+            # 각 월 폴더 내에서 KE-PJ로 시작하는 폴더 찾기
+            for item in os.listdir(month_path):
+                item_path = os.path.join(month_path, item)
+                if os.path.isdir(item_path) and item.startswith("KE-PJ"):
+                    pjob_folders.append(item_path)
     
     pjob_folders.sort()  # 폴더명으로 정렬
     

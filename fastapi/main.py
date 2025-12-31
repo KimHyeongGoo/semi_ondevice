@@ -842,6 +842,47 @@ async def get_anomaly_logs():
 
     return JSONResponse(result)
 
+@app.get("/api/prediction_logs")
+async def get_prediction_logs():
+    """예측 이상감지 로그: realtime_abnormal_log에서 최근 로그 조회"""
+    conn = psycopg2.connect(
+        dbname="postgres",
+        user="keti",
+        password="keti1234!",
+        host="localhost",
+        port=5432
+    )
+    cur = conn.cursor()
+    ensure_realtime_abnormal_log_table(cur)
+    conn.commit()
+
+    cur.execute(
+        """
+        SELECT start_time, end_time, parameter, message, violation_type
+        FROM realtime_abnormal_log
+        ORDER BY end_time DESC
+        LIMIT 50
+        """
+    )
+    rows = cur.fetchall()
+    cur.close()
+    conn.close()
+
+    result = []
+    for start_ts, end_ts, param, msg, violation_type in rows:
+        result.append({
+            "timestamp": end_ts.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3],
+            "parameter": param,
+            "message": msg,
+            "start_time": start_ts.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3],
+            "end_time": end_ts.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3],
+            "limit_type": None,
+            "is_interrupted": None,
+            "violation_type": violation_type,
+        })
+
+    return JSONResponse(result)
+
 @app.get("/api/history/logs")
 async def get_history_logs(
     start: str = Query(...),

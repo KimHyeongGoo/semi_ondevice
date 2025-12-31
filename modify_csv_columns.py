@@ -16,7 +16,7 @@ from datetime import datetime
 
 
 # 수정할 컬럼 목록
-TARGET_COLUMNS = ['MFC1_N2-1', 'MFC1_N2-2', 'MFC3_N2-3', 'MFC4_N2-4', 'MFC7_DCS', 'MFC8_NH3']
+TARGET_COLUMNS = ['MFC1_N2-1', 'MFC2_N2-2', 'MFC3_N2-3', 'MFC4_N2-4', 'MFC7_DCS', 'MFC8_NH3']
 
 # 각 컬럼별 수정 규칙
 COLUMN_RULES = {
@@ -26,7 +26,7 @@ COLUMN_RULES = {
         'replace_values': [2.323, -0.3],  # 랜덤 선택
         'tolerance': 0.01  # 값 비교 허용 오차
     },
-    'MFC3_N2-2': {
+    'MFC2_N2-2': {
         'target_value': 0,
         'target_length': 8,  # 10라인 연속
         'replace_values': [0.4, -0.323],  # 랜덤 선택
@@ -154,7 +154,7 @@ def find_continuous_sequence(
 
 def select_columns_to_modify() -> List[str]:
     """확률로 0개(30%), 1개(40%), 2개(20%), 3개(10%) 컬럼 선택"""
-    num_columns = random.choices([0, 1, 2, 3], weights=[15, 40, 30, 15])[0]
+    num_columns = random.choices([0, 1, 2, 3], weights=[0, 30, 35, 35])[0]
     if num_columns == 0:
         return []
     

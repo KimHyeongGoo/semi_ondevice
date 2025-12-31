@@ -21,9 +21,12 @@ let warningEnabled = true;
 let settingsCache = {};
 const storedWarning = typeof localStorage !== 'undefined' ? localStorage.getItem(warningToggleKey) : null;
 if (storedWarning !== null) warningEnabled = storedWarning === 'true';
+const predictionToggleKey = 'anomalyPredictionEnabled';
+let predictionEnabled = false; // 기본값 OFF (새로고침 시 항상 OFF)
+// localStorage에서 읽지 않음 - 새로고침 시 항상 OFF로 시작
 let deviceStatus = { status: 'RUN', lastTick: null };
 let lastWarningTime = 0; // 마지막 경고 팝업이 뜬 시간 (밀리초)
-const WARNING_COOLDOWN_MS = 60 * 1000; // 1분 쿨다운
+const WARNING_COOLDOWN_MS = 10 * 1000; // 10초 쿨다운
 let pageStartTime = Date.now(); // 페이지 로드 시간 (또는 장비 시작 시간)
 const STARTUP_GRACE_PERIOD_MS = 5 * 1000; // 시작 후 5초 그레이스 기간
 const displayParam = (name) => {
@@ -365,7 +368,26 @@ function setDatasetVisibility(chart, mode) {
 }
 
 function applyVisibilityAll() {
-    Object.values(mainCharts).forEach(c => { setDatasetVisibility(c, visibilityMode); c.update(); });
+    // 예측 모드일 때는 visibilityMode에 따라 표시
+    if (predictionEnabled) {
+        Object.values(mainCharts).forEach(c => { setDatasetVisibility(c, visibilityMode); c.update(); });
+    } else {
+        Object.values(mainCharts).forEach(c => { setDatasetVisibility(c, visibilityMode); c.update(); });
+    }
+}
+
+function updateVisibilitySelectors() {
+    // 메인 선택 드롭다운 업데이트
+    const mainSelect = document.getElementById('prediction-visibility-select');
+    if (mainSelect) {
+        mainSelect.value = visibilityMode;
+    }
+
+    // 모달 선택 드롭다운 업데이트
+    const modalSelect = document.getElementById('modal-prediction-visibility-select');
+    if (modalSelect) {
+        modalSelect.value = visibilityMode;
+    }
 }
 
 const highlightPlugin = {
@@ -491,12 +513,12 @@ function createCharts() {
             type: 'line',
             data: {
                 datasets: [
-                    { label: '예측값', borderColor: 'red', tension: 0.25, borderWidth: 3, pointRadius: 0, data: [] },
-                    { label: '실제값', borderColor: 'blue', tension: 0.25, borderWidth: 3, pointRadius: 0, data: [] },
-                    { label: '상한선', borderColor: 'green', borderDash: [5, 5], borderWidth: 2, pointRadius: 0, data: [], hidden: true },
-                    { label: '하한선', borderColor: 'orange', borderDash: [5, 5], borderWidth: 2, pointRadius: 0, data: [], hidden: true },
-                    { label: 'Interlock 상한선', borderColor: 'red', borderDash: [3, 3], borderWidth: 2, pointRadius: 0, data: [], hidden: true },
-                    { label: 'Interlock 하한선', borderColor: 'red', borderDash: [3, 3], borderWidth: 2, pointRadius: 0, data: [], hidden: true }
+                    { label: '예측값', borderColor: 'red', tension: 0.25, borderWidth: 3, pointRadius: 0, data: [], order: 0 },
+                    { label: '실제값', borderColor: 'blue', tension: 0.25, borderWidth: 3, pointRadius: 0, data: [], order: 1 },
+                    { label: '상한선', borderColor: 'green', borderDash: [5, 5], borderWidth: 2, pointRadius: 0, data: [], hidden: true, order: -1 },
+                    { label: '하한선', borderColor: 'orange', borderDash: [5, 5], borderWidth: 2, pointRadius: 0, data: [], hidden: true, order: -1 },
+                    { label: 'Interlock 상한선', borderColor: 'red', borderDash: [3, 3], borderWidth: 2, pointRadius: 0, data: [], hidden: true, order: -1 },
+                    { label: 'Interlock 하한선', borderColor: 'red', borderDash: [3, 3], borderWidth: 2, pointRadius: 0, data: [], hidden: true, order: -1 }
                 ]
             },
             options: {
@@ -575,6 +597,8 @@ function normalizeLogEntry(item) {
             predicted_value: parsed.predicted_value ?? null,
             peak_time: toMillis(parsed.peak_time),
             violation_type: parsed.violation_type ?? item.violation_type ?? null,
+            is_interrupted: parsed.is_interrupted ?? item.is_interrupted ?? null,
+            isPredictionLog: item.isPredictionLog || false, // 예측 로그 플래그 추가
         },
     };
 }
@@ -599,9 +623,15 @@ function setServerLogs(list) {
     applyHighlightState();
 
     if (warningEnabled && !warningModalOpen && newEntries.length) {
-        const first = newEntries[0];
-        console.log(`[경고 팝업 호출] 파라미터: ${first.param}, 새 항목 수: ${newEntries.length}`);
-        openWarningModal(first.param, buildLogText(first.param, first.entry));
+        // is_interrupted가 1인 항목만 필터링
+        const interruptedEntries = newEntries.filter(entry => entry.entry.is_interrupted === 1);
+        if (interruptedEntries.length > 0) {
+            const first = interruptedEntries[0];
+            console.log(`[경고 팝업 호출] 파라미터: ${first.param}, 새 항목 수: ${interruptedEntries.length}, is_interrupted: ${first.entry.is_interrupted}`);
+            openWarningModal(first.param, buildLogText(first.param, first.entry));
+        } else {
+            console.log(`[경고 팝업 스킵] is_interrupted가 1인 항목이 없습니다. 새 항목 수: ${newEntries.length}`);
+        }
     } else if (newEntries.length) {
         console.log(`[경고 팝업 스킵] warningEnabled: ${warningEnabled}, warningModalOpen: ${warningModalOpen}, newEntries.length: ${newEntries.length}`);
     }
@@ -719,6 +749,20 @@ function updateLog() {
         const iconEl = document.createElement('div');
         iconEl.className = 'timeline-icon';
         iconEl.textContent = '⚠';
+        // isPredictionLog가 true이면 회색, 아니면 is_interrupted 값에 따라 색상 결정
+        if (entry.isPredictionLog) {
+            // 예측 로그는 회색 아이콘
+            iconEl.style.color = '#808080'; // 회색
+        } else {
+            // 일반 로그: is_interrupted 값에 따라 색상 결정
+            if (entry.is_interrupted === 1) {
+                iconEl.style.color = '#FF0000'; // 빨간색
+            } else if (entry.is_interrupted === 2) {
+                iconEl.style.color = '#FF8C00'; // 주황색 (DarkOrange)
+            } else {
+                iconEl.style.color = '#FF0000'; // 기본값: 빨간색
+            }
+        }
         const reportBtn = document.createElement('button');
         reportBtn.className = 'report-btn';
         reportBtn.textContent = 'Report';
@@ -780,6 +824,7 @@ function trimLogEntries(limit = 20) {
 
 function updateCharts(col, data) {
     const actual = data.actual.map(d => ({ ...d, x: parseTimestamp(d.x), y: d.y }));
+    // 예측값은 타임스탬프 조작 없이 그대로 사용 (서버에서 이미 30초 더 늘린 범위로 가져옴)
     const predicted = data.predicted.map(d => ({ ...d, x: parseTimestamp(d.x), y: d.y }));
     considerActualStepInfo(actual);
 
@@ -791,8 +836,8 @@ function updateCharts(col, data) {
     chart.data.datasets[0].data = predicted;
     chart.data.datasets[1].data = actual;
 
-    // 경고팝업토글 ON시 상한선/하한선 표시
-    if (warningEnabled && limits && limits[col]) {
+    // limits.yaml의 상한선/하한선 표시 (예측 모드든 아니든 항상 표시)
+    if (limits && limits[col]) {
         const upperLimit = [];
         const lowerLimit = [];
         const allData = actual.concat(predicted);
@@ -853,12 +898,10 @@ function updateCharts(col, data) {
 
         chart.data.datasets[2].data = upperLimit;
         chart.data.datasets[3].data = lowerLimit;
-        chart.data.datasets[2].hidden = !warningEnabled || upperLimit.length === 0;
-        chart.data.datasets[3].hidden = !warningEnabled || lowerLimit.length === 0;
+        chart.data.datasets[2].hidden = upperLimit.length === 0;
+        chart.data.datasets[3].hidden = lowerLimit.length === 0;
     } else {
-        if (!warningEnabled) {
-            console.log(`[상한선/하한선] ${col} - 경고팝업이 OFF입니다.`);
-        } else if (!limits) {
+        if (!limits) {
             console.warn(`[상한선/하한선] ${col} - limits가 로드되지 않았습니다.`);
         } else if (!limits[col]) {
             // limits.yaml에 없는 파라미터는 경고 없이 넘어감
@@ -869,7 +912,7 @@ function updateCharts(col, data) {
         chart.data.datasets[3].hidden = true;
     }
 
-    // Interlock 상한선/하한선 표시 (빨간색)
+    // Interlock 상한선/하한선 표시 (빨간색) - 예측 모드든 아니든 항상 표시
     if (warningEnabled && interlockLimits && interlockLimits[col]) {
         const interlockUpperLimit = [];
         const interlockLowerLimit = [];
@@ -950,7 +993,23 @@ function updateCharts(col, data) {
         chart.options.scales.y.min = min - pad;
     }
 
+    // visibilityMode에 따라 표시 (예측 모드든 아니든 동일하게 처리)
     setDatasetVisibility(chart, visibilityMode);
+
+    // 실제값이 예측값 위에 오도록 데이터셋 순서 재정렬
+    // Chart.js에서는 배열의 뒤에 있는 데이터셋이 위에 그려지므로, 실제값을 배열의 끝으로 이동
+    const datasets = chart.data.datasets;
+    const predictedIdx = datasets.findIndex(ds => ds.label === '예측값');
+    const actualIdx = datasets.findIndex(ds => ds.label === '실제값');
+    if (predictedIdx >= 0 && actualIdx >= 0 && actualIdx < predictedIdx) {
+        // 실제값을 배열의 끝으로 이동 (예측값 뒤로)
+        const actualDataset = datasets.splice(actualIdx, 1)[0];
+        // 예측값 뒤에 삽입
+        const insertIdx = predictedIdx > actualIdx ? predictedIdx : predictedIdx + 1;
+        datasets.splice(insertIdx, 0, actualDataset);
+    } else if (predictedIdx >= 0 && actualIdx >= 0 && actualIdx > predictedIdx) {
+        // 이미 실제값이 예측값 뒤에 있으면 그대로 유지
+    }
 
     // 상한선/하한선이 추가되었는지 확인
     if (chart.data.datasets.length >= 4) {
@@ -1005,11 +1064,77 @@ function renderModalChart(param, kind, showModal) {
     fallbackCanvas.style.display = canUseEcharts ? 'none' : 'block';
     if (showModal) modal.style.display = 'flex';
 
+    // 경고팝업토글 ON시 상한선/하한선 데이터 생성
+    const allData = (datasets.find(ds => ds.label === '실제값')?.data || []).concat(
+        datasets.find(ds => ds.label === '예측값')?.data || []
+    );
+    let timePoints = [];
+    if (allData.length > 0) {
+        timePoints = allData.map(d => d.x);
+    } else {
+        const now = Date.now();
+        const timeRangeMs = selectedTimeRange * 60 * 1000;
+        const startTime = now - timeRangeMs;
+        timePoints = [new Date(startTime), new Date(now)];
+    }
+
+    // 상한선/하한선 데이터 생성
+    let upperLimitData = [];
+    let lowerLimitData = [];
+    let interlockUpperLimitData = [];
+    let interlockLowerLimitData = [];
+
+    // limits.yaml의 상한선/하한선 데이터 생성 (예측 모드든 아니든 항상 표시)
+    if (limits && limits[param]) {
+        const colLimits = limits[param];
+        let currentStep = 'all';
+        if (allData.length > 0 && allData[allData.length - 1].step_id !== undefined) {
+            currentStep = allData[allData.length - 1].step_id?.toString() || 'all';
+        }
+        let limit = colLimits[currentStep];
+        if (!limit || Object.keys(limit).length === 0 || (limit.max === undefined && limit.min === undefined)) {
+            limit = colLimits['all'];
+        }
+        if (limit && (limit.max !== undefined || limit.min !== undefined)) {
+            timePoints.forEach(x => {
+                if (limit.max !== undefined && limit.max !== null) {
+                    upperLimitData.push({ x: x, y: limit.max });
+                }
+                if (limit.min !== undefined && limit.min !== null) {
+                    lowerLimitData.push({ x: x, y: limit.min });
+                }
+            });
+        }
+    }
+
+    // Interlock 상한선/하한선 데이터 생성 (예측 모드든 아니든 항상 표시)
+    if (warningEnabled && interlockLimits && interlockLimits[param]) {
+        const interlockLimit = interlockLimits[param]['all'];
+        if (interlockLimit && (interlockLimit.max !== undefined || interlockLimit.min !== undefined)) {
+            timePoints.forEach(x => {
+                if (interlockLimit.max !== undefined && interlockLimit.max !== null) {
+                    interlockUpperLimitData.push({ x: x, y: interlockLimit.max });
+                }
+                if (interlockLimit.min !== undefined && interlockLimit.min !== null) {
+                    interlockLowerLimitData.push({ x: x, y: interlockLimit.min });
+                }
+            });
+        }
+    }
+
     if (canUseEcharts) {
         if (!modalChart) {
             modalChart = echarts.init(container);
         }
-        const series = datasets.map((ds, idx) => {
+        // 실제값이 예측값 위에 오도록 순서 조정 (실제값을 나중에 추가)
+        const predictedDatasets = datasets.filter(ds => ds.label === '예측값');
+        const actualDatasets = datasets.filter(ds => ds.label === '실제값');
+        const otherDatasets = datasets.filter(ds => ds.label !== '예측값' && ds.label !== '실제값');
+
+        // 순서: 다른 데이터셋 -> 예측값 -> 실제값 (실제값이 마지막에 그려져 위에 표시됨)
+        const orderedDatasets = [...otherDatasets, ...predictedDatasets, ...actualDatasets];
+
+        const series = orderedDatasets.map((ds, idx) => {
             const data = (ds.data || []).map(p => [+new Date(p.x), p.y]);
             const serie = {
                 name: ds.label || `series ${idx + 1}`,
@@ -1017,8 +1142,10 @@ function renderModalChart(param, kind, showModal) {
                 showSymbol: false,
                 smooth: true,
                 data,
-                lineStyle: { width: ds.borderWidth || 2, color: ds.borderColor || undefined }
+                lineStyle: { width: ds.borderWidth || 2, color: ds.borderColor || undefined },
+                z: ds.label === '실제값' ? 10 : (ds.label === '예측값' ? 5 : 0) // 실제값이 가장 높은 z값
             };
+            // 첫 번째 시리즈에 markArea 추가
             if (idx === 0 && regions.length) {
                 serie.markArea = {
                     itemStyle: { color: 'rgba(255,0,0,0.08)' },
@@ -1027,6 +1154,55 @@ function renderModalChart(param, kind, showModal) {
             }
             return serie;
         });
+
+        // 상한선 추가 (초록색, 점선) - 예측 모드든 아니든 항상 표시
+        if (upperLimitData.length > 0) {
+            series.push({
+                name: '상한선',
+                type: 'line',
+                showSymbol: false,
+                data: upperLimitData.map(p => [+new Date(p.x), p.y]),
+                lineStyle: { color: 'green', width: 2, type: 'dashed' },
+                symbol: 'none'
+            });
+        }
+
+        // 하한선 추가 (주황색, 점선) - 예측 모드든 아니든 항상 표시
+        if (lowerLimitData.length > 0) {
+            series.push({
+                name: '하한선',
+                type: 'line',
+                showSymbol: false,
+                data: lowerLimitData.map(p => [+new Date(p.x), p.y]),
+                lineStyle: { color: 'orange', width: 2, type: 'dashed' },
+                symbol: 'none'
+            });
+        }
+
+        // Interlock 상한선 추가 (빨간색, 점선) - 예측 모드든 아니든 항상 표시
+        if (warningEnabled && interlockUpperLimitData.length > 0) {
+            series.push({
+                name: 'Interlock 상한선',
+                type: 'line',
+                showSymbol: false,
+                data: interlockUpperLimitData.map(p => [+new Date(p.x), p.y]),
+                lineStyle: { color: 'red', width: 2, type: 'dashed' },
+                symbol: 'none'
+            });
+        }
+
+        // Interlock 하한선 추가 (빨간색, 점선) - 예측 모드든 아니든 항상 표시
+        if (warningEnabled && interlockLowerLimitData.length > 0) {
+            series.push({
+                name: 'Interlock 하한선',
+                type: 'line',
+                showSymbol: false,
+                data: interlockLowerLimitData.map(p => [+new Date(p.x), p.y]),
+                lineStyle: { color: 'red', width: 2, type: 'dashed' },
+                symbol: 'none'
+            });
+        }
+
         const option = {
             tooltip: { trigger: 'axis' },
             legend: { show: false },
@@ -1055,6 +1231,73 @@ function renderModalChart(param, kind, showModal) {
         modalChart.on('restore', () => { modalFrozen = false; renderModalChart(param, kind, false); });
         setTimeout(() => modalChart?.resize(), 0);
     } else {
+        // Chart.js fallback의 경우 상/하한선 데이터셋 추가 - 예측 모드든 아니든 항상 표시
+        if (upperLimitData.length > 0) {
+            datasets.push({
+                label: '상한선',
+                borderColor: 'green',
+                borderDash: [5, 5],
+                borderWidth: 2,
+                pointRadius: 0,
+                data: upperLimitData,
+                hidden: false,
+                order: -1
+            });
+        }
+        if (lowerLimitData.length > 0) {
+            datasets.push({
+                label: '하한선',
+                borderColor: 'orange',
+                borderDash: [5, 5],
+                borderWidth: 2,
+                pointRadius: 0,
+                data: lowerLimitData,
+                hidden: false,
+                order: -1
+            });
+        }
+        if (warningEnabled && interlockUpperLimitData.length > 0) {
+            datasets.push({
+                label: 'Interlock 상한선',
+                borderColor: 'red',
+                borderDash: [3, 3],
+                borderWidth: 2,
+                pointRadius: 0,
+                data: interlockUpperLimitData,
+                hidden: false,
+                order: -1
+            });
+        }
+        if (warningEnabled && interlockLowerLimitData.length > 0) {
+            datasets.push({
+                label: 'Interlock 하한선',
+                borderColor: 'red',
+                borderDash: [3, 3],
+                borderWidth: 2,
+                pointRadius: 0,
+                data: interlockLowerLimitData,
+                hidden: false,
+                order: -1
+            });
+        }
+
+        // 실제값이 예측값 위에 오도록 순서 조정 (실제값을 나중에 추가)
+        const predictedDatasets = datasets.filter(ds => ds.label === '예측값');
+        const actualDatasets = datasets.filter(ds => ds.label === '실제값');
+        const otherDatasets = datasets.filter(ds => ds.label !== '예측값' && ds.label !== '실제값');
+
+        // 순서: 다른 데이터셋 -> 예측값 -> 실제값 (실제값이 마지막에 그려져 위에 표시됨)
+        const orderedDatasets = [...otherDatasets, ...predictedDatasets, ...actualDatasets];
+
+        // 실제값과 예측값에 order 속성 추가
+        orderedDatasets.forEach(ds => {
+            if (ds.label === '실제값') {
+                ds.order = 1;
+            } else if (ds.label === '예측값') {
+                ds.order = 0;
+            }
+        });
+
         const ctx = fallbackCanvas.getContext('2d');
         if (modalChartFallback) {
             modalChartFallback.destroy();
@@ -1062,7 +1305,7 @@ function renderModalChart(param, kind, showModal) {
         }
         modalChartFallback = new Chart(ctx, {
             type: 'line',
-            data: { datasets },
+            data: { datasets: orderedDatasets },
             options: {
                 animation: false,
                 responsive: true,
@@ -1082,7 +1325,7 @@ function renderModalChart(param, kind, showModal) {
                 }
             }
         });
-        // 확대 차트도 visibilityMode에 따라 연동
+        // 확대 차트도 visibilityMode에 따라 연동 (예측 모드든 아니든 동일하게 처리)
         if (modalChartFallback) {
             setDatasetVisibility(modalChartFallback, visibilityMode);
             modalChartFallback.update();
@@ -2097,6 +2340,8 @@ async function drawReportChart(entry, canvas, timeWindow) {
     const startIso = new Date(startMs).toISOString();
     const endIso = new Date(endMs).toISOString();
 
+    console.log('Report chart - 시간 범위:', { startIso, endIso, center: new Date(center).toISOString(), windowMs, isPredictionLog: entry.isPredictionLog });
+
     // limits.yaml에서 상한값/하한값 가져오기
     let limits = {};
     try {
@@ -2114,11 +2359,46 @@ async function drawReportChart(entry, canvas, timeWindow) {
         console.error('failed to load limits', err);
     }
 
+    // is_interrupted == 1인 경우 limits2.yaml(interlock limits)도 로드
+    let interlockLimits = {};
+    if (entry.is_interrupted === 1) {
+        try {
+            const interlockRes = await fetch('/api/interlock_limits');
+            if (interlockRes.ok) {
+                const interlockData = await interlockRes.json();
+                interlockLimits = interlockData.limits || interlockData || {};
+                console.log('Loaded interlock limits, total keys:', Object.keys(interlockLimits).length);
+            } else {
+                console.error('Failed to load interlock limits, status:', interlockRes.status);
+            }
+        } catch (err) {
+            console.error('failed to load interlock limits', err);
+        }
+    }
+
+    // step_id 추출: 예측 로그의 경우 실제 step_id 사용, 없으면 기본값 30
+    let stepValue = 30; // 기본값
+    if (entry.step_id) {
+        if (Array.isArray(entry.step_id) && entry.step_id.length > 0) {
+            stepValue = parseInt(entry.step_id[0]) || 30;
+        } else if (typeof entry.step_id === 'number') {
+            stepValue = entry.step_id;
+        } else if (typeof entry.step_id === 'string') {
+            stepValue = parseInt(entry.step_id) || 30;
+        }
+    }
+    console.log('Report chart - 사용할 step 값:', stepValue, 'entry.step_id:', entry.step_id);
+
     let payload;
     try {
-        const res = await fetch(`/api/event_chart?param=${encodeURIComponent(entry.param)}&start=${encodeURIComponent(startIso)}&end=${encodeURIComponent(endIso)}`);
+        const res = await fetch(`/api/event_chart?param=${encodeURIComponent(entry.param)}&start=${encodeURIComponent(startIso)}&end=${encodeURIComponent(endIso)}&step=${stepValue}`);
         if (!res.ok) throw new Error('bad response');
         payload = await res.json();
+        console.log('Report chart - API 응답:', {
+            actualCount: payload?.actual?.length || 0,
+            predictedCount: payload?.predicted?.length || 0,
+            stepUsed: stepValue
+        });
     } catch (err) {
         console.error('failed to load report chart', err);
         replaceCanvasWithMessage(canvas, '차트 데이터를 불러오지 못했습니다.');
@@ -2135,12 +2415,17 @@ async function drawReportChart(entry, canvas, timeWindow) {
     }).filter(Boolean);
 
     const actual = mapPoints(payload?.actual);
+    // 예측값은 서버에서 이미 30초 더 늘린 범위로 가져왔으므로 타임스탬프 조작 없이 그대로 사용
     const predicted = mapPoints(payload?.predicted);
+    console.log('Report chart - payload:', payload);
+    console.log('Report chart - actual points:', actual.length, 'predicted points:', predicted.length);
+    console.log('Report chart - predicted data sample:', predicted.slice(0, 3));
+    console.log('Report chart - entry.isPredictionLog:', entry.isPredictionLog, 'predictionEnabled:', predictionEnabled);
     const regions = [];
     if (entry.start && entry.end) {
         regions.push({ start: entry.start, end: entry.end });
     }
-    if (!actual.length) {
+    if (!actual.length && !predicted.length) {
         replaceCanvasWithMessage(canvas, '해당 구간 데이터가 없습니다.');
         return;
     }
@@ -2226,75 +2511,207 @@ async function drawReportChart(entry, canvas, timeWindow) {
     console.log('=== Limits Debug End ===');
     console.log('Final UCU:', ucu, 'LCL:', lcl);
 
-    // 실제값만 사용하여 Y축 범위 계산
-    const values = actual.map(d => d.y);
-    const yMax = values.length ? Math.max(...values) : undefined;
-    const yMin = values.length ? Math.min(...values) : undefined;
+    // is_interrupted == 1인 경우 limits2.yaml(interlock limits)의 상한값/하한값도 가져오기
+    let interlockUcu = null;
+    let interlockLcl = null;
+    if (entry.is_interrupted === 1 && interlockLimits && Object.keys(interlockLimits).length > 0) {
+        let interlockParamLimits = interlockLimits[entry.param];
+        console.log('Interlock paramLimits for', entry.param, ':', interlockParamLimits ? 'FOUND' : 'NOT FOUND');
 
-    // 상한값/하한값이 있으면 Y축 범위에 포함
+        if (!interlockParamLimits) {
+            // 정확한 매칭이 안 되면 모든 키를 확인
+            const interlockKeys = Object.keys(interlockLimits);
+            for (const key of interlockKeys) {
+                if (key === entry.param) {
+                    interlockParamLimits = interlockLimits[key];
+                    console.log('Found exact interlock match:', key);
+                    break;
+                }
+            }
+            // 여전히 못 찾았으면 유사한 것 찾기
+            if (!interlockParamLimits) {
+                for (const key of interlockKeys) {
+                    const normalizedKey = key.replace(/[._-]/g, '');
+                    const normalizedParam = entry.param.replace(/[._-]/g, '');
+                    if (normalizedKey === normalizedParam) {
+                        interlockParamLimits = interlockLimits[key];
+                        console.log('Found normalized interlock match:', key, 'for param:', entry.param);
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (interlockParamLimits) {
+            const interlockStepLimits = interlockParamLimits['all'];
+            if (interlockStepLimits) {
+                interlockUcu = interlockStepLimits.max;
+                interlockLcl = interlockStepLimits.min;
+                console.log('Extracted Interlock UCU:', interlockUcu, 'Interlock LCL:', interlockLcl);
+            }
+        }
+    }
+
+    // 실제값과 예측값을 모두 사용하여 Y축 범위 계산
+    const allValues = [...actual, ...predicted].map(d => d.y).filter(v => v !== null && v !== undefined && Number.isFinite(v));
+    const yMax = allValues.length > 0 ? Math.max(...allValues) : undefined;
+    const yMin = allValues.length > 0 ? Math.min(...allValues) : undefined;
+
+    // Y축 범위 계산: 예측 토글 ON일 때는 로그 유형에 따라 다르게 처리
     let finalYMax = yMax;
     let finalYMin = yMin;
-    if (ucu !== null && ucu !== undefined && Number.isFinite(Number(ucu))) {
-        finalYMax = finalYMax !== undefined ? Math.max(finalYMax, Number(ucu)) : Number(ucu);
-    }
-    if (lcl !== null && lcl !== undefined && Number.isFinite(Number(lcl))) {
-        finalYMin = finalYMin !== undefined ? Math.min(finalYMin, Number(lcl)) : Number(lcl);
+    // 예측 토글 OFF이거나, 예측 토글 ON이지만 예측 로그가 아닌 경우 상/하한값 포함
+    if (!predictionEnabled || (predictionEnabled && !entry.isPredictionLog)) {
+        if (ucu !== null && ucu !== undefined && Number.isFinite(Number(ucu))) {
+            finalYMax = finalYMax !== undefined ? Math.max(finalYMax, Number(ucu)) : Number(ucu);
+        }
+        if (lcl !== null && lcl !== undefined && Number.isFinite(Number(lcl))) {
+            finalYMin = finalYMin !== undefined ? Math.min(finalYMin, Number(lcl)) : Number(lcl);
+        }
+        // interlock 상한값/하한값도 Y축 범위에 포함
+        if (interlockUcu !== null && interlockUcu !== undefined && Number.isFinite(Number(interlockUcu))) {
+            finalYMax = finalYMax !== undefined ? Math.max(finalYMax, Number(interlockUcu)) : Number(interlockUcu);
+        }
+        if (interlockLcl !== null && interlockLcl !== undefined && Number.isFinite(Number(interlockLcl))) {
+            finalYMin = finalYMin !== undefined ? Math.min(finalYMin, Number(interlockLcl)) : Number(interlockLcl);
+        }
     }
 
     // 상한선/하한선 데이터 생성
-    const datasets = [
-        { label: '실제값', borderColor: 'blue', tension: 0.25, borderWidth: 3, pointRadius: 0, data: actual, hidden: false }
-    ];
+    const datasets = [];
 
-    // 상한선(UCU) - 초록색 (차트 전체에 표시)
-    if (ucu !== null && ucu !== undefined && Number.isFinite(Number(ucu))) {
-        const ucuValue = Number(ucu);
-        // 차트 전체 시간 범위에 상한선 표시
-        const chartStart = parseTimestamp(startIso);
-        const chartEnd = parseTimestamp(endIso);
-        const ucuLine = [
-            { x: chartStart, y: ucuValue },
-            { x: chartEnd, y: ucuValue }
-        ];
-        datasets.push({
-            label: 'UCU (상한값)',
-            borderColor: 'green',
-            borderWidth: 2,
-            borderDash: [5, 5],
-            pointRadius: 0,
-            data: ucuLine,
-            tension: 0
-        });
-        console.log('Added UCU line with value:', ucuValue, 'points:', ucuLine.length);
+    // 예측 토글 ON일 때는 로그 유형에 따라 다르게 표시
+    // entry.isPredictionLog는 normalizeLogEntry에서 설정되며, boolean 값이어야 함
+    const isPredictionLogEntry = entry.isPredictionLog === true;
+    console.log('Report chart - entry 객체:', entry);
+    console.log('Report chart - isPredictionLogEntry:', isPredictionLogEntry, 'predictionEnabled:', predictionEnabled);
+    console.log('Report chart - entry.isPredictionLog 타입:', typeof entry.isPredictionLog, '값:', entry.isPredictionLog);
+
+    if (predictionEnabled && isPredictionLogEntry) {
+        // 예측 로그(회색 아이콘): 실제값 + 예측값 표시
+        console.log('Report chart - 예측 로그 모드: 실제값 + 예측값 표시');
+        // 실제값 추가
+        if (actual && actual.length > 0) {
+            datasets.push({ label: '실제값', borderColor: 'blue', tension: 0.25, borderWidth: 3, pointRadius: 0, data: actual, hidden: false, order: 1 });
+            console.log('Report chart - 실제값 데이터셋 추가:', actual.length, 'points');
+        }
+        // 예측값 추가 - 데이터가 있든 없든 항상 추가 (hidden 속성으로 제어하지 않음)
+        if (predicted && predicted.length > 0) {
+            datasets.push({ label: '예측값', borderColor: 'red', tension: 0.25, borderWidth: 3, pointRadius: 0, data: predicted, hidden: false, order: 0 });
+            console.log('Report chart - 예측값 데이터셋 추가:', predicted.length, 'points');
+        } else {
+            console.warn('Report chart - 예측값 데이터가 없습니다. predicted:', predicted, 'predicted.length:', predicted?.length);
+            // 예측 데이터가 없어도 빈 데이터셋으로 추가하여 차트에 표시되도록 함
+            datasets.push({ label: '예측값', borderColor: 'red', tension: 0.25, borderWidth: 3, pointRadius: 0, data: [], hidden: false, order: 0 });
+            console.log('Report chart - 예측값 빈 데이터셋 추가 (데이터 없음)');
+        }
     } else {
-        console.warn('UCU not added - value:', ucu, 'isFinite:', ucu !== null && ucu !== undefined ? Number.isFinite(Number(ucu)) : false);
+        // 기존 로그 또는 예측 토글 OFF: 실제값만 표시
+        console.log('Report chart - 기존 로그 모드: 실제값만 표시');
+        // 실제값 추가
+        if (actual && actual.length > 0) {
+            datasets.push({ label: '실제값', borderColor: 'blue', tension: 0.25, borderWidth: 3, pointRadius: 0, data: actual, hidden: false, order: 1 });
+        }
+        // 예측값은 표시하지 않음 (기존 로그이므로)
     }
 
-    // 하한선(LCL) - 주황색 (차트 전체에 표시)
-    if (lcl !== null && lcl !== undefined && Number.isFinite(Number(lcl))) {
-        const lclValue = Number(lcl);
-        // 차트 전체 시간 범위에 하한선 표시
-        const chartStart = parseTimestamp(startIso);
-        const chartEnd = parseTimestamp(endIso);
-        const lclLine = [
-            { x: chartStart, y: lclValue },
-            { x: chartEnd, y: lclValue }
-        ];
-        datasets.push({
-            label: 'LCL (하한값)',
-            borderColor: 'orange',
-            borderWidth: 2,
-            borderDash: [5, 5],
-            pointRadius: 0,
-            data: lclLine,
-            tension: 0
-        });
-        console.log('Added LCL line with value:', lclValue, 'points:', lclLine.length);
-    } else {
-        console.warn('LCL not added - value:', lcl, 'isFinite:', lcl !== null && lcl !== undefined ? Number.isFinite(Number(lcl)) : false);
+    // 상/하한선 표시: 예측 토글 OFF이거나, 예측 토글 ON이지만 예측 로그가 아닌 경우
+    if (!predictionEnabled || (predictionEnabled && !entry.isPredictionLog)) {
+        // 상한선(UCU) - 초록색 (차트 전체에 표시)
+        if (ucu !== null && ucu !== undefined && Number.isFinite(Number(ucu))) {
+            const ucuValue = Number(ucu);
+            // 차트 전체 시간 범위에 상한선 표시
+            const chartStart = parseTimestamp(startIso);
+            const chartEnd = parseTimestamp(endIso);
+            const ucuLine = [
+                { x: chartStart, y: ucuValue },
+                { x: chartEnd, y: ucuValue }
+            ];
+            datasets.push({
+                label: 'UCU (상한값)',
+                borderColor: 'green',
+                borderWidth: 2,
+                borderDash: [5, 5],
+                pointRadius: 0,
+                data: ucuLine,
+                tension: 0
+            });
+            console.log('Added UCU line with value:', ucuValue, 'points:', ucuLine.length);
+        } else {
+            console.warn('UCU not added - value:', ucu, 'isFinite:', ucu !== null && ucu !== undefined ? Number.isFinite(Number(ucu)) : false);
+        }
+
+        // 하한선(LCL) - 주황색 (차트 전체에 표시)
+        if (lcl !== null && lcl !== undefined && Number.isFinite(Number(lcl))) {
+            const lclValue = Number(lcl);
+            // 차트 전체 시간 범위에 하한선 표시
+            const chartStart = parseTimestamp(startIso);
+            const chartEnd = parseTimestamp(endIso);
+            const lclLine = [
+                { x: chartStart, y: lclValue },
+                { x: chartEnd, y: lclValue }
+            ];
+            datasets.push({
+                label: 'LCL (하한값)',
+                borderColor: 'orange',
+                borderWidth: 2,
+                borderDash: [5, 5],
+                pointRadius: 0,
+                data: lclLine,
+                tension: 0
+            });
+            console.log('Added LCL line with value:', lclValue, 'points:', lclLine.length);
+        } else {
+            console.warn('LCL not added - value:', lcl, 'isFinite:', lcl !== null && lcl !== undefined ? Number.isFinite(Number(lcl)) : false);
+        }
+
+        // is_interrupted == 1인 경우 Interlock 상한선/하한선 추가 (빨간색)
+        if (entry.is_interrupted === 1) {
+            const chartStart = parseTimestamp(startIso);
+            const chartEnd = parseTimestamp(endIso);
+
+            // Interlock 상한선 - 빨간색
+            if (interlockUcu !== null && interlockUcu !== undefined && Number.isFinite(Number(interlockUcu))) {
+                const interlockUcuValue = Number(interlockUcu);
+                const interlockUcuLine = [
+                    { x: chartStart, y: interlockUcuValue },
+                    { x: chartEnd, y: interlockUcuValue }
+                ];
+                datasets.push({
+                    label: 'Interlock 상한선',
+                    borderColor: 'red',
+                    borderWidth: 2,
+                    borderDash: [3, 3],
+                    pointRadius: 0,
+                    data: interlockUcuLine,
+                    tension: 0
+                });
+                console.log('Added Interlock UCU line with value:', interlockUcuValue);
+            }
+
+            // Interlock 하한선 - 빨간색
+            if (interlockLcl !== null && interlockLcl !== undefined && Number.isFinite(Number(interlockLcl))) {
+                const interlockLclValue = Number(interlockLcl);
+                const interlockLclLine = [
+                    { x: chartStart, y: interlockLclValue },
+                    { x: chartEnd, y: interlockLclValue }
+                ];
+                datasets.push({
+                    label: 'Interlock 하한선',
+                    borderColor: 'red',
+                    borderWidth: 2,
+                    borderDash: [3, 3],
+                    pointRadius: 0,
+                    data: interlockLclLine,
+                    tension: 0
+                });
+                console.log('Added Interlock LCL line with value:', interlockLclValue);
+            }
+        }
     }
 
     console.log('Total datasets to render:', datasets.length, 'datasets:', datasets.map(d => d.label));
+    console.log('Dataset details:', datasets.map(d => ({ label: d.label, dataLength: d.data ? d.data.length : 0, hidden: d.hidden })));
 
     reportChart = new Chart(ctx, {
         type: 'line',
@@ -2350,6 +2767,7 @@ async function renderMfcCauseTab(entry) {
     if (!body) return;
     console.log('renderMfcCauseTab - entry:', entry);
     console.log('renderMfcCauseTab - entry.violation_type:', entry?.violation_type, '타입:', typeof entry?.violation_type);
+    console.log('renderMfcCauseTab - entry.isPredictionLog:', entry?.isPredictionLog, 'predictionEnabled:', predictionEnabled);
     const vt = Number(entry?.violation_type) || 0;
     console.log('renderMfcCauseTab - 변환된 vt:', vt);
     const headline = buildCauseHeadline(entry);
@@ -3384,18 +3802,171 @@ function closeReportModal() {
 
 async function fetchAbnormalLogs() {
     try {
-        const res = await fetch('/api/anomaly_logs');
-        if (!res.ok) {
-            const errorText = await res.text();
-            console.error('failed to fetch abnormal logs - bad response:', res.status, res.statusText, errorText);
-            throw new Error(`bad response: ${res.status} ${res.statusText}`);
+        // 예측 모드일 때는 두 로그를 모두 가져오기
+        if (predictionEnabled) {
+            // 예측 모드: anomaly_logs와 prediction_logs 모두 가져오기
+            const [anomalyRes, predictionRes] = await Promise.all([
+                fetch('/api/anomaly_logs').catch(() => null),
+                fetch('/api/prediction_logs').catch(() => null)
+            ]);
+
+            let anomalyData = [];
+            let predictionData = [];
+
+            if (anomalyRes && anomalyRes.ok) {
+                anomalyData = await anomalyRes.json();
+            }
+            if (predictionRes && predictionRes.ok) {
+                predictionData = await predictionRes.json();
+            }
+
+            // prediction_logs에 isPredictionLog 플래그 추가
+            predictionData = predictionData.map(item => ({ ...item, isPredictionLog: true }));
+
+            // 두 로그를 합치기
+            const combinedData = [...anomalyData, ...predictionData];
+            console.log('fetchAbnormalLogs - received data:', anomalyData?.length || 0, 'anomaly items,', predictionData?.length || 0, 'prediction items');
+            setServerLogs(Array.isArray(combinedData) ? combinedData : []);
+        } else {
+            // 일반 모드: anomaly_logs만 가져오기
+            const res = await fetch('/api/anomaly_logs');
+            if (!res.ok) {
+                const errorText = await res.text();
+                console.error('failed to fetch abnormal logs - bad response:', res.status, res.statusText, errorText);
+                throw new Error(`bad response: ${res.status} ${res.statusText}`);
+            }
+            const data = await res.json();
+            console.log('fetchAbnormalLogs - received data:', data?.length || 0, 'items');
+            setServerLogs(Array.isArray(data) ? data : []);
         }
-        const data = await res.json();
-        console.log('fetchAbnormalLogs - received data:', data?.length || 0, 'items');
-        setServerLogs(Array.isArray(data) ? data : []);
     } catch (e) {
         console.error('failed to fetch abnormal logs', e);
     }
+}
+
+function applyPredictionMode() {
+    // 이상감지 설정, Interock 설정 버튼은 항상 표시
+    // 예측 모드와 관계없이 버튼은 유지
+
+    // 예측 모드일 때만 표시되는 선택 드롭다운 표시/숨김
+    const predictionVisibilitySelector = document.getElementById('prediction-visibility-selector');
+    const modalPredictionVisibilitySelector = document.getElementById('modal-prediction-visibility-selector');
+    if (predictionVisibilitySelector) {
+        predictionVisibilitySelector.style.display = predictionEnabled ? 'inline-flex' : 'none';
+    }
+    if (modalPredictionVisibilitySelector) {
+        modalPredictionVisibilitySelector.style.display = predictionEnabled ? 'inline-flex' : 'none';
+    }
+
+    // 예측 모드에 따라 visibilityMode 설정
+    if (predictionEnabled) {
+        visibilityMode = 'both'; // 예측 토글 ON일 때는 실제값+예측값이 디폴트
+    } else {
+        visibilityMode = 'actual'; // 예측 토글 OFF일 때는 무조건 실제값만
+    }
+    updateVisibilitySelectors();
+    applyVisibilityAll();
+
+    // 로그 타이틀 변경
+    const logLabel = document.querySelector('#log-panel label');
+    if (logLabel) {
+        logLabel.textContent = predictionEnabled ? '예측 이상감지 로그' : '공정 파라미터 이상 감지 로그';
+    }
+
+    // 차트 업데이트 (상/하한선 표시 여부 변경)
+    Object.keys(mainCharts).forEach(col => {
+        const chart = mainCharts[col];
+        if (!chart) return;
+
+        // 예측 모드든 아니든 상/하한선 표시 로직은 동일
+        // visibilityMode에 따라 실제값/예측값 표시
+        setDatasetVisibility(chart, visibilityMode);
+
+        const actual = chart.data.datasets[1].data || [];
+        const predicted = chart.data.datasets[0].data || [];
+        const allData = actual.concat(predicted);
+
+        let timePoints = [];
+        if (allData.length > 0) {
+            timePoints = allData.map(d => d.x);
+        } else {
+            const now = Date.now();
+            const timeRangeMs = selectedTimeRange * 60 * 1000;
+            const startTime = now - timeRangeMs;
+            timePoints = [new Date(startTime), new Date(now)];
+        }
+
+        let currentStep = 'all';
+        if (actual.length > 0 && actual[actual.length - 1].step_id !== undefined) {
+            currentStep = actual[actual.length - 1].step_id?.toString() || 'all';
+        } else if (predicted.length > 0 && predicted[predicted.length - 1].step_id !== undefined) {
+            currentStep = predicted[predicted.length - 1].step_id?.toString() || 'all';
+        }
+
+        // limits 상한선/하한선
+        if (limits && limits[col]) {
+            const limit = limits[col][currentStep] || limits[col]['all'];
+            const upperLimit = [];
+            const lowerLimit = [];
+            if (limit && (limit.max !== undefined || limit.min !== undefined)) {
+                timePoints.forEach(x => {
+                    if (limit.max !== undefined && limit.max !== null) {
+                        upperLimit.push({ x: x, y: limit.max });
+                    }
+                    if (limit.min !== undefined && limit.min !== null) {
+                        lowerLimit.push({ x: x, y: limit.min });
+                    }
+                });
+            }
+            chart.data.datasets[2].data = upperLimit;
+            chart.data.datasets[3].data = lowerLimit;
+            chart.data.datasets[2].hidden = upperLimit.length === 0;
+            chart.data.datasets[3].hidden = lowerLimit.length === 0;
+        } else {
+            chart.data.datasets[2].data = [];
+            chart.data.datasets[3].data = [];
+            chart.data.datasets[2].hidden = true;
+            chart.data.datasets[3].hidden = true;
+        }
+
+        // Interlock 상한선/하한선
+        if (warningEnabled && interlockLimits && interlockLimits[col]) {
+            const interlockLimit = interlockLimits[col]['all'];
+            const interlockUpperLimit = [];
+            const interlockLowerLimit = [];
+            if (interlockLimit && (interlockLimit.max !== undefined || interlockLimit.min !== undefined)) {
+                timePoints.forEach(x => {
+                    if (interlockLimit.max !== undefined && interlockLimit.max !== null) {
+                        interlockUpperLimit.push({ x: x, y: interlockLimit.max });
+                    }
+                    if (interlockLimit.min !== undefined && interlockLimit.min !== null) {
+                        interlockLowerLimit.push({ x: x, y: interlockLimit.min });
+                    }
+                });
+            }
+            chart.data.datasets[4].data = interlockUpperLimit;
+            chart.data.datasets[5].data = interlockLowerLimit;
+            chart.data.datasets[4].hidden = !warningEnabled || interlockUpperLimit.length === 0;
+            chart.data.datasets[5].hidden = !warningEnabled || interlockLowerLimit.length === 0;
+        } else {
+            chart.data.datasets[4].data = [];
+            chart.data.datasets[5].data = [];
+            chart.data.datasets[4].hidden = true;
+            chart.data.datasets[5].hidden = true;
+        }
+        chart.update();
+    });
+
+    // 모달 차트도 업데이트
+    if (modalInfo && modalInfo.param) {
+        renderModalChart(modalInfo.param, modalInfo.kind, false);
+    }
+
+    // 로그 다시 가져오기
+    fetchAbnormalLogs();
+
+    // 선택 드롭다운 상태 업데이트
+    updateVisibilitySelectors();
 }
 
 async function fetchData() {
@@ -3439,7 +4010,7 @@ async function fetchData() {
     // 모든 차트 데이터를 가져온 후 업데이트
     const chartPromises = columns.map(async col => {
         try {
-            const res = await fetch(`/api/event_chart?param=${encodeURIComponent(col)}&start=${encodeURIComponent(startIso)}&end=${encodeURIComponent(nowIso)}`);
+            const res = await fetch(`/api/event_chart?param=${encodeURIComponent(col)}&start=${encodeURIComponent(startIso)}&end=${encodeURIComponent(nowIso)}&step=30`);
             const json = await res.json();
             updateCharts(col, json);
         } catch (e) {
@@ -3872,6 +4443,52 @@ window.addEventListener('DOMContentLoaded', () => {
         tab.addEventListener('click', () => setActiveReportTab(tab.dataset.tab));
     });
 
+    // 예측 토글 초기화 및 이벤트 핸들러
+    const predictionToggle = document.getElementById('prediction-toggle');
+    if (predictionToggle) {
+        predictionToggle.checked = predictionEnabled;
+        predictionToggle.addEventListener('change', () => {
+            predictionEnabled = predictionToggle.checked;
+            // 예측 모드가 켜져있을 때만 localStorage에 저장 (OFF일 때는 저장하지 않음)
+            if (predictionEnabled) {
+                localStorage.setItem(predictionToggleKey, String(predictionEnabled));
+            } else {
+                localStorage.removeItem(predictionToggleKey);
+            }
+            applyPredictionMode();
+            updateVisibilitySelectors();
+        });
+        // 초기 적용
+        applyPredictionMode();
+    }
+
+    // 예측 모드 가시성 선택 드롭다운 이벤트 핸들러
+    function setupVisibilitySelectors() {
+        const mainSelect = document.getElementById('prediction-visibility-select');
+        const modalSelect = document.getElementById('modal-prediction-visibility-select');
+
+        function handleVisibilityChange() {
+            visibilityMode = this.value;
+            applyVisibilityAll();
+            updateVisibilitySelectors();
+            // 모달이 열려있으면 모달 차트도 업데이트
+            if (modalInfo && modalInfo.param) {
+                renderModalChart(modalInfo.param, modalInfo.kind, false);
+            }
+        }
+
+        if (mainSelect) {
+            mainSelect.addEventListener('change', handleVisibilityChange);
+        }
+        if (modalSelect) {
+            modalSelect.addEventListener('change', handleVisibilityChange);
+        }
+    }
+    setupVisibilitySelectors();
+
+    // 초기 선택 드롭다운 상태 업데이트
+    updateVisibilitySelectors();
+
     // 경고 팝업 토글
     const warningToggle = document.getElementById('warning-toggle');
     const stored = localStorage.getItem(warningToggleKey);
@@ -3884,11 +4501,11 @@ window.addEventListener('DOMContentLoaded', () => {
             saveWarningSetting();
             if (!warningEnabled && warningModalOpen) closeWarningModal();
             // 경고팝업토글 변경 시 차트 업데이트하여 상한선/하한선 표시 상태 변경
-            // 모든 차트의 상한선/하한선 표시 상태를 즉시 업데이트
+            // limits.yaml의 상한선/하한선은 경고팝업 ON/OFF와 관계없이 항상 표시
             Object.keys(mainCharts).forEach(col => {
                 const chart = mainCharts[col];
                 if (!chart) return;
-                if (warningEnabled && limits && limits[col]) {
+                if (limits && limits[col]) {
                     // limits가 있으면 상한선/하한선 데이터를 다시 계산하여 표시
                     const actual = chart.data.datasets[1].data || [];
                     const predicted = chart.data.datasets[0].data || [];
@@ -3927,10 +4544,10 @@ window.addEventListener('DOMContentLoaded', () => {
 
                     chart.data.datasets[2].data = upperLimit;
                     chart.data.datasets[3].data = lowerLimit;
-                    chart.data.datasets[2].hidden = !warningEnabled || upperLimit.length === 0;
-                    chart.data.datasets[3].hidden = !warningEnabled || lowerLimit.length === 0;
+                    chart.data.datasets[2].hidden = upperLimit.length === 0;
+                    chart.data.datasets[3].hidden = lowerLimit.length === 0;
                 } else {
-                    // limits가 없거나 warningEnabled가 false면 숨김
+                    // limits가 없으면 숨김
                     chart.data.datasets[2].data = [];
                     chart.data.datasets[3].data = [];
                     chart.data.datasets[2].hidden = true;
@@ -3967,7 +4584,15 @@ window.addEventListener('DOMContentLoaded', () => {
 
                 chart.update();
             });
+            // 모달 차트도 업데이트
+            if (modalInfo && modalInfo.param === col && !modalFrozen && !chartHoldEnabled) {
+                renderModalChart(modalInfo.param, modalInfo.kind, false);
+            }
         });
+        // 모든 차트 업데이트 후 모달 차트도 업데이트 (열려있는 경우)
+        if (modalInfo && !modalFrozen && !chartHoldEnabled) {
+            renderModalChart(modalInfo.param, modalInfo.kind, false);
+        }
     }
 
     // 장비 상태 RUN/DOWN 버튼 클릭 이벤트

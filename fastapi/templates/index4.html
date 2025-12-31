@@ -1505,10 +1505,17 @@
             border-radius: 6px;
         }
 
-        .warning-toggle {
+        .warning-toggle,
+        .prediction-toggle {
             display: inline-flex;
             align-items: center;
             gap: 8px;
+        }
+
+        .prediction-visibility-selector,
+        .modal-prediction-visibility-selector {
+            display: inline-flex;
+            align-items: center;
         }
 
         .device-status-wrap {
@@ -1608,12 +1615,12 @@
     <div class="page-surface">
         <h2>실시간 이상감지</h2>
         <div class="step-info">
-            <span>STEP ID: <strong id="current-step-id">-</strong></span>
-            <span>STEP NAME: <strong id="current-step-name">DEPO</strong></span>
-            <button id="open-settings">파라미터별 상/하한 설정</button>
-            <button id="open-interlock-settings">Interlock 상/하한 설정</button>
+            <span>StepID: <strong id="current-step-id">-</strong></span>
+            <span>StepNAME: <strong id="current-step-name">DEPO</strong></span>
+            <button id="open-settings">이상감지 설정</button>
+            <button id="open-interlock-settings">Interlock 설정</button>
             <span class="time-range-selector">
-                <label for="time-range-select" style="margin-right: 8px;">차트 표시 기간:</label>
+                <label for="time-range-select" style="margin-right: 8px;">차트기간:</label>
                 <select id="time-range-select"
                     style="padding: 4px 8px; border: 1px solid #1F4E79; border-radius: 4px; background: #fff; font-size: 14px;">
                     <option value="1">1분</option>
@@ -1630,14 +1637,29 @@
                 </label>
             </span>
             <span class="warning-toggle">
-                경고 팝업
+                경고팝업
                 <label class="switch">
                     <input type="checkbox" id="warning-toggle" checked>
                     <span class="slider"></span>
                 </label>
             </span>
+            <span class="prediction-toggle">
+                예측
+                <label class="switch">
+                    <input type="checkbox" id="prediction-toggle">
+                    <span class="slider"></span>
+                </label>
+            </span>
+            <span class="prediction-visibility-selector" id="prediction-visibility-selector" style="display: none;">
+                <select id="prediction-visibility-select"
+                    style="padding: 4px 8px; border: 1px solid #1F4E79; border-radius: 4px; background: #fff; font-size: 14px;">
+                    <option value="both">실제값+예측값</option>
+                    <option value="actual">실제값만</option>
+                    <option value="predicted">예측값만</option>
+                </select>
+            </span>
             <span class="device-status-wrap">
-                <span>장비 상태</span>
+                <span>장비상태</span>
                 <span class="device-toggle" id="device-toggle">
                     <span class="state run" id="device-state-run">RUN</span>
                     <span class="state down" id="device-state-down">DOWN</span>
@@ -1763,6 +1785,15 @@
                 <div class="modal-header">
                     <div id="modal-title" style="font-weight:bold; font-size:16px;"></div>
                     <div style="display: flex; align-items: center; gap: 12px;">
+                        <span class="modal-prediction-visibility-selector" id="modal-prediction-visibility-selector"
+                            style="display: none;">
+                            <select id="modal-prediction-visibility-select"
+                                style="padding: 4px 8px; border: 1px solid #1F4E79; border-radius: 4px; background: #fff; font-size: 14px;">
+                                <option value="both">실제값+예측값</option>
+                                <option value="actual">실제값만</option>
+                                <option value="predicted">예측값만</option>
+                            </select>
+                        </span>
                         <span class="modal-hold-toggle">
                             <label for="modal-chart-hold-toggle"
                                 style="margin-right: 8px; font-weight: 600;">HOLD</label>

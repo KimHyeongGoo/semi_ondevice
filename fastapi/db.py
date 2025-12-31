@@ -245,7 +245,8 @@ def get_event_chart_data(param, start, end, step=10):
             for ts, val, step_id, step_name in cur.fetchall()
         ]
         if table_name:
-            # 예측값은 실제 Timestamp 기준으로 동일 구간 조회 (오프셋 제거)
+            # 예측값은 실제값보다 30초 더 앞서 표시해야 하므로 끝시간에 30초를 더해서 조회
+            pred_to_ts = to_ts + timedelta(seconds=30)
             cur.execute(
                 f"""
                 SELECT DATE_TRUNC('second', "Timestamp") AS ts, "{param_modified}"
@@ -253,7 +254,7 @@ def get_event_chart_data(param, start, end, step=10):
                 WHERE "PredictStep" = %s AND "Timestamp" >= %s::timestamp AND "Timestamp" <= %s::timestamp
                 ORDER BY ts ASC
                 """,
-                (step, from_ts, to_ts),
+                (step, from_ts, pred_to_ts),
             )
             preds = [{"x": str(ts), "y": val} for ts, val in cur.fetchall()]
         else:

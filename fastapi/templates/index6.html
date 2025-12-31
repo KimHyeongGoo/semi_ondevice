@@ -222,6 +222,137 @@
             border: 1px solid #8b8b8b;
             border-radius: 4px;
             margin-bottom: 4px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .month-display:hover {
+            background: #e4e4e4;
+        }
+
+        .month-picker-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.45);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .month-picker-modal.show {
+            display: flex;
+        }
+
+        .month-picker-content {
+            background: #e5e5e5;
+            border: 2px solid #9a9a9a;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            min-width: 300px;
+        }
+
+        .month-picker-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .month-picker-title {
+            font-weight: 700;
+            font-size: 16px;
+        }
+
+        .month-picker-close {
+            width: 30px;
+            height: 30px;
+            border: 1px solid #000;
+            border-radius: 4px;
+            background: #f6f6f6;
+            cursor: pointer;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .month-picker-close:hover {
+            background: #e4e4e4;
+        }
+
+        .month-picker-year-selector {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding: 8px;
+            background: #fff;
+            border: 1px solid #8b8b8b;
+            border-radius: 4px;
+        }
+
+        .month-picker-year-btn {
+            width: 30px;
+            height: 30px;
+            border: 1px solid #8b8b8b;
+            border-radius: 4px;
+            background: #f2f2f2;
+            cursor: pointer;
+            font-weight: 700;
+        }
+
+        .month-picker-year-btn:hover:not(:disabled) {
+            background: #e4e4e4;
+        }
+
+        .month-picker-year-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .month-picker-year {
+            font-weight: 700;
+            font-size: 16px;
+        }
+
+        .month-picker-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+
+        .month-picker-month-btn {
+            padding: 12px;
+            border: 1px solid #8b8b8b;
+            border-radius: 4px;
+            background: #f2f2f2;
+            cursor: pointer;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .month-picker-month-btn:hover {
+            background: #e4e4e4;
+        }
+
+        .month-picker-month-btn.active {
+            background: #9DC3E6;
+            border-color: #1F4E79;
+            color: #000;
+            font-weight: 700;
+        }
+
+        .month-picker-month-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            background: #f0f0f0;
+            color: #999;
+        }
+
+        .month-picker-month-btn:disabled:hover {
+            background: #f0f0f0;
         }
 
         .table-shell {
@@ -2013,6 +2144,24 @@
         </div>
     </div>
 
+    <!-- Month Picker Modal -->
+    <div class="month-picker-modal" id="month-picker-modal">
+        <div class="month-picker-content">
+            <div class="month-picker-header">
+                <div class="month-picker-title">년도/월 선택</div>
+                <button class="month-picker-close" id="month-picker-close">×</button>
+            </div>
+            <div class="month-picker-year-selector">
+                <button class="month-picker-year-btn" id="year-prev">‹</button>
+                <div class="month-picker-year" id="month-picker-year">2025</div>
+                <button class="month-picker-year-btn" id="year-next">›</button>
+            </div>
+            <div class="month-picker-grid" id="month-picker-grid">
+                <!-- 월 버튼들이 여기에 동적으로 생성됩니다 -->
+            </div>
+        </div>
+    </div>
+
     <!-- Numeric Table Modal -->
     <div class="numeric-modal-overlay" id="numeric-modal">
         <div class="numeric-modal-content">
@@ -2248,6 +2397,127 @@
             if (displayEl) {
                 displayEl.textContent = `${year}년 ${monthNames[month]}`;
             }
+        }
+
+        // 월 선택 모달 관련 변수
+        let monthPickerYear = new Date().getFullYear();
+        
+        // 데이터에서 사용 가능한 년도 목록 가져오기
+        function getAvailableYears() {
+            const yearSet = new Set();
+            if (allRows.length > 0) {
+                allRows.forEach(row => {
+                    if (row.process_start_time) {
+                        const date = new Date(row.process_start_time);
+                        yearSet.add(date.getFullYear());
+                    }
+                });
+            }
+            return Array.from(yearSet).sort((a, b) => b - a); // 최신순 정렬
+        }
+        
+        // 월 선택 모달 열기
+        function openMonthPicker() {
+            const modal = document.getElementById('month-picker-modal');
+            const currentYear = Math.floor(currentMonth / 12);
+            const currentMonthIndex = currentMonth % 12;
+            
+            const availableYears = getAvailableYears();
+            // 현재 년도가 사용 가능한 년도 목록에 없으면 첫 번째 사용 가능한 년도로 설정
+            if (availableYears.length > 0 && !availableYears.includes(currentYear)) {
+                monthPickerYear = availableYears[0];
+            } else {
+                monthPickerYear = currentYear;
+            }
+            
+            updateMonthPickerYear();
+            updateYearButtons();
+            renderMonthPickerGrid();
+            modal.classList.add('show');
+        }
+        
+        // 년도 변경 버튼 상태 업데이트
+        function updateYearButtons() {
+            const availableYears = getAvailableYears();
+            const prevBtn = document.getElementById('year-prev');
+            const nextBtn = document.getElementById('year-next');
+            
+            if (availableYears.length === 0) {
+                if (prevBtn) prevBtn.disabled = true;
+                if (nextBtn) nextBtn.disabled = true;
+                return;
+            }
+            
+            const currentIndex = availableYears.indexOf(monthPickerYear);
+            
+            if (prevBtn) {
+                // 이전 년도로 이동 (더 최신 년도)
+                prevBtn.disabled = currentIndex >= availableYears.length - 1;
+            }
+            
+            if (nextBtn) {
+                // 다음 년도로 이동 (더 과거 년도)
+                nextBtn.disabled = currentIndex <= 0;
+            }
+        }
+
+        // 월 선택 모달 닫기
+        function closeMonthPicker() {
+            const modal = document.getElementById('month-picker-modal');
+            modal.classList.remove('show');
+        }
+
+        // 월 선택 모달의 년도 표시 업데이트
+        function updateMonthPickerYear() {
+            const yearEl = document.getElementById('month-picker-year');
+            if (yearEl) {
+                yearEl.textContent = monthPickerYear;
+            }
+        }
+
+        // 월 선택 모달의 월 그리드 렌더링
+        function renderMonthPickerGrid() {
+            const grid = document.getElementById('month-picker-grid');
+            if (!grid) return;
+
+            // 데이터에서 사용 가능한 모든 월 추출
+            const availableMonths = new Set();
+            if (allRows.length > 0) {
+                allRows.forEach(row => {
+                    if (row.process_start_time) {
+                        const date = new Date(row.process_start_time);
+                        const monthIndex = date.getFullYear() * 12 + date.getMonth();
+                        availableMonths.add(monthIndex);
+                    }
+                });
+            }
+
+            const monthNames = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'];
+            const currentYear = Math.floor(currentMonth / 12);
+            const currentMonthIndex = currentMonth % 12;
+
+            grid.innerHTML = monthNames.map((name, index) => {
+                const monthIndex = monthPickerYear * 12 + index;
+                const isActive = monthPickerYear === currentYear && index === currentMonthIndex;
+                const hasData = availableMonths.has(monthIndex);
+                return `
+                    <button class="month-picker-month-btn ${isActive ? 'active' : ''}" 
+                            data-month-index="${monthIndex}"
+                            ${!hasData ? 'disabled' : ''}>
+                        ${name}
+                    </button>
+                `;
+            }).join('');
+
+            // 각 월 버튼에 이벤트 리스너 추가 (disabled가 아닌 경우만)
+            grid.querySelectorAll('.month-picker-month-btn:not(:disabled)').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const monthIndex = parseInt(btn.dataset.monthIndex);
+                    currentMonth = monthIndex;
+                    filterByMonth();
+                    closeMonthPicker();
+                });
+            });
         }
 
         // 월 네비게이션 버튼 상태 업데이트
@@ -2902,6 +3172,43 @@
                 const selectedRecipe = e.target.value;
                 // 현재 월을 유지하면서 데이터만 다시 로드
                 loadEquipmentHistory(selectedRecipe);
+            });
+
+            // 월 표시 클릭 시 월 선택 모달 열기
+            document.getElementById('month-display')?.addEventListener('click', () => {
+                openMonthPicker();
+            });
+
+            // 월 선택 모달 이벤트 리스너
+            document.getElementById('month-picker-close')?.addEventListener('click', closeMonthPicker);
+            document.getElementById('month-picker-modal')?.addEventListener('click', (e) => {
+                if (e.target.id === 'month-picker-modal') {
+                    closeMonthPicker();
+                }
+            });
+            document.getElementById('year-prev')?.addEventListener('click', () => {
+                const availableYears = getAvailableYears();
+                if (availableYears.length === 0) return;
+                
+                const currentIndex = availableYears.indexOf(monthPickerYear);
+                if (currentIndex < availableYears.length - 1) {
+                    monthPickerYear = availableYears[currentIndex + 1];
+                    updateMonthPickerYear();
+                    updateYearButtons();
+                    renderMonthPickerGrid();
+                }
+            });
+            document.getElementById('year-next')?.addEventListener('click', () => {
+                const availableYears = getAvailableYears();
+                if (availableYears.length === 0) return;
+                
+                const currentIndex = availableYears.indexOf(monthPickerYear);
+                if (currentIndex > 0) {
+                    monthPickerYear = availableYears[currentIndex - 1];
+                    updateMonthPickerYear();
+                    updateYearButtons();
+                    renderMonthPickerGrid();
+                }
             });
 
             document.querySelectorAll('.side-panel .ghost-btn').forEach(btn => {

@@ -669,41 +669,41 @@ def ray_predict(proc_idx, selected_cols, predict_columns, window_size, predict_s
         #             continue            # 8. 오래된 데이터 삭제
         
         # 8. 오래된 데이터 삭제
-        if cnt%3600==0:
-                conn = pool.getconn()
-                cur = None
-                try:
-                    cur = conn.cursor()
-                    try:
-                        save_table_name = table_name
-                        cur.execute(f'SELECT "Timestamp" FROM "{save_table_name}" ORDER BY "Timestamp" DESC LIMIT 1')
-                        latest_ts = cur.fetchone()[0]
-                        if latest_ts:
-                            delete_before = latest_ts - timedelta(hours=48)
-                            cur.execute(f'''
-                                DELETE FROM "{save_table_name}"
-                                WHERE "Timestamp" < %s
-                            ''', (delete_before,))
-                            conn.commit()
-                        # 최신 Timestamp 조회
-                        # realtime_violation_log 테이블 오래된 데이터 삭제 기능 주석처리
-                        # violation_table = 'realtime_violation_log'
-                        # cur.execute(f'SELECT "Timestamp" FROM "{violation_table}" ORDER BY "Timestamp" DESC LIMIT 1')
-                        # latest_ts = cur.fetchone()[0]
-                        # if latest_ts:
-                        #     delete_before = latest_ts - timedelta(hours=48)
-                        #     cur.execute(f'''
-                        #         DELETE FROM "{violation_table}"
-                        #         WHERE "Timestamp" < %s
-                        #     ''', (delete_before,))
-                        #     conn.commit()
-                    except Exception as e:
-                        logg(f"[PID|{os.getpid()}].log", f"insert_pred_data() 오래된 데이터 삭제 오류")
-                        logg(f"[PID|{os.getpid()}].log", str(e))
-                finally:
-                    if cur:
-                        cur.close()
-                    pool.putconn(conn)
+        # if cnt%3600==0:
+        #         conn = pool.getconn()
+        #         cur = None
+        #         try:
+        #             cur = conn.cursor()
+        #             try:
+        #                 save_table_name = table_name
+        #                 cur.execute(f'SELECT "Timestamp" FROM "{save_table_name}" ORDER BY "Timestamp" DESC LIMIT 1')
+        #                 latest_ts = cur.fetchone()[0]
+        #                 if latest_ts:
+        #                     delete_before = latest_ts - timedelta(hours=48)
+        #                     cur.execute(f'''
+        #                         DELETE FROM "{save_table_name}"
+        #                         WHERE "Timestamp" < %s
+        #                     ''', (delete_before,))
+        #                     conn.commit()
+        #                 # 최신 Timestamp 조회
+        #                 # realtime_violation_log 테이블 오래된 데이터 삭제 기능 주석처리
+        #                 # violation_table = 'realtime_violation_log'
+        #                 # cur.execute(f'SELECT "Timestamp" FROM "{violation_table}" ORDER BY "Timestamp" DESC LIMIT 1')
+        #                 # latest_ts = cur.fetchone()[0]
+        #                 # if latest_ts:
+        #                 #     delete_before = latest_ts - timedelta(hours=48)
+        #                 #     cur.execute(f'''
+        #                 #         DELETE FROM "{violation_table}"
+        #                 #         WHERE "Timestamp" < %s
+        #                 #     ''', (delete_before,))
+        #                 #     conn.commit()
+        #             except Exception as e:
+        #                 logg(f"[PID|{os.getpid()}].log", f"insert_pred_data() 오래된 데이터 삭제 오류")
+        #                 logg(f"[PID|{os.getpid()}].log", str(e))
+        #         finally:
+        #             if cur:
+        #                 cur.close()
+        #             pool.putconn(conn)
 
         
     

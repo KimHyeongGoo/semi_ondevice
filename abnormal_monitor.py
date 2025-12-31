@@ -46,7 +46,8 @@ ALLOWED_PARAMS = {
 PREDICT_STEP = 10
 THRESHOLD_PERCENT = 10.0  # 10% 이상
 THRESHOLD_ABS = 0.4      # 절대값 0.25 이상
-MIN_DURATION_SEC = 5.0    # 이상 구간 최소 지속시간
+MIN_DURATION_SEC_LIMITS = 3.0    # limits.yaml 이상 구간 최소 지속시간 (3초)
+MIN_DURATION_SEC_INTERLOCK = 1.0  # limits2.yaml 이상 구간 최소 지속시간 (1초)
 CLEAR_GAP_SEC = 2.0       # 2초 이상 정상 구간이면 종료
 POLL_INTERVAL_SEC = 1.0
 
@@ -335,13 +336,13 @@ class Monitor:
         self.last_ts = {}  # param -> last processed timestamp
         self.last_telegram_time = {}  # param -> last telegram notification time
         self.last_telegram_time_global = 0  # 전역 마지막 텔레그램 알림 시간
-        self.telegram_cooldown_sec = 30  # 30초 쿨다운
+        self.telegram_cooldown_sec = 10  # 10초 쿨다운
         self.start_time = time.time()  # 프로세스 시작 시간
         self.last_process_pids = {}  # generate_data.py, insert_real_time.py의 마지막 PID 추적
         self.warning_enabled = load_warning_setting()  # 경고 팝업 토글 상태
         self.last_settings_check = time.time()  # 마지막 설정 파일 확인 시간
         self.settings_check_interval = 5.0  # 설정 파일 확인 간격 (5초)
-        self.equipment_start_grace_period_sec = 180  # 장비 시작 후 3분(180초) 동안 이상감지/DB저장/메시지 발송 비활성화
+        self.equipment_start_grace_period_sec = 10  # 장비 시작 후 10초 동안 이상감지/DB저장/메시지 발송 비활성화
         self.equipment_start_time = None  # 장비 시작 시간 (generator_health.json에서 읽음)
         self.limits = {}  # limits.yaml 데이터
         self.interlock_limits = {}  # limits2.yaml 데이터
@@ -377,7 +378,7 @@ class Monitor:
         return None
     
     def is_within_equipment_start_grace_period(self):
-        """장비 시작 후 3분(180초) 이내인지 확인"""
+        """장비 시작 후 10초 이내인지 확인"""
         if self.equipment_start_time is None:
             self.equipment_start_time = self.get_equipment_start_time()
         
@@ -387,7 +388,7 @@ class Monitor:
         current_time = time.time()
         time_since_equipment_start = current_time - self.equipment_start_time
         
-        # 장비 시작 시간이 3분 이내이고, 프로세스 시작 시간보다 최근이면 그레이스 기간 적용
+        # 장비 시작 시간이 10초 이내이고, 프로세스 시작 시간보다 최근이면 그레이스 기간 적용
         if time_since_equipment_start < self.equipment_start_grace_period_sec:
             # 장비 시작 시간이 프로세스 시작 시간보다 최근인지 확인
             if self.equipment_start_time > self.start_time:
@@ -512,9 +513,9 @@ class Monitor:
                 )
             conn.commit()
             
-            # 장비 시작 후 3분 이내면 DB 저장과 메시지 발송 스킵
+            # 장비 시작 후 10초 이내면 DB 저장과 메시지 발송 스킵
             if self.is_within_equipment_start_grace_period():
-                self.log(f"[이상감지 스킵] 장비 시작 후 3분 그레이스 기간 중 (파라미터: {param})")
+                self.log(f"[이상감지 스킵] 장비 시작 후 10초 그레이스 기간 중 (파라미터: {param})")
                 return
             
             # 설정 파일에서 경고 팝업 토글 상태 확인 (주기적으로 업데이트)
@@ -529,12 +530,15 @@ class Monitor:
             
             # 쿨다운 체크: 
             # 1. 경고 팝업 토글: warning_enabled가 True일 때만 알림 전송
-            # 2. 전역 쿨다운: 마지막 알림 후 30초 이내에는 어떤 파라미터든 알림을 보내지 않음
-            # 3. 파라미터별 쿨다운: 같은 파라미터에 대해 30초 이내에는 알림을 보내지 않음
+            # 2. is_interrupted: is_interrupted가 1일 때만 알림 전송
+            # 3. 전역 쿨다운: 마지막 알림 후 30초 이내에는 어떤 파라미터든 알림을 보내지 않음
+            # 4. 파라미터별 쿨다운: 같은 파라미터에 대해 30초 이내에는 알림을 보내지 않음
             time_since_global = current_time - last_notification_time_global
             time_since_param = current_time - last_notification_time_param
+            is_interrupted = event.get("is_interrupted")
             
             if (self.warning_enabled and
+                is_interrupted == 1 and
                 time_since_global >= self.telegram_cooldown_sec and 
                 time_since_param >= self.telegram_cooldown_sec):
                 diff_pct = _to_py(event.get("avg_diff", 0))
@@ -580,6 +584,8 @@ class Monitor:
                 skip_reason = []
                 if not self.warning_enabled:
                     skip_reason.append("경고 팝업 토글 OFF")
+                if is_interrupted != 1:
+                    skip_reason.append(f"is_interrupted={is_interrupted} (1이 아님)")
                 if time_since_global < self.telegram_cooldown_sec:
                     skip_reason.append(f"전역 쿨다운 {time_since_global:.1f}초")
                 if time_since_param < self.telegram_cooldown_sec:
@@ -593,7 +599,9 @@ class Monitor:
         if not state or not state.get("active"):
             return
         duration = (state["last_anomaly"] - state["start"]).total_seconds() + 1.0
-        if duration < MIN_DURATION_SEC:
+        # limits2.yaml 침범이 있으면 1초, 없고 limits.yaml만 침범이면 3초
+        min_duration = MIN_DURATION_SEC_INTERLOCK if state.get("is_interlock_violation", False) else MIN_DURATION_SEC_LIMITS
+        if duration < min_duration:
             self.state[param] = {}
             return
         avg_diff = state["diff_sum"] / max(1, state["diff_count"])
@@ -617,7 +625,7 @@ class Monitor:
         self.state[param] = {}
 
     def handle_sample(self, param, ts, actual_val, pred_val, step_id=None, step_name=None):
-        # 장비 시작 후 3분 이내면 이상감지 스킵
+        # 장비 시작 후 10초 이내면 이상감지 스킵
         if self.is_within_equipment_start_grace_period():
             return
         
@@ -642,35 +650,53 @@ class Monitor:
         upper_limit = param_limits.get('upper')
         lower_limit = param_limits.get('lower')
         
-        # limits.yaml에 해당 파라미터가 없으면 스킵
-        if upper_limit is None and lower_limit is None:
+        # limits2.yaml에서 Interlock 상한/하한값 확인
+        interlock_param_limits = self.interlock_limits.get(param, {})
+        interlock_upper = interlock_param_limits.get('upper')
+        interlock_lower = interlock_param_limits.get('lower')
+        
+        # limits.yaml 또는 limits2.yaml 중 하나라도 없으면 스킵
+        if (upper_limit is None and lower_limit is None) and \
+           (interlock_upper is None and interlock_lower is None):
             if state.get("active"):
                 if (ts - state["last_anomaly"]).total_seconds() >= CLEAR_GAP_SEC:
                     self.finalize_event(param)
             return
         
-        # 실제값이 상한/하한선을 침범하는지 확인
+        # limits.yaml 기준으로 상한/하한선 침범 여부 확인
         is_upper_violation = upper_limit is not None and actual_val > upper_limit
         is_lower_violation = lower_limit is not None and actual_val < lower_limit
-        is_anomaly = is_upper_violation or is_lower_violation
         
-        # limit_type 결정
+        # limits2.yaml 기준으로 Interlock 상한/하한선 침범 여부 확인
+        is_interlock_upper_violation = interlock_upper is not None and actual_val > interlock_upper
+        is_interlock_lower_violation = interlock_lower is not None and actual_val < interlock_lower
+        
+        # limits.yaml 침범 여부
+        is_limits_violation = is_upper_violation or is_lower_violation
+        # limits2.yaml 침범 여부
+        is_interlock_violation = is_interlock_upper_violation or is_interlock_lower_violation
+        
+        # limits.yaml 또는 limits2.yaml 중 하나라도 침범하면 이상감지
+        is_anomaly = is_limits_violation or is_interlock_violation
+        
+        # limit_type 결정 (limits.yaml 기준)
         limit_type = None
         if is_upper_violation:
             limit_type = 'u'
         elif is_lower_violation:
             limit_type = 'l'
+        elif is_interlock_upper_violation:
+            limit_type = 'u'  # limits2.yaml만 침범한 경우도 상한으로 표시
+        elif is_interlock_lower_violation:
+            limit_type = 'l'  # limits2.yaml만 침범한 경우도 하한으로 표시
         
-        # limits2.yaml에서 Interlock 상한/하한값 확인
-        interlock_param_limits = self.interlock_limits.get(param, {})
-        interlock_upper = interlock_param_limits.get('upper')
-        interlock_lower = interlock_param_limits.get('lower')
+        # is_interrupted 결정 (limits2.yaml 기준)
         is_interrupted = 2  # 기본값: 2 (Interlock 침범 안함)
-        if (interlock_upper is not None and actual_val > interlock_upper) or \
-           (interlock_lower is not None and actual_val < interlock_lower):
+        if is_interlock_violation:
             is_interrupted = 1  # Interlock 침범
         
         # 실제값과 상한/하한값과의 차이 percentage 계산
+        # limits.yaml이 있으면 limits.yaml 기준, 없으면 limits2.yaml 기준
         diff_pct = 0.0
         if is_upper_violation and upper_limit is not None:
             try:
@@ -682,8 +708,24 @@ class Monitor:
                 diff_pct = abs(actual_val - lower_limit) / (abs(lower_limit) or 1.0) * 100.0
             except Exception:
                 diff_pct = 0.0
+        elif is_interlock_upper_violation and interlock_upper is not None:
+            # limits.yaml이 없고 limits2.yaml만 침범한 경우
+            try:
+                diff_pct = abs(actual_val - interlock_upper) / (abs(interlock_upper) or 1.0) * 100.0
+            except Exception:
+                diff_pct = 0.0
+        elif is_interlock_lower_violation and interlock_lower is not None:
+            # limits.yaml이 없고 limits2.yaml만 침범한 경우
+            try:
+                diff_pct = abs(actual_val - interlock_lower) / (abs(interlock_lower) or 1.0) * 100.0
+            except Exception:
+                diff_pct = 0.0
         
         if is_anomaly:
+            # 저장할 상한/하한값 결정: limits.yaml이 있으면 limits.yaml 기준, 없으면 limits2.yaml 기준
+            save_upper = upper_limit if upper_limit is not None else interlock_upper
+            save_lower = lower_limit if lower_limit is not None else interlock_lower
+            
             if not state.get("active"):
                 state["active"] = True
                 state["start"] = ts
@@ -694,9 +736,11 @@ class Monitor:
                 state["peak_time"] = ts
                 state["peak_actual"] = actual_val
                 state["limit_type"] = limit_type
-                state["upper_value"] = upper_limit
-                state["lower_value"] = lower_limit
+                state["upper_value"] = save_upper
+                state["lower_value"] = save_lower
                 state["is_interrupted"] = is_interrupted
+                state["is_limits_violation"] = is_limits_violation
+                state["is_interlock_violation"] = is_interlock_violation
                 state["step_ids"] = set()
                 state["step_names"] = set()
             else:
@@ -707,10 +751,13 @@ class Monitor:
                     state["peak_time"] = ts
                     state["peak_actual"] = actual_val
                     state["limit_type"] = limit_type
-                    state["upper_value"] = upper_limit
-                    state["lower_value"] = lower_limit
+                    state["upper_value"] = save_upper
+                    state["lower_value"] = save_lower
                 # is_interrupted는 가장 최근 값으로 업데이트
                 state["is_interrupted"] = is_interrupted
+                # 침범 상태도 업데이트 (OR 연산으로 누적)
+                state["is_limits_violation"] = state.get("is_limits_violation", False) or is_limits_violation
+                state["is_interlock_violation"] = state.get("is_interlock_violation", False) or is_interlock_violation
             state["last_anomaly"] = ts
             if step_id is not None:
                 state.setdefault("step_ids", set()).add(step_id)
@@ -718,7 +765,9 @@ class Monitor:
                 state.setdefault("step_names", set()).add(step_name)
 
             duration = (state["last_anomaly"] - state["start"]).total_seconds() + 1.0
-            if duration >= MIN_DURATION_SEC:
+            # limits2.yaml 침범이 있으면 1초, 없고 limits.yaml만 침범이면 3초
+            min_duration = MIN_DURATION_SEC_INTERLOCK if state.get("is_interlock_violation", False) else MIN_DURATION_SEC_LIMITS
+            if duration >= min_duration:
                 avg_diff = state["diff_sum"] / max(1, state["diff_count"])
                 self.upsert_event(
                     param,
