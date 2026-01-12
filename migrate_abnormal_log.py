@@ -164,6 +164,7 @@ def migrate_data():
             print(f"총 {total_rows}개의 행을 마이그레이션합니다.")
             
             migrated_count = 0
+            skipped_count = 0
             error_count = 0
             
             for idx, row in enumerate(rows, 1):
@@ -185,7 +186,7 @@ def migrate_data():
                     
                     # avg_diff_percent, max_diff_percent는 realtime_abnormal_log2의 값 그대로 사용
                     
-                    # realtime_abnormal_log에 삽입 또는 업데이트
+                    # realtime_abnormal_log에 삽입 (이미 존재하는 경우 건너뛰기)
                     cur.execute("""
                         INSERT INTO realtime_abnormal_log (
                             start_time, end_time, parameter,
@@ -193,17 +194,7 @@ def migrate_data():
                             peak_time, actual_value, predicted_value,
                             violation_type, message, created_at, updated_at
                         ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                        ON CONFLICT (parameter, start_time) DO UPDATE
-                        SET end_time = EXCLUDED.end_time,
-                            duration_seconds = EXCLUDED.duration_seconds,
-                            avg_diff_percent = EXCLUDED.avg_diff_percent,
-                            max_diff_percent = EXCLUDED.max_diff_percent,
-                            peak_time = EXCLUDED.peak_time,
-                            actual_value = EXCLUDED.actual_value,
-                            predicted_value = EXCLUDED.predicted_value,
-                            violation_type = EXCLUDED.violation_type,
-                            message = EXCLUDED.message,
-                            updated_at = EXCLUDED.updated_at
+                        ON CONFLICT (parameter, start_time) DO NOTHING
                     """, (
                         start_time, end_time, parameter,
                         duration_seconds, avg_diff_percent, max_diff_percent,
@@ -211,9 +202,14 @@ def migrate_data():
                         violation_type, message, created_at, updated_at
                     ))
                     
-                    migrated_count += 1
+                    # 실제로 INSERT된 경우에만 카운트 증가 (0이면 이미 존재하여 건너뛴 경우)
+                    if cur.rowcount > 0:
+                        migrated_count += 1
+                    else:
+                        skipped_count += 1
+                    
                     if idx % 100 == 0:
-                        print(f"[{idx}/{total_rows}] 진행 중... (마이그레이션: {migrated_count}, 오류: {error_count})")
+                        print(f"[{idx}/{total_rows}] 진행 중... (마이그레이션: {migrated_count}, 건너뜀: {skipped_count}, 오류: {error_count})")
                     
                 except Exception as e:
                     error_count += 1
@@ -224,6 +220,7 @@ def migrate_data():
             print(f"\n마이그레이션 완료!")
             print(f"  - 총 행 수: {total_rows}")
             print(f"  - 마이그레이션 성공: {migrated_count}")
+            print(f"  - 건너뜀 (이미 존재): {skipped_count}")
             print(f"  - 오류: {error_count}")
             
     except Exception as e:

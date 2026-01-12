@@ -154,7 +154,7 @@ def find_continuous_sequence(
 
 def select_columns_to_modify() -> List[str]:
     """확률로 0개(30%), 1개(40%), 2개(20%), 3개(10%) 컬럼 선택"""
-    num_columns = random.choices([0, 1, 2, 3], weights=[0, 30, 35, 35])[0]
+    num_columns = random.choices([0, 1, 2, 3], weights=[30, 30, 25, 15])[0]
     if num_columns == 0:
         return []
     
@@ -448,7 +448,7 @@ def main():
     if len(sys.argv) >= 2:
         directory = sys.argv[1]
     else:
-        directory = '/home/goo4168/semi_platform/abnormal_data/2025'
+        directory = '/home/goo4168/semi_platform/abnormal_data/2026'
     
     if not os.path.isdir(directory):
         print(f"오류: 디렉토리를 찾을 수 없습니다: {directory}")

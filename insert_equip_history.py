@@ -164,7 +164,7 @@ def process_pjob_folder(pjob_folder_path):
 
 def insert_equipment_history_data():
     """equipment_history 테이블에 데이터 삽입"""
-    base_path = "../traceData/2025"
+    base_path = "../traceData/2026"
     
     if not os.path.exists(base_path):
         print(f"❌ 경로가 존재하지 않습니다: {base_path}")

@@ -858,7 +858,7 @@ async def get_prediction_logs():
 
     cur.execute(
         """
-        SELECT start_time, end_time, parameter, message, violation_type
+        SELECT start_time, end_time, parameter, message, violation_type, actual_value, predicted_value
         FROM realtime_abnormal_log
         ORDER BY end_time DESC
         LIMIT 50
@@ -869,7 +869,7 @@ async def get_prediction_logs():
     conn.close()
 
     result = []
-    for start_ts, end_ts, param, msg, violation_type in rows:
+    for start_ts, end_ts, param, msg, violation_type, actual_val, predicted_val in rows:
         result.append({
             "timestamp": end_ts.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3],
             "parameter": param,
@@ -879,6 +879,8 @@ async def get_prediction_logs():
             "limit_type": None,
             "is_interrupted": None,
             "violation_type": violation_type,
+            "actual_value": round(actual_val, 3) if actual_val is not None else None,
+            "predicted_value": round(predicted_val, 3) if predicted_val is not None else None,
         })
 
     return JSONResponse(result)

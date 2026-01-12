@@ -550,11 +550,46 @@ function formatTimelineTime(ts) {
 }
 
 function buildLogText(param, entry) {
-    const diffRaw = entry.diff != null ? Math.abs(entry.diff) : 0;
-    const diff = (diffRaw / 10).toFixed(1);
+    let diffRaw = entry.diff != null ? Math.abs(entry.diff) : 0;
+    console.log('[buildLogText] 함수 호출:', {
+        param: param,
+        isPredictionLog: entry.isPredictionLog,
+        actual_value: entry.actual_value,
+        predicted_value: entry.predicted_value,
+        entry_diff: entry.diff
+    });
+    // 예측 로그인 경우 (actual_value - predicted_value) / actual_value * 100 / 10으로 계산
+    if (entry.isPredictionLog && entry.actual_value != null && entry.predicted_value != null) {
+        const oldDiffRaw = diffRaw;
+        diffRaw = (entry.actual_value - entry.predicted_value) / entry.actual_value * 100 / 10;
+        console.log('[buildLogText] 예측 로그 계산 (수정됨):', {
+            param: param,
+            isPredictionLog: entry.isPredictionLog,
+            actual_value: entry.actual_value,
+            predicted_value: entry.predicted_value,
+            old_diffRaw: oldDiffRaw,
+            new_diffRaw: diffRaw,
+            formula: `(${entry.actual_value} - ${entry.predicted_value}) / ${entry.actual_value} * 100 / 10 = ${diffRaw}`
+        });
+    } else if (!entry.isPredictionLog && entry.actual_value != null) {
+        // 일반 로그인 경우 limit_type에 따라 계산
+        if (entry.limit_type === 'u' && entry.upper_value != null) {
+            diffRaw = (entry.actual_value - entry.upper_value) / entry.actual_value * 100 / 10;
+        } else if (entry.limit_type === 'l' && entry.lower_value != null) {
+            diffRaw = (entry.actual_value - entry.lower_value) / entry.actual_value * 100 / 10;
+        }
+    }
+    const diff = Math.abs(diffRaw).toFixed(1);
     let direction = 0;
     if (entry.actual_value != null && entry.predicted_value != null) {
         direction = entry.actual_value - entry.predicted_value;
+    } else if (!entry.isPredictionLog && entry.actual_value != null) {
+        // 일반 로그인 경우 limit_type에 따라 direction 계산
+        if (entry.limit_type === 'u' && entry.upper_value != null) {
+            direction = entry.actual_value - entry.upper_value;
+        } else if (entry.limit_type === 'l' && entry.lower_value != null) {
+            direction = entry.actual_value - entry.lower_value;
+        }
     }
     let descriptor;
     if (direction > 0.0001) {
@@ -593,12 +628,15 @@ function normalizeLogEntry(item) {
             duration_seconds: parsed.duration_seconds ?? item.duration_seconds ?? null,
             step_id: parsed.step_id || [],
             step_name: parsed.step_name || [],
-            actual_value: parsed.actual_value ?? null,
-            predicted_value: parsed.predicted_value ?? null,
+            actual_value: parsed.actual_value ?? item.actual_value ?? null,
+            predicted_value: parsed.predicted_value ?? item.predicted_value ?? null,
             peak_time: toMillis(parsed.peak_time),
             violation_type: parsed.violation_type ?? item.violation_type ?? null,
             is_interrupted: parsed.is_interrupted ?? item.is_interrupted ?? null,
             isPredictionLog: item.isPredictionLog || false, // 예측 로그 플래그 추가
+            limit_type: parsed.limit_type ?? item.limit_type ?? null,
+            upper_value: parsed.upper_value ?? item.upper_value ?? null,
+            lower_value: parsed.lower_value ?? item.lower_value ?? null,
         },
     };
 }
@@ -2302,8 +2340,19 @@ async function createThreeViewer(container, modelUrl, entry = null) {
 }
 
 function buildCauseHeadline(entry) {
-    const diffRaw = entry.diff != null ? Math.abs(entry.diff) : 0;
-    const diff = (diffRaw / 10).toFixed(1);
+    let diffRaw = entry.diff != null ? Math.abs(entry.diff) : 0;
+    // 예측 로그인 경우 (actual_value - predicted_value) / actual_value * 100 / 10으로 계산
+    if (entry.isPredictionLog && entry.actual_value != null && entry.predicted_value != null) {
+        diffRaw = (entry.actual_value - entry.predicted_value) / entry.actual_value * 100 / 10;
+    } else if (!entry.isPredictionLog && entry.actual_value != null) {
+        // 일반 로그인 경우 limit_type에 따라 계산
+        if (entry.limit_type === 'u' && entry.upper_value != null) {
+            diffRaw = (entry.actual_value - entry.upper_value) / entry.actual_value * 100 / 10;
+        } else if (entry.limit_type === 'l' && entry.lower_value != null) {
+            diffRaw = (entry.actual_value - entry.lower_value) / entry.actual_value * 100 / 10;
+        }
+    }
+    const diff = Math.abs(diffRaw).toFixed(1);
     const direction = (entry.actual_value ?? 0) - (entry.predicted_value ?? 0);
     if (direction > 0.0001) return `유량 +${diff}% 변화 상승 감지`;
     if (direction < -0.0001) return `유량 -${diff}% 변화 하강 감지`;
@@ -2376,9 +2425,12 @@ async function drawReportChart(entry, canvas, timeWindow) {
         }
     }
 
-    // step_id 추출: 예측 로그의 경우 실제 step_id 사용, 없으면 기본값 30
+    // step_id 추출: 예측 로그의 경우 예측 데이터는 PredictStep=30으로 저장되므로 30 사용
     let stepValue = 30; // 기본값
-    if (entry.step_id) {
+    if (entry.isPredictionLog) {
+        // 예측 로그인 경우 예측 데이터는 PredictStep=30으로 저장되므로 30 사용
+        stepValue = 30;
+    } else if (entry.step_id) {
         if (Array.isArray(entry.step_id) && entry.step_id.length > 0) {
             stepValue = parseInt(entry.step_id[0]) || 30;
         } else if (typeof entry.step_id === 'number') {
@@ -2387,7 +2439,7 @@ async function drawReportChart(entry, canvas, timeWindow) {
             stepValue = parseInt(entry.step_id) || 30;
         }
     }
-    console.log('Report chart - 사용할 step 값:', stepValue, 'entry.step_id:', entry.step_id);
+    console.log('Report chart - 사용할 step 값:', stepValue, 'entry.step_id:', entry.step_id, 'isPredictionLog:', entry.isPredictionLog);
 
     let payload;
     try {
@@ -2595,15 +2647,13 @@ async function drawReportChart(entry, canvas, timeWindow) {
             datasets.push({ label: '실제값', borderColor: 'blue', tension: 0.25, borderWidth: 3, pointRadius: 0, data: actual, hidden: false, order: 1 });
             console.log('Report chart - 실제값 데이터셋 추가:', actual.length, 'points');
         }
-        // 예측값 추가 - 데이터가 있든 없든 항상 추가 (hidden 속성으로 제어하지 않음)
+        // 예측값 추가 - 예측 로그인 경우 예측값 데이터가 반드시 표시되어야 함
         if (predicted && predicted.length > 0) {
             datasets.push({ label: '예측값', borderColor: 'red', tension: 0.25, borderWidth: 3, pointRadius: 0, data: predicted, hidden: false, order: 0 });
             console.log('Report chart - 예측값 데이터셋 추가:', predicted.length, 'points');
         } else {
-            console.warn('Report chart - 예측값 데이터가 없습니다. predicted:', predicted, 'predicted.length:', predicted?.length);
-            // 예측 데이터가 없어도 빈 데이터셋으로 추가하여 차트에 표시되도록 함
-            datasets.push({ label: '예측값', borderColor: 'red', tension: 0.25, borderWidth: 3, pointRadius: 0, data: [], hidden: false, order: 0 });
-            console.log('Report chart - 예측값 빈 데이터셋 추가 (데이터 없음)');
+            console.warn('Report chart - 예측 로그인데 예측값 데이터가 없습니다. predicted:', predicted, 'predicted.length:', predicted?.length);
+            // 예측 로그인 경우 예측 데이터가 있어야 하는데 없으면 경고만 출력 (빈 데이터셋은 추가하지 않음)
         }
     } else {
         // 기존 로그 또는 예측 토글 OFF: 실제값만 표시
